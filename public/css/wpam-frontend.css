@@ -1,0 +1,38 @@
+.wpam-status {
+    display: inline-block;
+    margin-bottom: 10px;
+    padding: 4px 8px;
+    background: #f0f0f0;
+    border-radius: 3px;
+    font-weight: 600;
+}
+
+.wpam-bid-form {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.wpam-bid-form input {
+    max-width: 120px;
+}
+
+.wpam-bid-button,
+.wpam-watchlist-button {
+    background: #96588a;
+    color: #fff;
+    border: none;
+    padding: 6px 12px;
+    cursor: pointer;
+    border-radius: 3px;
+}
+
+.wpam-bid-button:hover,
+.wpam-watchlist-button:hover {
+    opacity: 0.9;
+}
+
+.wpam-watchlist-button {
+    margin-top: 5px;
+}
