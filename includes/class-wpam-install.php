@@ -33,6 +33,35 @@ class WPAM_Install {
         add_rewrite_endpoint( 'my-bids', EP_ROOT | EP_PAGES );
         add_rewrite_endpoint( 'auctions-won', EP_ROOT | EP_PAGES );
         flush_rewrite_rules();
+
+        // Schedule cron events for existing auctions
+        $auctions = get_posts(
+            [
+                'post_type'      => 'product',
+                'posts_per_page' => -1,
+                'meta_query'     => [
+                    [ 'key' => '_auction_start', 'compare' => 'EXISTS' ],
+                ],
+                'fields'         => 'ids',
+            ]
+        );
+
+        foreach ( $auctions as $auction_id ) {
+            $start = get_post_meta( $auction_id, '_auction_start', true );
+            $end   = get_post_meta( $auction_id, '_auction_end', true );
+
+            $start_ts = $start ? strtotime( $start ) : false;
+            $end_ts   = $end ? strtotime( $end ) : false;
+            $now      = current_time( 'timestamp' );
+
+            if ( $start_ts && $start_ts > $now ) {
+                wp_schedule_single_event( $start_ts, 'wpam_auction_start', [ $auction_id ] );
+            }
+
+            if ( $end_ts && $end_ts > $now ) {
+                wp_schedule_single_event( $end_ts, 'wpam_auction_end', [ $auction_id ] );
+            }
+        }
     }
 }
 

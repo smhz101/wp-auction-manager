@@ -13,6 +13,7 @@ class WPAM_Public {
                 'ajax_url'        => admin_url( 'admin-ajax.php' ),
                 'bid_nonce'       => wp_create_nonce( 'wpam_place_bid' ),
                 'watchlist_nonce' => wp_create_nonce( 'wpam_toggle_watchlist' ),
+                'highest_nonce'   => wp_create_nonce( 'wpam_get_highest_bid' ),
             ]
         );
     }

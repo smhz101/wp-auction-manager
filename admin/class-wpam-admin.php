@@ -47,8 +47,31 @@ class WPAM_Admin {
         register_setting( 'wpam_settings', 'wpam_twilio_sid' );
         register_setting( 'wpam_settings', 'wpam_twilio_token' );
         register_setting( 'wpam_settings', 'wpam_twilio_from' );
+        register_setting( 'wpam_settings', 'wpam_enable_sms_notifications' );
+        register_setting( 'wpam_settings', 'wpam_enable_email_notifications' );
+        register_setting( 'wpam_settings', 'wpam_soft_close_threshold' );
+        register_setting( 'wpam_settings', 'wpam_soft_close_extend' );
 
+        add_settings_section( 'wpam_general', __( 'Auction Settings', 'wpam' ), '__return_false', 'wpam_settings' );
         add_settings_section( 'wpam_twilio', __( 'Twilio Integration', 'wpam' ), '__return_false', 'wpam_settings' );
+
+        add_settings_section( 'wpam_notifications', __( 'Notifications', 'wpam' ), '__return_false', 'wpam_settings' );
+
+        add_settings_field(
+            'wpam_soft_close_threshold',
+            __( 'Soft Close Threshold (seconds)', 'wpam' ),
+            [ $this, 'field_soft_close_threshold' ],
+            'wpam_settings',
+            'wpam_general'
+        );
+
+        add_settings_field(
+            'wpam_soft_close_extend',
+            __( 'Extension Duration (seconds)', 'wpam' ),
+            [ $this, 'field_soft_close_extend' ],
+            'wpam_settings',
+            'wpam_general'
+        );
 
         add_settings_field(
             'wpam_twilio_sid',
@@ -73,6 +96,22 @@ class WPAM_Admin {
             'wpam_settings',
             'wpam_twilio'
         );
+
+        add_settings_field(
+            'wpam_enable_sms_notifications',
+            __( 'Enable SMS Notifications', 'wpam' ),
+            [ $this, 'field_enable_sms' ],
+            'wpam_settings',
+            'wpam_notifications'
+        );
+
+        add_settings_field(
+            'wpam_enable_email_notifications',
+            __( 'Enable Email Notifications', 'wpam' ),
+            [ $this, 'field_enable_email' ],
+            'wpam_settings',
+            'wpam_notifications'
+        );
     }
 
     public function field_twilio_sid() {
@@ -88,6 +127,25 @@ class WPAM_Admin {
     public function field_twilio_from() {
         $value = esc_attr( get_option( 'wpam_twilio_from', '' ) );
         echo '<input type="text" class="regular-text" name="wpam_twilio_from" value="' . $value . '" />';
+    }
+
+    public function field_enable_sms() {
+        $value = get_option( 'wpam_enable_sms_notifications', '0' );
+        echo '<label><input type="checkbox" name="wpam_enable_sms_notifications" value="1" ' . checked( $value, '1', false ) . ' /> ' . esc_html__( 'Send SMS updates', 'wpam' ) . '</label>';
+    }
+
+    public function field_enable_email() {
+        $value = get_option( 'wpam_enable_email_notifications', '1' );
+        echo '<label><input type="checkbox" name="wpam_enable_email_notifications" value="1" ' . checked( $value, '1', false ) . ' /> ' . esc_html__( 'Send Email updates', 'wpam' ) . '</label>';
+
+    public function field_soft_close_threshold() {
+        $value = esc_attr( get_option( 'wpam_soft_close_threshold', 30 ) );
+        echo '<input type="number" class="small-text" name="wpam_soft_close_threshold" value="' . $value . '" />';
+    }
+
+    public function field_soft_close_extend() {
+        $value = esc_attr( get_option( 'wpam_soft_close_extend', 30 ) );
+        echo '<input type="number" class="small-text" name="wpam_soft_close_extend" value="' . $value . '" />';
     }
 
     public function render_auctions_page() {
