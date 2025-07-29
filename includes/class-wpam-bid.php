@@ -59,11 +59,30 @@ class WPAM_Bid {
             [ '%d', '%d', '%f', '%s' ]
         );
 
+
         if ( $this->realtime_provider ) {
             $this->realtime_provider->send_bid_update( $auction_id, $bid );
         }
 
         wp_send_json_success( [ 'message' => __( 'Bid received', 'wpam' ) ] );
+
+//         $extended       = false;
+//         $new_end_ts     = $end_ts;
+//         $threshold      = absint( get_option( 'wpam_soft_close_threshold', 30 ) );
+//         $extension      = absint( get_option( 'wpam_soft_close_extend', 30 ) );
+
+//         if ( $end_ts - $now <= $threshold ) {
+//             $new_end_ts = $end_ts + $extension;
+//             update_post_meta( $auction_id, '_auction_end', date( 'Y-m-d H:i:s', $new_end_ts ) );
+//             $extended = true;
+//         }
+
+//         $response = [ 'message' => __( 'Bid received', 'wpam' ) ];
+//         if ( $extended ) {
+//             $response['new_end_ts'] = $new_end_ts;
+//         }
+
+//         wp_send_json_success( $response );
     }
 
     /**
