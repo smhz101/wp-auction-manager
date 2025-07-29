@@ -15,5 +15,15 @@ class WPAM_Public {
                 'watchlist_nonce' => wp_create_nonce( 'wpam_toggle_watchlist' ),
             ]
         );
+
+        wp_enqueue_script( 'wpam-ajax-messages', WPAM_PLUGIN_URL . 'public/js/ajax-messages.js', [ 'jquery' ], WPAM_PLUGIN_VERSION, true );
+        wp_localize_script(
+            'wpam-ajax-messages',
+            'wpam_messages',
+            [
+                'ajax_url'      => admin_url( 'admin-ajax.php' ),
+                'message_nonce' => wp_create_nonce( 'wpam_submit_question' ),
+            ]
+        );
     }
 }
