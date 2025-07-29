@@ -35,6 +35,15 @@ class WPAM_Admin {
 
         add_submenu_page(
             'wpam-auctions',
+            __( 'Messages', 'wpam' ),
+            __( 'Messages', 'wpam' ),
+            'manage_options',
+            'wpam-messages',
+            [ $this, 'render_messages_page' ]
+        );
+
+        add_submenu_page(
+            'wpam-auctions',
             __( 'Integrations', 'wpam' ),
             __( 'Settings', 'wpam' ),
             'manage_options',
@@ -177,6 +186,29 @@ class WPAM_Admin {
         echo '<form method="get">';
         echo '<input type="hidden" name="page" value="wpam-bids" />';
         echo '<input type="hidden" name="auction_id" value="' . esc_attr( $auction_id ) . '" />';
+        $table->display();
+        echo '</form></div>';
+    }
+
+    public function render_messages_page() {
+        require_once WPAM_PLUGIN_DIR . 'admin/class-wpam-messages-table.php';
+
+        if ( isset( $_GET['action'], $_GET['message'] ) && in_array( $_GET['action'], [ 'approve', 'unapprove' ], true ) ) {
+            $message_id = absint( $_GET['message'] );
+            check_admin_referer( 'wpam_toggle_message_' . $message_id );
+            global $wpdb;
+            $table = $wpdb->prefix . 'wc_auction_messages';
+            $approved = 'approve' === $_GET['action'] ? 1 : 0;
+            $wpdb->update( $table, [ 'approved' => $approved ], [ 'id' => $message_id ], [ '%d' ], [ '%d' ] );
+            echo '<div class="updated"><p>' . esc_html__( 'Message updated.', 'wpam' ) . '</p></div>';
+        }
+
+        $table = new WPAM_Messages_Table();
+        $table->prepare_items();
+        echo '<div class="wrap">';
+        echo '<h1>' . esc_html__( 'Auction Messages', 'wpam' ) . '</h1>';
+        echo '<form method="get">';
+        echo '<input type="hidden" name="page" value="wpam-messages" />';
         $table->display();
         echo '</form></div>';
     }

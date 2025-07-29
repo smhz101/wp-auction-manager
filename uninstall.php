@@ -14,6 +14,7 @@ global $wpdb;
 $tables = [
     $wpdb->prefix . 'wc_auction_bids',
     $wpdb->prefix . 'wc_auction_watchlists',
+    $wpdb->prefix . 'wc_auction_messages',
 ];
 
 foreach ( $tables as $table ) {
