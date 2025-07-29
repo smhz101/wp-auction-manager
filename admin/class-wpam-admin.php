@@ -3,6 +3,8 @@ class WPAM_Admin {
     public function __construct() {
         add_action( 'admin_menu', [ $this, 'add_menu' ] );
         add_action( 'admin_init', [ $this, 'register_settings' ] );
+        add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_scripts' ] );
+        add_action( 'rest_api_init', [ $this, 'register_rest_routes' ] );
     }
 
     public function add_menu() {
@@ -335,13 +337,99 @@ class WPAM_Admin {
         echo '</form></div>';
     }
 
+    public function enqueue_scripts( $hook ) {
+        if ( 'wpam-auctions_page_wpam-settings' !== $hook ) {
+            return;
+        }
+
+        wp_enqueue_script(
+            'wpam-settings-app',
+            WPAM_PLUGIN_URL . 'admin/js/settings-app.js',
+            [ 'wp-element', 'wp-components', 'wp-api-fetch' ],
+            WPAM_PLUGIN_VERSION,
+            true
+        );
+
+        wp_localize_script(
+            'wpam-settings-app',
+            'wpamSettings',
+            [
+                'nonce'    => wp_create_nonce( 'wp_rest' ),
+                'rest_url' => esc_url_raw( rest_url( 'wpam/v1/settings' ) ),
+            ]
+        );
+    }
+
+    public function register_rest_routes() {
+        register_rest_route(
+            'wpam/v1',
+            '/settings',
+            [
+                'methods'             => WP_REST_Server::READABLE,
+                'callback'            => [ $this, 'rest_get_settings' ],
+                'permission_callback' => function() {
+                    return current_user_can( 'manage_options' );
+                },
+            ]
+        );
+
+        register_rest_route(
+            'wpam/v1',
+            '/settings',
+            [
+                'methods'             => WP_REST_Server::EDITABLE,
+                'callback'            => [ $this, 'rest_update_settings' ],
+                'permission_callback' => function() {
+                    return current_user_can( 'manage_options' );
+                },
+            ]
+        );
+    }
+
+    public function rest_get_settings( WP_REST_Request $request ) {
+        $options = [];
+        foreach ( $this->get_option_keys() as $key ) {
+            $options[ $key ] = get_option( $key );
+        }
+
+        return rest_ensure_response( $options );
+    }
+
+    public function rest_update_settings( WP_REST_Request $request ) {
+        $params = $request->get_json_params();
+        foreach ( $this->get_option_keys() as $key ) {
+            if ( isset( $params[ $key ] ) ) {
+                update_option( $key, $params[ $key ] );
+            }
+        }
+
+        return $this->rest_get_settings( $request );
+    }
+
+    private function get_option_keys() {
+        return [
+            'wpam_default_increment',
+            'wpam_soft_close',
+            'wpam_enable_twilio',
+            'wpam_enable_firebase',
+            'wpam_firebase_server_key',
+            'wpam_twilio_sid',
+            'wpam_twilio_token',
+            'wpam_twilio_from',
+            'wpam_pusher_app_id',
+            'wpam_pusher_key',
+            'wpam_pusher_secret',
+            'wpam_pusher_cluster',
+            'wpam_soft_close_threshold',
+            'wpam_soft_close_extend',
+            'wpam_realtime_provider',
+        ];
+    }
+
     public function render_settings_page() {
         echo '<div class="wrap">';
         echo '<h1>' . esc_html__( 'Integrations', 'wpam' ) . '</h1>';
-        echo '<form method="post" action="options.php">';
-        settings_fields( 'wpam_settings' );
-        do_settings_sections( 'wpam_settings' );
-        submit_button();
-        echo '</form></div>';
+        echo '<div id="wpam-settings-root"></div>';
+        echo '</div>';
     }
 }
