@@ -7,7 +7,8 @@
     "wp-coding-standards/wpcs": "^3",
     "dealerdirect/phpcodesniffer-composer-installer": "^1",
     "johnpbloch/wordpress": "^6",
-    "yoast/phpunit-polyfills": "^1.0"
+    "yoast/phpunit-polyfills": "^1.0",
+    "pusher/pusher-php-server": "^7.2"
   },
   "config": {
     "allow-plugins": {
