@@ -336,7 +336,6 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     const root = document.getElementById('wpam-settings-root');
-    console.log('root >>', root);
     if (root) {
       render(createElement(SettingsApp), root);
     }
