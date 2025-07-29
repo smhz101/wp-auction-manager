@@ -2,6 +2,7 @@
 class WPAM_Public {
     public function __construct() {
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_scripts' ] );
+        add_shortcode( 'wpam_auction_app', [ $this, 'render_react_app' ] );
     }
 
     public function enqueue_scripts() {
@@ -39,5 +40,47 @@ class WPAM_Public {
                 'get_messages_nonce' => wp_create_nonce( 'wpam_get_messages' ),
             ]
         );
+
+        wp_register_script(
+            'wpam-react-app',
+            WPAM_PLUGIN_URL . 'public/js/react/auction-app.js',
+            [ 'wp-element', 'wp-api-fetch' ],
+            WPAM_PLUGIN_VERSION,
+            true
+        );
+        wp_localize_script(
+            'wpam-react-app',
+            'wpamReactData',
+            [
+                'ajax_url'        => admin_url( 'admin-ajax.php' ),
+                'bid_nonce'       => wp_create_nonce( 'wpam_place_bid' ),
+                'watchlist_nonce' => wp_create_nonce( 'wpam_toggle_watchlist' ),
+                'message_nonce'   => wp_create_nonce( 'wpam_submit_question' ),
+                'get_messages_nonce' => wp_create_nonce( 'wpam_get_messages' ),
+                'highest_nonce'   => wp_create_nonce( 'wpam_get_highest_bid' ),
+                'pusher_enabled'  => $pusher_enabled,
+                'pusher_key'      => get_option( 'wpam_pusher_key' ),
+                'pusher_cluster'  => get_option( 'wpam_pusher_cluster' ),
+                'pusher_channel'  => 'wpam-auctions',
+            ]
+        );
+    }
+
+    public function render_react_app( $atts = [] ) {
+        $auction_id = 0;
+
+        if ( ! empty( $atts['auction'] ) ) {
+            $auction_id = absint( $atts['auction'] );
+        } elseif ( is_singular( 'product' ) ) {
+            $product = wc_get_product( get_the_ID() );
+            if ( $product && 'auction' === $product->get_type() ) {
+                $auction_id = get_the_ID();
+            }
+        }
+
+        wp_enqueue_script( 'wpam-react-app' );
+        wp_localize_script( 'wpam-react-app', 'wpamReactPage', [ 'auction_id' => $auction_id ] );
+
+        return '<div id="wpam-react-root"></div>';
     }
 }
