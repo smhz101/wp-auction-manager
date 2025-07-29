@@ -47,8 +47,27 @@ class WPAM_Admin {
         register_setting( 'wpam_settings', 'wpam_twilio_sid' );
         register_setting( 'wpam_settings', 'wpam_twilio_token' );
         register_setting( 'wpam_settings', 'wpam_twilio_from' );
+        register_setting( 'wpam_settings', 'wpam_soft_close_threshold' );
+        register_setting( 'wpam_settings', 'wpam_soft_close_extend' );
 
+        add_settings_section( 'wpam_general', __( 'Auction Settings', 'wpam' ), '__return_false', 'wpam_settings' );
         add_settings_section( 'wpam_twilio', __( 'Twilio Integration', 'wpam' ), '__return_false', 'wpam_settings' );
+
+        add_settings_field(
+            'wpam_soft_close_threshold',
+            __( 'Soft Close Threshold (seconds)', 'wpam' ),
+            [ $this, 'field_soft_close_threshold' ],
+            'wpam_settings',
+            'wpam_general'
+        );
+
+        add_settings_field(
+            'wpam_soft_close_extend',
+            __( 'Extension Duration (seconds)', 'wpam' ),
+            [ $this, 'field_soft_close_extend' ],
+            'wpam_settings',
+            'wpam_general'
+        );
 
         add_settings_field(
             'wpam_twilio_sid',
@@ -88,6 +107,16 @@ class WPAM_Admin {
     public function field_twilio_from() {
         $value = esc_attr( get_option( 'wpam_twilio_from', '' ) );
         echo '<input type="text" class="regular-text" name="wpam_twilio_from" value="' . $value . '" />';
+    }
+
+    public function field_soft_close_threshold() {
+        $value = esc_attr( get_option( 'wpam_soft_close_threshold', 30 ) );
+        echo '<input type="number" class="small-text" name="wpam_soft_close_threshold" value="' . $value . '" />';
+    }
+
+    public function field_soft_close_extend() {
+        $value = esc_attr( get_option( 'wpam_soft_close_extend', 30 ) );
+        echo '<input type="number" class="small-text" name="wpam_soft_close_extend" value="' . $value . '" />';
     }
 
     public function render_auctions_page() {
