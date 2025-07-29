@@ -369,9 +369,10 @@ class WPAM_Admin {
 
     public function enqueue_scripts( $hook ) {
         $admin_pages = [
-            'woocommerce_page_wpam-auctions',
-            'woocommerce_page_wpam-bids',
-            'woocommerce_page_wpam-messages',
+            'toplevel_page_wpam-auctions',
+            'wpam-auctions_page_wpam-auctions',
+            'wpam-auctions_page_wpam-bids',
+            'wpam-auctions_page_wpam-messages',
             'wpam-auctions_page_wpam-settings',
         ];
 
