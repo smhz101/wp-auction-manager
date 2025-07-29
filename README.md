@@ -55,6 +55,8 @@ wp-auction-manager/
 The plugin uses AJAX polling by default to refresh the current highest bid every few seconds.
 Future versions may swap to WebSocket providers found under `includes/api-integrations`.
 
+Under **Auctions → Settings → Realtime Integration** you can select `None` or `Pusher` as the provider. Enter your Pusher app credentials to enable realtime WebSocket updates.
+
 ## Running unit tests
 
 A `tests/` directory will contain PHPUnit tests in the future. Once available, install development dependencies and execute:
