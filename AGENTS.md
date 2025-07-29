@@ -60,3 +60,26 @@
   - Test shared-hosting compatibility
   - Test each third-party service
   - Ensure clean fallback when API is not enabled
+
+## 📁 Basic Folder Structure Guidelines
+
+```
+wp-auction-manager/
+├── admin/
+│ └── class-wpam-admin.php
+├── includes/
+│ ├── class-wpam-loader.php
+│ ├── class-wpam-auction.php
+│ ├── class-wpam-bid.php
+│ └── api-integrations/
+│ ├── class-api-provider.php
+│ └── class-twilio-provider.php
+├── public/
+│ ├── class-wpam-public.php
+│ └── js/ajax-bid.js
+├── templates/
+│ ├── single-auction.php
+│ └── auction-listing.php
+├── uninstall.php
+├── wp-auction-manager.php
+```
