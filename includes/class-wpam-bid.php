@@ -51,6 +51,8 @@ class WPAM_Bid {
             [ '%d', '%d', '%f', '%s' ]
         );
 
+        WPAM_Notifications::notify_new_bid( $auction_id, $bid, $user_id );
+
         wp_send_json_success( [ 'message' => __( 'Bid received', 'wpam' ) ] );
     }
 }

@@ -1,0 +1,59 @@
+<?php
+class WPAM_Notifications {
+    public static function send_to_user( $user_id, $subject, $message ) {
+        $sms_enabled   = get_option( 'wpam_enable_sms_notifications', '0' );
+        $email_enabled = get_option( 'wpam_enable_email_notifications', '1' );
+
+        $user  = get_user_by( 'id', $user_id );
+        if ( ! $user ) {
+            return;
+        }
+
+        $phone = get_user_meta( $user_id, 'billing_phone', true );
+        $provider = new WPAM_Twilio_Provider();
+
+        $sent = false;
+        if ( $sms_enabled && $phone ) {
+            $result = $provider->send( $phone, $message );
+            $sent   = ! is_wp_error( $result );
+        }
+
+        if ( ! $sent && $email_enabled ) {
+            wp_mail( $user->user_email, $subject, $message );
+        }
+    }
+
+    protected static function get_recipients( $auction_id ) {
+        global $wpdb;
+        $watchers = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT user_id FROM {$wpdb->prefix}wc_auction_watchlists WHERE auction_id = %d", $auction_id ) );
+        $bidders  = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT user_id FROM {$wpdb->prefix}wc_auction_bids WHERE auction_id = %d", $auction_id ) );
+        return array_unique( array_merge( $watchers, $bidders ) );
+    }
+
+    public static function notify_new_bid( $auction_id, $bid, $exclude_user = 0 ) {
+        $title   = get_the_title( $auction_id );
+        $subject = sprintf( __( 'New bid on %s', 'wpam' ), $title );
+        $amount  = function_exists( 'wc_price' ) ? wc_price( $bid ) : $bid;
+        $message = sprintf( __( 'A new bid of %1$s was placed on "%2$s".', 'wpam' ), $amount, $title );
+        $recipients = self::get_recipients( $auction_id );
+        foreach ( $recipients as $user_id ) {
+            if ( $user_id == $exclude_user ) {
+                continue;
+            }
+            self::send_to_user( $user_id, $subject, $message );
+        }
+    }
+
+    public static function notify_auction_end( $auction_id ) {
+        global $wpdb;
+        $highest = $wpdb->get_var( $wpdb->prepare( "SELECT MAX(bid_amount) FROM {$wpdb->prefix}wc_auction_bids WHERE auction_id = %d", $auction_id ) );
+        $title   = get_the_title( $auction_id );
+        $subject = sprintf( __( 'Auction ended for %s', 'wpam' ), $title );
+        $price   = $highest ? ( function_exists( 'wc_price' ) ? wc_price( $highest ) : $highest ) : __( 'No bids', 'wpam' );
+        $message = sprintf( __( 'Auction "%1$s" has ended. Final price: %2$s', 'wpam' ), $title, $price );
+        $recipients = self::get_recipients( $auction_id );
+        foreach ( $recipients as $user_id ) {
+            self::send_to_user( $user_id, $subject, $message );
+        }
+    }
+}
