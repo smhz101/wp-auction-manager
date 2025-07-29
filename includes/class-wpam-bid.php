@@ -32,6 +32,10 @@ class WPAM_Bid {
         $bid        = floatval( $_POST['bid'] );
         $user_id    = get_current_user_id();
 
+        if ( 0 === $user_id ) {
+            wp_send_json_error( [ 'message' => __( 'Please login', 'wpam' ) ] );
+        }
+
         $start = get_post_meta( $auction_id, '_auction_start', true );
         $end   = get_post_meta( $auction_id, '_auction_end', true );
 
