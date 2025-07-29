@@ -9,6 +9,18 @@ class WPAM_Messages_Table extends \WP_List_Table {
     public function prepare_items() {
         global $wpdb;
         $table   = $wpdb->prefix . 'wc_auction_messages';
+
+        if ( $wpdb->get_var( $wpdb->prepare(
+            'SHOW TABLES LIKE %s', $table
+        ) ) !== $table ) {
+            $this->items = [];
+            $this->set_pagination_args( [ 'total_items' => 0, 'per_page' => 50, 'total_pages' => 0 ] );
+            add_action( 'admin_notices', function() {
+                echo '<div class="error"><p>' . esc_html__( 'Auction messages table missing. Please deactivate and reactivate the plugin.', 'wpam' ) . '</p></div>';
+            } );
+            return;
+        }
+
         $search  = isset( $_REQUEST['s'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['s'] ) ) : '';
         $sql     = "SELECT * FROM $table";
         if ( $search ) {
