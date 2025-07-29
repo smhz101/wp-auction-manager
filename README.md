@@ -64,6 +64,10 @@ Under **Auctions → Settings → Realtime Integration** you can select `None` o
 Twilio SMS notifications can be toggled via the `Enable Twilio Notifications` option (`wpam_enable_twilio`).
 Firebase push notifications are available through the `Enable Firebase` option (`wpam_enable_firebase`) once you provide a valid server key.
 
+### React frontend
+
+The plugin includes a lightweight React application that can render either a list of auctions or a single auction view. Use the `[wpam_auction_app]` shortcode on any page to load the React interface. When used on a single auction product page the current auction is automatically displayed.
+
 ## Running unit tests
 
 A `tests/` directory will contain PHPUnit tests in the future. Once available, install development dependencies and execute:
