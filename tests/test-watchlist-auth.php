@@ -1,0 +1,46 @@
+<?php
+class Test_WPAM_Watchlist_Auth extends WP_Ajax_UnitTestCase {
+    protected $auction_id;
+    public function set_up() : void {
+        parent::set_up();
+        new WPAM_Watchlist();
+        WPAM_Install::activate();
+        $this->auction_id = $this->factory->post->create([
+            'post_type' => 'product',
+        ]);
+    }
+
+    public function test_get_watchlist_error_if_logged_out() {
+        wp_set_current_user( 0 );
+        try {
+            $this->_handleAjax( 'wpam_get_watchlist' );
+        } catch ( WPAjaxDieContinueException $e ) {
+            $response = json_decode( $this->_last_response, true );
+            $this->assertFalse( $response['success'] );
+            $this->assertSame( 'Please login', $response['data']['message'] );
+            return;
+        }
+        $this->fail( 'Expected AJAX die.' );
+    }
+
+    public function test_get_watchlist_success_for_user() {
+        $user_id = $this->factory->user->create();
+        wp_set_current_user( $user_id );
+        // Add item to watchlist first
+        $_POST = [
+            'nonce'      => wp_create_nonce( 'wpam_toggle_watchlist' ),
+            'auction_id' => $this->auction_id,
+        ];
+        try {
+            $this->_handleAjax( 'wpam_toggle_watchlist' );
+        } catch ( WPAjaxDieContinueException $e ) {}
+        try {
+            $this->_handleAjax( 'wpam_get_watchlist' );
+        } catch ( WPAjaxDieContinueException $e ) {
+            $response = json_decode( $this->_last_response, true );
+        }
+        $this->assertTrue( $response['success'] );
+        $this->assertCount( 1, $response['data']['items'] );
+        $this->assertSame( $this->auction_id, $response['data']['items'][0]['id'] );
+    }
+}
