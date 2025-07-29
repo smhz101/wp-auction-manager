@@ -34,4 +34,58 @@ class Test_WPAM_Bid extends WP_Ajax_UnitTestCase {
         }
         $this->fail( 'Expected AJAX die.' );
     }
+
+    public function test_place_bid_before_start() {
+        $auction_id  = $this->factory->post->create([
+            'post_type' => 'product',
+        ]);
+        update_post_meta( $auction_id, '_auction_start', date( 'Y-m-d H:i:s', time() + 3600 ) );
+        update_post_meta( $auction_id, '_auction_end', date( 'Y-m-d H:i:s', time() + 7200 ) );
+
+        $user_id = $this->factory->user->create();
+        wp_set_current_user( $user_id );
+
+        $_POST = [
+            'nonce'      => wp_create_nonce( 'wpam_place_bid' ),
+            'auction_id' => $auction_id,
+            'bid'        => 10,
+        ];
+
+        try {
+            $this->_handleAjax( 'wpam_place_bid' );
+        } catch ( WPAjaxDieContinueException $e ) {
+            $response = json_decode( $this->_last_response, true );
+            $this->assertFalse( $response['success'] );
+            $this->assertSame( 'Auction not active', $response['data']['message'] );
+            return;
+        }
+        $this->fail( 'Expected AJAX die.' );
+    }
+
+    public function test_place_bid_after_end() {
+        $auction_id  = $this->factory->post->create([
+            'post_type' => 'product',
+        ]);
+        update_post_meta( $auction_id, '_auction_start', date( 'Y-m-d H:i:s', time() - 7200 ) );
+        update_post_meta( $auction_id, '_auction_end', date( 'Y-m-d H:i:s', time() - 3600 ) );
+
+        $user_id = $this->factory->user->create();
+        wp_set_current_user( $user_id );
+
+        $_POST = [
+            'nonce'      => wp_create_nonce( 'wpam_place_bid' ),
+            'auction_id' => $auction_id,
+            'bid'        => 10,
+        ];
+
+        try {
+            $this->_handleAjax( 'wpam_place_bid' );
+        } catch ( WPAjaxDieContinueException $e ) {
+            $response = json_decode( $this->_last_response, true );
+            $this->assertFalse( $response['success'] );
+            $this->assertSame( 'Auction not active', $response['data']['message'] );
+            return;
+        }
+        $this->fail( 'Expected AJAX die.' );
+    }
 }
