@@ -20,6 +20,7 @@ class WPAM_Public {
                 'ajax_url'        => admin_url( 'admin-ajax.php' ),
                 'bid_nonce'       => wp_create_nonce( 'wpam_place_bid' ),
                 'watchlist_nonce' => wp_create_nonce( 'wpam_toggle_watchlist' ),
+                'watchlist_get_nonce' => wp_create_nonce( 'wpam_get_watchlist' ),
                 'highest_nonce'   => wp_create_nonce( 'wpam_get_highest_bid' ),
                 'pusher_enabled'  => $pusher_enabled,
                 'pusher_key'      => get_option( 'wpam_pusher_key' ),
@@ -35,6 +36,7 @@ class WPAM_Public {
             [
                 'ajax_url'      => admin_url( 'admin-ajax.php' ),
                 'message_nonce' => wp_create_nonce( 'wpam_submit_question' ),
+                'get_messages_nonce' => wp_create_nonce( 'wpam_get_messages' ),
             ]
         );
     }

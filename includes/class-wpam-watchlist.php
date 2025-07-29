@@ -57,6 +57,7 @@ class WPAM_Watchlist {
     }
 
     public function get_watchlist() {
+        check_ajax_referer( 'wpam_get_watchlist', 'nonce' );
         $user_id = get_current_user_id();
         if ( ! $user_id ) {
             wp_send_json_error( [ 'message' => __( 'Please login', 'wpam' ) ] );

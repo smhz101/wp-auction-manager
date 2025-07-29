@@ -39,6 +39,7 @@ class WPAM_Messages {
     }
 
     public function get_messages() {
+        check_ajax_referer( 'wpam_get_messages', 'nonce' );
         if ( empty( $_POST['auction_id'] ) ) {
             wp_send_json_error( [ 'message' => __( 'Invalid auction', 'wpam' ) ] );
         }

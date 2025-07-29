@@ -12,6 +12,7 @@ class Test_WPAM_Watchlist_Auth extends WP_Ajax_UnitTestCase {
 
     public function test_get_watchlist_error_if_logged_out() {
         wp_set_current_user( 0 );
+        $_POST = [ 'nonce' => wp_create_nonce( 'wpam_get_watchlist' ) ];
         try {
             $this->_handleAjax( 'wpam_get_watchlist' );
         } catch ( WPAjaxDieContinueException $e ) {
@@ -34,6 +35,7 @@ class Test_WPAM_Watchlist_Auth extends WP_Ajax_UnitTestCase {
         try {
             $this->_handleAjax( 'wpam_toggle_watchlist' );
         } catch ( WPAjaxDieContinueException $e ) {}
+        $_POST = [ 'nonce' => wp_create_nonce( 'wpam_get_watchlist' ) ];
         try {
             $this->_handleAjax( 'wpam_get_watchlist' );
         } catch ( WPAjaxDieContinueException $e ) {
