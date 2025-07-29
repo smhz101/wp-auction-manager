@@ -35,6 +35,15 @@ class WPAM_Admin {
 
         add_submenu_page(
             'wpam-auctions',
+            __( 'Messages', 'wpam' ),
+            __( 'Messages', 'wpam' ),
+            'manage_options',
+            'wpam-messages',
+            [ $this, 'render_messages_page' ]
+        );
+
+        add_submenu_page(
+            'wpam-auctions',
             __( 'Integrations', 'wpam' ),
             __( 'Settings', 'wpam' ),
             'manage_options',
@@ -44,11 +53,79 @@ class WPAM_Admin {
     }
 
     public function register_settings() {
+        register_setting( 'wpam_settings', 'wpam_default_increment' );
+        register_setting( 'wpam_settings', 'wpam_soft_close' );
+        register_setting( 'wpam_settings', 'wpam_enable_twilio' );
+        register_setting( 'wpam_settings', 'wpam_enable_pusher' );
+        register_setting( 'wpam_settings', 'wpam_enable_firebase' );
         register_setting( 'wpam_settings', 'wpam_twilio_sid' );
         register_setting( 'wpam_settings', 'wpam_twilio_token' );
         register_setting( 'wpam_settings', 'wpam_twilio_from' );
+        register_setting( 'wpam_settings', 'wpam_enable_sms_notifications' );
+        register_setting( 'wpam_settings', 'wpam_enable_email_notifications' );
+        register_setting( 'wpam_settings', 'wpam_soft_close_threshold' );
+        register_setting( 'wpam_settings', 'wpam_soft_close_extend' );
 
+        add_settings_section( 'wpam_general', __( 'Auction Defaults', 'wpam' ), '__return_false', 'wpam_settings' );
+        add_settings_section( 'wpam_providers', __( 'Providers', 'wpam' ), '__return_false', 'wpam_settings' );      
         add_settings_section( 'wpam_twilio', __( 'Twilio Integration', 'wpam' ), '__return_false', 'wpam_settings' );
+        add_settings_section( 'wpam_notifications', __( 'Notifications', 'wpam' ), '__return_false', 'wpam_settings' );
+
+        add_settings_field(
+            'wpam_soft_close_threshold',
+            __( 'Soft Close Threshold (seconds)', 'wpam' ),
+            [ $this, 'field_soft_close_threshold' ],
+            'wpam_settings',
+            'wpam_general'
+        );
+
+        add_settings_field(
+            'wpam_soft_close_extend',
+            __( 'Extension Duration (seconds)', 'wpam' ),
+            [ $this, 'field_soft_close_extend' ],
+            'wpam_settings',
+            'wpam_general'
+        );
+
+        add_settings_field(
+            'wpam_default_increment',
+            __( 'Default Bid Increment', 'wpam' ),
+            [ $this, 'field_default_increment' ],
+            'wpam_settings',
+            'wpam_general'
+        );
+
+        add_settings_field(
+            'wpam_soft_close',
+            __( 'Soft Close Duration (minutes)', 'wpam' ),
+            [ $this, 'field_soft_close' ],
+            'wpam_settings',
+            'wpam_general'
+        );
+
+        add_settings_field(
+            'wpam_enable_twilio',
+            __( 'Enable Twilio Notifications', 'wpam' ),
+            [ $this, 'field_enable_twilio' ],
+            'wpam_settings',
+            'wpam_providers'
+        );
+
+        add_settings_field(
+            'wpam_enable_pusher',
+            __( 'Enable Pusher', 'wpam' ),
+            [ $this, 'field_enable_pusher' ],
+            'wpam_settings',
+            'wpam_providers'
+        );
+
+        add_settings_field(
+            'wpam_enable_firebase',
+            __( 'Enable Firebase', 'wpam' ),
+            [ $this, 'field_enable_firebase' ],
+            'wpam_settings',
+            'wpam_providers'
+        );
 
         add_settings_field(
             'wpam_twilio_sid',
@@ -73,6 +150,47 @@ class WPAM_Admin {
             'wpam_settings',
             'wpam_twilio'
         );
+
+        add_settings_field(
+            'wpam_enable_sms_notifications',
+            __( 'Enable SMS Notifications', 'wpam' ),
+            [ $this, 'field_enable_sms' ],
+            'wpam_settings',
+            'wpam_notifications'
+        );
+
+        add_settings_field(
+            'wpam_enable_email_notifications',
+            __( 'Enable Email Notifications', 'wpam' ),
+            [ $this, 'field_enable_email' ],
+            'wpam_settings',
+            'wpam_notifications'
+        );
+    }
+
+    public function field_default_increment() {
+        $value = esc_attr( get_option( 'wpam_default_increment', 1 ) );
+        echo '<input type="number" step="0.01" name="wpam_default_increment" value="' . $value . '" class="small-text" />';
+    }
+
+    public function field_soft_close() {
+        $value = esc_attr( get_option( 'wpam_soft_close', 0 ) );
+        echo '<input type="number" step="1" name="wpam_soft_close" value="' . $value . '" class="small-text" />';
+    }
+
+    public function field_enable_twilio() {
+        $checked = checked( 1, get_option( 'wpam_enable_twilio', 0 ), false );
+        echo '<label><input type="checkbox" name="wpam_enable_twilio" value="1" ' . $checked . ' /> ' . __( 'Enable', 'wpam' ) . '</label>';
+    }
+
+    public function field_enable_pusher() {
+        $checked = checked( 1, get_option( 'wpam_enable_pusher', 0 ), false );
+        echo '<label><input type="checkbox" name="wpam_enable_pusher" value="1" ' . $checked . ' /> ' . __( 'Enable', 'wpam' ) . '</label>';
+    }
+
+    public function field_enable_firebase() {
+        $checked = checked( 1, get_option( 'wpam_enable_firebase', 0 ), false );
+        echo '<label><input type="checkbox" name="wpam_enable_firebase" value="1" ' . $checked . ' /> ' . __( 'Enable', 'wpam' ) . '</label>';
     }
 
     public function field_twilio_sid() {
@@ -88,6 +206,25 @@ class WPAM_Admin {
     public function field_twilio_from() {
         $value = esc_attr( get_option( 'wpam_twilio_from', '' ) );
         echo '<input type="text" class="regular-text" name="wpam_twilio_from" value="' . $value . '" />';
+    }
+
+    public function field_enable_sms() {
+        $value = get_option( 'wpam_enable_sms_notifications', '0' );
+        echo '<label><input type="checkbox" name="wpam_enable_sms_notifications" value="1" ' . checked( $value, '1', false ) . ' /> ' . esc_html__( 'Send SMS updates', 'wpam' ) . '</label>';
+    }
+
+    public function field_enable_email() {
+        $value = get_option( 'wpam_enable_email_notifications', '1' );
+        echo '<label><input type="checkbox" name="wpam_enable_email_notifications" value="1" ' . checked( $value, '1', false ) . ' /> ' . esc_html__( 'Send Email updates', 'wpam' ) . '</label>';
+
+    public function field_soft_close_threshold() {
+        $value = esc_attr( get_option( 'wpam_soft_close_threshold', 30 ) );
+        echo '<input type="number" class="small-text" name="wpam_soft_close_threshold" value="' . $value . '" />';
+    }
+
+    public function field_soft_close_extend() {
+        $value = esc_attr( get_option( 'wpam_soft_close_extend', 30 ) );
+        echo '<input type="number" class="small-text" name="wpam_soft_close_extend" value="' . $value . '" />';
     }
 
     public function render_auctions_page() {
@@ -119,6 +256,29 @@ class WPAM_Admin {
         echo '<form method="get">';
         echo '<input type="hidden" name="page" value="wpam-bids" />';
         echo '<input type="hidden" name="auction_id" value="' . esc_attr( $auction_id ) . '" />';
+        $table->display();
+        echo '</form></div>';
+    }
+
+    public function render_messages_page() {
+        require_once WPAM_PLUGIN_DIR . 'admin/class-wpam-messages-table.php';
+
+        if ( isset( $_GET['action'], $_GET['message'] ) && in_array( $_GET['action'], [ 'approve', 'unapprove' ], true ) ) {
+            $message_id = absint( $_GET['message'] );
+            check_admin_referer( 'wpam_toggle_message_' . $message_id );
+            global $wpdb;
+            $table = $wpdb->prefix . 'wc_auction_messages';
+            $approved = 'approve' === $_GET['action'] ? 1 : 0;
+            $wpdb->update( $table, [ 'approved' => $approved ], [ 'id' => $message_id ], [ '%d' ], [ '%d' ] );
+            echo '<div class="updated"><p>' . esc_html__( 'Message updated.', 'wpam' ) . '</p></div>';
+        }
+
+        $table = new WPAM_Messages_Table();
+        $table->prepare_items();
+        echo '<div class="wrap">';
+        echo '<h1>' . esc_html__( 'Auction Messages', 'wpam' ) . '</h1>';
+        echo '<form method="get">';
+        echo '<input type="hidden" name="page" value="wpam-messages" />';
         $table->display();
         echo '</form></div>';
     }
