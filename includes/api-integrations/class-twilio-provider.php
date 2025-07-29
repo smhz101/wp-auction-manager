@@ -8,7 +8,7 @@ class WPAM_Twilio_Provider implements WPAM_API_Provider {
         $from  = get_option( 'wpam_twilio_from' );
 
         if ( ! $sid || ! $token || ! $from ) {
-            return new WP_Error( 'twilio_credentials', __( 'Twilio credentials not configured', 'wpam' ) );
+            return new \WP_Error( 'twilio_credentials', __( 'Twilio credentials not configured', 'wpam' ) );
         }
 
         $endpoint = sprintf( 'https://api.twilio.com/2010-04-01/Accounts/%s/Messages.json', rawurlencode( $sid ) );
@@ -34,6 +34,6 @@ class WPAM_Twilio_Provider implements WPAM_API_Provider {
             return true;
         }
 
-        return new WP_Error( 'twilio_http', wp_remote_retrieve_body( $response ) );
+        return new \WP_Error( 'twilio_http', wp_remote_retrieve_body( $response ) );
     }
 }

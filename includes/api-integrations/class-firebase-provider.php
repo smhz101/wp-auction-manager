@@ -12,7 +12,7 @@ class WPAM_Firebase_Provider implements WPAM_API_Provider {
     public function send( $token, $message ) {
         $key = get_option( 'wpam_firebase_server_key' );
         if ( ! $key || ! $token ) {
-            return new WP_Error( 'firebase_credentials', __( 'Firebase not configured', 'wpam' ) );
+            return new \WP_Error( 'firebase_credentials', __( 'Firebase not configured', 'wpam' ) );
         }
 
         $body = [
@@ -41,6 +41,6 @@ class WPAM_Firebase_Provider implements WPAM_API_Provider {
             return true;
         }
 
-        return new WP_Error( 'firebase_http', wp_remote_retrieve_body( $response ) );
+        return new \WP_Error( 'firebase_http', wp_remote_retrieve_body( $response ) );
     }
 }

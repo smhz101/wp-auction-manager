@@ -63,7 +63,7 @@ class WPAM_Auctions_Table extends \WP_List_Table {
             ];
         }
 
-        $query = new WP_Query( $args );
+        $query = new \WP_Query( $args );
         $items  = [];
         foreach ( $query->posts as $post ) {
             $start = get_post_meta( $post->ID, '_auction_start', true );

@@ -22,6 +22,43 @@ if ( file_exists( WPAM_PLUGIN_DIR . 'vendor/autoload.php' ) ) {
     require_once WPAM_PLUGIN_DIR . 'vendor/autoload.php';
 }
 
+// Autoload plugin classes when Composer's autoloader does not map them.
+spl_autoload_register(
+    function ( $class ) {
+        if ( 0 !== strpos( $class, 'WPAM\\' ) ) {
+            return;
+        }
+
+        $parts = explode( '\\', $class );
+        array_shift( $parts ); // Remove "WPAM" namespace root.
+
+        $class_name = array_pop( $parts );
+        $slug       = strtolower( str_replace( '_', '-', $class_name ) );
+
+        $files = [ 'class-' . $slug . '.php' ];
+        if ( 0 === strpos( $slug, 'wpam-' ) ) {
+            $files[] = 'class-' . substr( $slug, 5 ) . '.php';
+        }
+
+        $directories = [
+            WPAM_PLUGIN_DIR . 'includes/',
+            WPAM_PLUGIN_DIR . 'includes/api-integrations/',
+            WPAM_PLUGIN_DIR . 'admin/',
+            WPAM_PLUGIN_DIR . 'public/',
+        ];
+
+        foreach ( $directories as $directory ) {
+            foreach ( $files as $file ) {
+                $path = $directory . $file;
+                if ( file_exists( $path ) ) {
+                    require_once $path;
+                    return;
+                }
+            }
+        }
+    }
+);
+
 /**
  * Load plugin translation files.
  */

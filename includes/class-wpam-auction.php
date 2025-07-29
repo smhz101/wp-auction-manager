@@ -1,7 +1,7 @@
 <?php
 namespace WPAM\Includes;
 if ( class_exists( 'WC_Product' ) && ! class_exists( 'WC_Product_Auction' ) ) {
-    class WC_Product_Auction extends WC_Product {
+    class WC_Product_Auction extends \WC_Product {
         public function get_type() {
             return 'auction';
         }
@@ -233,7 +233,7 @@ class WPAM_Auction {
         $fee = floatval( get_post_meta( $auction_id, '_auction_fee', 0 ) );
         $fee = apply_filters( 'wpam_auction_fee_calculated', $fee, $auction_id, $amount );
         if ( $fee > 0 ) {
-            $item = new WC_Order_Item_Fee();
+            $item = new \WC_Order_Item_Fee();
             $item->set_name( __( 'Auction Fee', 'wpam' ) );
             $item->set_amount( $fee );
             $item->set_total( $fee );
@@ -292,7 +292,7 @@ class WPAM_Auction {
             ],
         ];
 
-        $query = new WP_Query( $args );
+        $query = new \WP_Query( $args );
         foreach ( $query->posts as $post ) {
             update_post_meta( $post->ID, '_auction_ended', 1 );
             WPAM_Notifications::notify_auction_end( $post->ID );
