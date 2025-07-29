@@ -3,6 +3,44 @@ class WPAM_Public {
     public function __construct() {
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_scripts' ] );
         add_shortcode( 'wpam_auction_app', [ $this, 'render_react_app' ] );
+
+        // Register template loader on init so custom templates can be swapped in.
+        add_action( 'init', [ $this, 'register_template_hook' ] );
+    }
+
+    /**
+     * Hook the template loader filter.
+     */
+    public function register_template_hook() {
+        add_filter( 'template_include', [ $this, 'template_loader' ] );
+    }
+
+    /**
+     * Conditionally load custom templates for auction views.
+     *
+     * @param string $template Current template path.
+     *
+     * @return string
+     */
+    public function template_loader( $template ) {
+        if ( is_singular( 'product' ) ) {
+            $product = wc_get_product( get_queried_object_id() );
+            if ( $product && 'auction' === $product->get_type() ) {
+                $this->enqueue_scripts();
+
+                $custom = WPAM_PLUGIN_DIR . 'templates/single-auction.php';
+                return file_exists( $custom ) ? $custom : $template;
+            }
+        }
+
+        if ( is_tax( 'product_type', 'auction' ) ) {
+            $this->enqueue_scripts();
+
+            $custom = WPAM_PLUGIN_DIR . 'templates/auction-listing.php';
+            return file_exists( $custom ) ? $custom : $template;
+        }
+
+        return $template;
     }
 
     public function enqueue_scripts() {
