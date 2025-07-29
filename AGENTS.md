@@ -53,6 +53,7 @@
     - Watchlist
   - Build admin settings page with integrations
   - Place the Auctions admin menu as a WooCommerce submenu (`woocommerce` slug).
+  - Integrate auction details on the single product page using WooCommerce hooks instead of template overrides.
 
 ## 🧪 Testing Agent
 

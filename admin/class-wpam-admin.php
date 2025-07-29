@@ -8,17 +8,8 @@ class WPAM_Admin {
     }
 
     public function add_menu() {
-        add_menu_page(
-            __( 'WP Auction Manager', 'wpam' ),
-            __( 'Auctions', 'wpam' ),
-            'manage_options',
-            'wpam-auctions',
-            [ $this, 'render_auctions_page' ],
-            'dashicons-hammer'
-        );
-
         add_submenu_page(
-            'wpam-auctions',
+            'woocommerce',
             __( 'All Auctions', 'wpam' ),
             __( 'All Auctions', 'wpam' ),
             'manage_options',
@@ -27,7 +18,7 @@ class WPAM_Admin {
         );
 
         add_submenu_page(
-            'wpam-auctions',
+            'woocommerce',
             __( 'Bids', 'wpam' ),
             __( 'Bids', 'wpam' ),
             'manage_options',
@@ -36,7 +27,7 @@ class WPAM_Admin {
         );
 
         add_submenu_page(
-            'wpam-auctions',
+            'woocommerce',
             __( 'Messages', 'wpam' ),
             __( 'Messages', 'wpam' ),
             'manage_options',
@@ -45,7 +36,7 @@ class WPAM_Admin {
         );
 
         add_submenu_page(
-            'wpam-auctions',
+            'woocommerce',
             __( 'Integrations', 'wpam' ),
             __( 'Settings', 'wpam' ),
             'manage_options',
@@ -60,6 +51,8 @@ class WPAM_Admin {
         register_setting( 'wpam_settings', 'wpam_enable_twilio' );
         register_setting( 'wpam_settings', 'wpam_enable_firebase' );
         register_setting( 'wpam_settings', 'wpam_firebase_server_key' );
+        register_setting( 'wpam_settings', 'wpam_sendgrid_key' );
+        register_setting( 'wpam_settings', 'wpam_require_kyc' );
         register_setting( 'wpam_settings', 'wpam_twilio_sid' );
         register_setting( 'wpam_settings', 'wpam_twilio_token' );
         register_setting( 'wpam_settings', 'wpam_twilio_from' );
@@ -159,6 +152,22 @@ class WPAM_Admin {
             [ $this, 'field_twilio_from' ],
             'wpam_settings',
             'wpam_twilio'
+        );
+
+        add_settings_field(
+            'wpam_sendgrid_key',
+            __( 'SendGrid API Key', 'wpam' ),
+            [ $this, 'field_sendgrid_key' ],
+            'wpam_settings',
+            'wpam_providers'
+        );
+
+        add_settings_field(
+            'wpam_require_kyc',
+            __( 'Require KYC Verification', 'wpam' ),
+            [ $this, 'field_require_kyc' ],
+            'wpam_settings',
+            'wpam_general'
         );
 
         add_settings_field(
@@ -271,6 +280,16 @@ class WPAM_Admin {
     public function field_firebase_server_key() {
         $value = esc_attr( get_option( 'wpam_firebase_server_key', '' ) );
         echo '<input type="text" class="regular-text" name="wpam_firebase_server_key" value="' . $value . '" />';
+    }
+
+    public function field_sendgrid_key() {
+        $value = esc_attr( get_option( 'wpam_sendgrid_key', '' ) );
+        echo '<input type="text" class="regular-text" name="wpam_sendgrid_key" value="' . $value . '" />';
+    }
+
+    public function field_require_kyc() {
+        $value = get_option( 'wpam_require_kyc', false );
+        echo '<input type="checkbox" name="wpam_require_kyc" value="1"' . checked( 1, $value, false ) . ' />';
     }
 
     public function field_realtime_provider() {
@@ -413,6 +432,7 @@ class WPAM_Admin {
             'wpam_enable_twilio',
             'wpam_enable_firebase',
             'wpam_firebase_server_key',
+            'wpam_sendgrid_key',
             'wpam_twilio_sid',
             'wpam_twilio_token',
             'wpam_twilio_from',
@@ -423,6 +443,7 @@ class WPAM_Admin {
             'wpam_soft_close_threshold',
             'wpam_soft_close_extend',
             'wpam_realtime_provider',
+            'wpam_require_kyc',
         ];
     }
 

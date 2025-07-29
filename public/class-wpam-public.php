@@ -27,9 +27,10 @@ class WPAM_Public {
             $product = wc_get_product( get_queried_object_id() );
             if ( $product && 'auction' === $product->get_type() ) {
                 $this->enqueue_scripts();
-
-                $custom = WPAM_PLUGIN_DIR . 'templates/single-auction.php';
-                return file_exists( $custom ) ? $custom : $template;
+                add_action( 'woocommerce_single_product_summary', [ $this, 'render_auction_meta' ], 6 );
+                add_action( 'woocommerce_single_product_summary', [ $this, 'render_bid_form' ], 25 );
+                add_action( 'woocommerce_single_product_summary', [ $this, 'render_watchlist_button' ], 26 );
+                add_action( 'woocommerce_single_product_summary', [ $this, 'render_messages' ], 30 );
             }
         }
 
@@ -120,5 +121,61 @@ class WPAM_Public {
         wp_localize_script( 'wpam-react-app', 'wpamReactPage', [ 'auction_id' => $auction_id ] );
 
         return '<div id="wpam-react-root"></div>';
+    }
+
+    public function render_auction_meta() {
+        global $product;
+        $auction_id = $product->get_id();
+        $end = get_post_meta( $auction_id, '_auction_end', true );
+        $end_ts = $end ? strtotime( $end ) : 0;
+        $type = get_post_meta( $auction_id, '_auction_type', true );
+        $status = 'ongoing';
+        $now = current_time( 'timestamp' );
+        $start = get_post_meta( $auction_id, '_auction_start', true );
+        $start_ts = $start ? strtotime( $start ) : 0;
+        if ( $now < $start_ts ) {
+            $status = 'scheduled';
+        } elseif ( $now > $end_ts ) {
+            $status = 'ended';
+        }
+
+        global $wpdb;
+        $highest = $wpdb->get_var( $wpdb->prepare( "SELECT MAX(bid_amount) FROM {$wpdb->prefix}wc_auction_bids WHERE auction_id = %d", $auction_id ) );
+        $highest = $highest ? floatval( $highest ) : 0;
+
+        echo '<p class="wpam-status">' . esc_html( ucfirst( $status ) ) . '</p>';
+        echo '<p class="wpam-type">' . esc_html( ucfirst( $type ) ) . '</p>';
+        echo '<p class="wpam-countdown" data-end="' . esc_attr( $end_ts ) . '"></p>';
+        echo '<p>' . esc_html__( 'Current Bid:', 'wpam' ) . ' <span class="wpam-current-bid" data-auction-id="' . esc_attr( $auction_id ) . '">' . esc_html( $highest ) . '</span></p>';
+    }
+
+    public function render_bid_form() {
+        global $product;
+        echo '<form class="wpam-bid-form">';
+        echo '<input type="number" step="0.01" class="wpam-bid-input" />';
+        wp_nonce_field( 'wpam_place_bid', 'wpam_bid_nonce', false );
+        echo '<button class="wpam-bid-button" data-auction-id="' . esc_attr( $product->get_id() ) . '">' . esc_html__( 'Place Bid', 'wpam' ) . '</button>';
+        echo '</form>';
+    }
+
+    public function render_watchlist_button() {
+        global $product;
+        wp_nonce_field( 'wpam_toggle_watchlist', 'wpam_watchlist_nonce', false );
+        echo '<button class="wpam-watchlist-button" data-auction-id="' . esc_attr( $product->get_id() ) . '">' . esc_html__( 'Toggle Watchlist', 'wpam' ) . '</button>';
+    }
+
+    public function render_messages() {
+        global $product;
+        echo '<div class="wpam-messages">';
+        echo '<h2>' . esc_html__( 'Questions & Answers', 'wpam' ) . '</h2>';
+        echo '<div class="wpam-messages-list"></div>';
+        if ( is_user_logged_in() ) {
+            echo '<textarea class="wpam-message-input" rows="3"></textarea>';
+            wp_nonce_field( 'wpam_submit_question', 'wpam_message_nonce', false );
+            echo '<button class="wpam-message-button" data-auction-id="' . esc_attr( $product->get_id() ) . '">' . esc_html__( 'Submit Question', 'wpam' ) . '</button>';
+        } else {
+            echo '<p>' . esc_html__( 'Please login to ask a question.', 'wpam' ) . '</p>';
+        }
+        echo '</div>';
     }
 }

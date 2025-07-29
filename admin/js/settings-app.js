@@ -54,6 +54,16 @@
                 onChange: ( v ) => updateField( 'wpam_enable_twilio', v ? 1 : 0 )
             } ),
             createElement( TextControl, {
+                label: 'SendGrid API Key',
+                value: settings.wpam_sendgrid_key || '',
+                onChange: ( v ) => updateField( 'wpam_sendgrid_key', v )
+            } ),
+            createElement( CheckboxControl, {
+                label: 'Require KYC Verification',
+                checked: !! settings.wpam_require_kyc,
+                onChange: ( v ) => updateField( 'wpam_require_kyc', v ? 1 : 0 )
+            } ),
+            createElement( TextControl, {
                 label: 'Twilio SID',
                 value: settings.wpam_twilio_sid || '',
                 onChange: ( v ) => updateField( 'wpam_twilio_sid', v )

@@ -36,6 +36,10 @@ class WPAM_Bid {
             wp_send_json_error( [ 'message' => __( 'Please login', 'wpam' ) ] );
         }
 
+        if ( get_option( 'wpam_require_kyc' ) && ! get_user_meta( $user_id, 'wpam_kyc_verified', true ) ) {
+            wp_send_json_error( [ 'message' => __( 'Verification required', 'wpam' ) ] );
+        }
+
         $start = get_post_meta( $auction_id, '_auction_start', true );
         $end   = get_post_meta( $auction_id, '_auction_end', true );
 
@@ -52,6 +56,14 @@ class WPAM_Bid {
         $table   = $wpdb->prefix . 'wc_auction_bids';
         $highest = $wpdb->get_var( $wpdb->prepare( "SELECT MAX(bid_amount) FROM $table WHERE auction_id = %d", $auction_id ) );
         $highest = $highest ? floatval( $highest ) : 0;
+
+        $max_bids = intval( get_post_meta( $auction_id, '_auction_max_bids', 0 ) );
+        if ( $max_bids > 0 ) {
+            $count = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $table WHERE auction_id = %d AND user_id = %d", $auction_id, $user_id ) );
+            if ( $count >= $max_bids ) {
+                wp_send_json_error( [ 'message' => __( 'Bid limit reached', 'wpam' ) ] );
+            }
+        }
 
         $increment = get_post_meta( $auction_id, '_auction_increment', true );
         if ( '' === $increment ) {
@@ -73,6 +85,8 @@ class WPAM_Bid {
             ],
             [ '%d', '%d', '%f', '%s' ]
         );
+
+        do_action( 'wpam_bid_placed', $auction_id, $user_id, $bid );
 
 
         // Extend auction end time if within soft close window
