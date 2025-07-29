@@ -76,10 +76,15 @@ class WPAM_Bid {
 
 
         // Extend auction end time if within soft close window
-        $soft_close = intval( get_option( 'wpam_soft_close', 0 ) );
-        if ( $soft_close > 0 && $end_ts - $now <= $soft_close * 60 ) {
-            $new_end = date( 'Y-m-d H:i:s', $end_ts + ( $soft_close * 60 ) );
-            update_post_meta( $auction_id, '_auction_end', $new_end );
+        $extended   = false;
+        $new_end_ts = $end_ts;
+        $threshold  = absint( get_option( 'wpam_soft_close_threshold', 30 ) );
+        $extension  = absint( get_option( 'wpam_soft_close_extend', 30 ) );
+
+        if ( $threshold > 0 && $end_ts - $now <= $threshold ) {
+            $new_end_ts = $end_ts + $extension;
+            update_post_meta( $auction_id, '_auction_end', date( 'Y-m-d H:i:s', $new_end_ts ) );
+            $extended = true;
         }
 
         // SMS notification via Twilio if enabled
@@ -100,25 +105,12 @@ class WPAM_Bid {
             $this->realtime_provider->send_bid_update( $auction_id, $bid );
         }
 
-        wp_send_json_success( [ 'message' => __( 'Bid received', 'wpam' ) ] );
+        $response = [ 'message' => __( 'Bid received', 'wpam' ) ];
+        if ( $extended ) {
+            $response['new_end_ts'] = $new_end_ts;
+        }
 
-//         $extended       = false;
-//         $new_end_ts     = $end_ts;
-//         $threshold      = absint( get_option( 'wpam_soft_close_threshold', 30 ) );
-//         $extension      = absint( get_option( 'wpam_soft_close_extend', 30 ) );
-
-//         if ( $end_ts - $now <= $threshold ) {
-//             $new_end_ts = $end_ts + $extension;
-//             update_post_meta( $auction_id, '_auction_end', date( 'Y-m-d H:i:s', $new_end_ts ) );
-//             $extended = true;
-//         }
-
-//         $response = [ 'message' => __( 'Bid received', 'wpam' ) ];
-//         if ( $extended ) {
-//             $response['new_end_ts'] = $new_end_ts;
-//         }
-
-//         wp_send_json_success( $response );
+        wp_send_json_success( $response );
     }
 
     /**
