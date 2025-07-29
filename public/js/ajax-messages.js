@@ -4,7 +4,8 @@ jQuery(function($){
             wpam_messages.ajax_url,
             {
                 action: 'wpam_get_messages',
-                auction_id: auctionId
+                auction_id: auctionId,
+                nonce: wpam_messages.get_messages_nonce
             },
             function(res){
                 if(res.success){
