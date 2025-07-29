@@ -52,6 +52,7 @@
     - My Account → Auctions
     - Watchlist
   - Build admin settings page with integrations
+  - Place the Auctions admin menu as a WooCommerce submenu (`woocommerce` slug).
 
 ## 🧪 Testing Agent
 
