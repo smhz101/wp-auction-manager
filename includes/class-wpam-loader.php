@@ -12,6 +12,7 @@ class WPAM_Loader {
         new WPAM_Auction();
         new WPAM_Bid();
         new WPAM_Watchlist();
+        new WPAM_KYC();
         new WPAM_Messages();
         new \WPAM\Admin\WPAM_Admin();
         new \WPAM\Public\WPAM_Public();
