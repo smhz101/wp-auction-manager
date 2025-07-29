@@ -20,14 +20,48 @@ define( 'WPAM_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
 require_once WPAM_PLUGIN_DIR . 'includes/class-wpam-loader.php';
 require_once WPAM_PLUGIN_DIR . 'includes/class-wpam-install.php';
 
+/**
+ * Show admin notice when WooCommerce is missing.
+ */
+function wpam_wc_missing_notice() {
+    echo '<div class="error"><p>' . esc_html__( 'WP Auction Manager requires WooCommerce to be installed and active.', 'wpam' ) . '</p></div>';
+}
+
+/**
+ * Activation hook to ensure WooCommerce is active.
+ */
+function wpam_activation() {
+    if ( ! class_exists( 'WooCommerce' ) ) {
+        deactivate_plugins( WPAM_PLUGIN_BASENAME );
+        wp_die(
+            esc_html__( 'WP Auction Manager requires WooCommerce to be installed and active.', 'wpam' ),
+            esc_html__( 'Plugin dependency check', 'wpam' ),
+            [ 'back_link' => true ]
+        );
+    }
+
+    WPAM_Install::activate();
+}
+
 function wpam_run_plugin() {
     $loader = new WPAM_Loader();
     $loader->run();
 }
 
-register_activation_hook( __FILE__, [ 'WPAM_Install', 'activate' ] );
+register_activation_hook( __FILE__, 'wpam_activation' );
 register_deactivation_hook( __FILE__, function() {
     // Reserved for future cleanup tasks
 } );
 
-wpam_run_plugin();
+/**
+ * Initialize the plugin only when WooCommerce is active.
+ */
+function wpam_plugins_loaded() {
+    if ( ! class_exists( 'WooCommerce' ) ) {
+        add_action( 'admin_notices', 'wpam_wc_missing_notice' );
+        return;
+    }
+
+    wpam_run_plugin();
+}
+add_action( 'plugins_loaded', 'wpam_plugins_loaded' );
