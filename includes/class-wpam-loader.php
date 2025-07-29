@@ -12,6 +12,8 @@ class WPAM_Loader {
         require_once WPAM_PLUGIN_DIR . 'includes/class-wpam-notifications.php';
         require_once WPAM_PLUGIN_DIR . 'includes/api-integrations/class-api-provider.php';
         require_once WPAM_PLUGIN_DIR . 'includes/api-integrations/class-twilio-provider.php';
+        require_once WPAM_PLUGIN_DIR . 'includes/api-integrations/class-firebase-provider.php';
+        require_once WPAM_PLUGIN_DIR . 'includes/api-integrations/class-sendgrid-provider.php';
         require_once WPAM_PLUGIN_DIR . 'admin/class-wpam-admin.php';
         require_once WPAM_PLUGIN_DIR . 'public/class-wpam-public.php';
         require_once WPAM_PLUGIN_DIR . 'includes/api-integrations/class-realtime-provider.php';
