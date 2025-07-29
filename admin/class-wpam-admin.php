@@ -44,11 +44,58 @@ class WPAM_Admin {
     }
 
     public function register_settings() {
+        register_setting( 'wpam_settings', 'wpam_default_increment' );
+        register_setting( 'wpam_settings', 'wpam_soft_close' );
+        register_setting( 'wpam_settings', 'wpam_enable_twilio' );
+        register_setting( 'wpam_settings', 'wpam_enable_pusher' );
+        register_setting( 'wpam_settings', 'wpam_enable_firebase' );
         register_setting( 'wpam_settings', 'wpam_twilio_sid' );
         register_setting( 'wpam_settings', 'wpam_twilio_token' );
         register_setting( 'wpam_settings', 'wpam_twilio_from' );
 
+        add_settings_section( 'wpam_general', __( 'Auction Defaults', 'wpam' ), '__return_false', 'wpam_settings' );
+        add_settings_section( 'wpam_providers', __( 'Providers', 'wpam' ), '__return_false', 'wpam_settings' );
         add_settings_section( 'wpam_twilio', __( 'Twilio Integration', 'wpam' ), '__return_false', 'wpam_settings' );
+
+        add_settings_field(
+            'wpam_default_increment',
+            __( 'Default Bid Increment', 'wpam' ),
+            [ $this, 'field_default_increment' ],
+            'wpam_settings',
+            'wpam_general'
+        );
+
+        add_settings_field(
+            'wpam_soft_close',
+            __( 'Soft Close Duration (minutes)', 'wpam' ),
+            [ $this, 'field_soft_close' ],
+            'wpam_settings',
+            'wpam_general'
+        );
+
+        add_settings_field(
+            'wpam_enable_twilio',
+            __( 'Enable Twilio Notifications', 'wpam' ),
+            [ $this, 'field_enable_twilio' ],
+            'wpam_settings',
+            'wpam_providers'
+        );
+
+        add_settings_field(
+            'wpam_enable_pusher',
+            __( 'Enable Pusher', 'wpam' ),
+            [ $this, 'field_enable_pusher' ],
+            'wpam_settings',
+            'wpam_providers'
+        );
+
+        add_settings_field(
+            'wpam_enable_firebase',
+            __( 'Enable Firebase', 'wpam' ),
+            [ $this, 'field_enable_firebase' ],
+            'wpam_settings',
+            'wpam_providers'
+        );
 
         add_settings_field(
             'wpam_twilio_sid',
@@ -73,6 +120,31 @@ class WPAM_Admin {
             'wpam_settings',
             'wpam_twilio'
         );
+    }
+
+    public function field_default_increment() {
+        $value = esc_attr( get_option( 'wpam_default_increment', 1 ) );
+        echo '<input type="number" step="0.01" name="wpam_default_increment" value="' . $value . '" class="small-text" />';
+    }
+
+    public function field_soft_close() {
+        $value = esc_attr( get_option( 'wpam_soft_close', 0 ) );
+        echo '<input type="number" step="1" name="wpam_soft_close" value="' . $value . '" class="small-text" />';
+    }
+
+    public function field_enable_twilio() {
+        $checked = checked( 1, get_option( 'wpam_enable_twilio', 0 ), false );
+        echo '<label><input type="checkbox" name="wpam_enable_twilio" value="1" ' . $checked . ' /> ' . __( 'Enable', 'wpam' ) . '</label>';
+    }
+
+    public function field_enable_pusher() {
+        $checked = checked( 1, get_option( 'wpam_enable_pusher', 0 ), false );
+        echo '<label><input type="checkbox" name="wpam_enable_pusher" value="1" ' . $checked . ' /> ' . __( 'Enable', 'wpam' ) . '</label>';
+    }
+
+    public function field_enable_firebase() {
+        $checked = checked( 1, get_option( 'wpam_enable_firebase', 0 ), false );
+        echo '<label><input type="checkbox" name="wpam_enable_firebase" value="1" ' . $checked . ' /> ' . __( 'Enable', 'wpam' ) . '</label>';
     }
 
     public function field_twilio_sid() {

@@ -34,7 +34,10 @@ class WPAM_Bid {
         $highest = $highest ? floatval( $highest ) : 0;
 
         $increment = get_post_meta( $auction_id, '_auction_increment', true );
-        $increment = $increment ? floatval( $increment ) : 1;
+        if ( '' === $increment ) {
+            $increment = get_option( 'wpam_default_increment', 1 );
+        }
+        $increment = floatval( $increment );
 
         if ( $bid < $highest + $increment ) {
             wp_send_json_error( [ 'message' => __( 'Bid too low', 'wpam' ) ] );
@@ -50,6 +53,21 @@ class WPAM_Bid {
             ],
             [ '%d', '%d', '%f', '%s' ]
         );
+
+        // Extend auction end time if within soft close window
+        $soft_close = intval( get_option( 'wpam_soft_close', 0 ) );
+        if ( $soft_close > 0 && $end_ts - $now <= $soft_close * 60 ) {
+            $new_end = date( 'Y-m-d H:i:s', $end_ts + ( $soft_close * 60 ) );
+            update_post_meta( $auction_id, '_auction_end', $new_end );
+        }
+
+        // Basic notification via Twilio if enabled
+        if ( get_option( 'wpam_enable_twilio' ) ) {
+            if ( class_exists( 'WPAM_Twilio_Provider' ) ) {
+                $provider = new WPAM_Twilio_Provider();
+                $provider->send( get_option( 'wpam_twilio_from' ), sprintf( __( 'New bid of %s on auction #%d', 'wpam' ), $bid, $auction_id ) );
+            }
+        }
 
         wp_send_json_success( [ 'message' => __( 'Bid received', 'wpam' ) ] );
     }
