@@ -8,7 +8,8 @@ jQuery(function($){
             {
                 action: 'wpam_place_bid',
                 auction_id: auctionId,
-                bid: bidInput.val()
+                bid: bidInput.val(),
+                nonce: wpam_ajax.bid_nonce
             },
             function(res){
                 alert(res.data.message);
@@ -23,7 +24,8 @@ jQuery(function($){
             wpam_ajax.ajax_url,
             {
                 action: 'wpam_toggle_watchlist',
-                auction_id: auctionId
+                auction_id: auctionId,
+                nonce: wpam_ajax.watchlist_nonce
             },
             function(res){
                 alert(res.data.message);

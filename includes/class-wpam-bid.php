@@ -6,6 +6,8 @@ class WPAM_Bid {
     }
 
     public function place_bid() {
+        check_ajax_referer( 'wpam_place_bid', 'nonce' );
+
         if ( empty( $_POST['auction_id'] ) || empty( $_POST['bid'] ) ) {
             wp_send_json_error( [ 'message' => __( 'Invalid bid data', 'wpam' ) ] );
         }
