@@ -50,4 +50,27 @@ jQuery(function($){
             }
         );
     });
+
+    function refreshBids(){
+        $('.wpam-current-bid').each(function(){
+            const bidEl = $(this);
+            const auctionId = bidEl.data('auction-id');
+            $.post(
+                wpam_ajax.ajax_url,
+                {
+                    action: 'wpam_get_highest_bid',
+                    auction_id: auctionId,
+                    nonce: wpam_ajax.highest_nonce
+                },
+                function(res){
+                    if(res.success){
+                        bidEl.text(res.data.highest_bid);
+                    }
+                }
+            );
+        });
+    }
+
+    refreshBids();
+    setInterval(refreshBids, 5000);
 });
