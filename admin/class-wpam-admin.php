@@ -246,6 +246,11 @@ class WPAM_Admin {
         echo '<input type="number" class="small-text" name="wpam_soft_close_extend" value="' . $value . '" />';
     }
 
+    public function field_default_increment() {
+        $value = esc_attr( get_option( 'wpam_default_increment', 1 ) );
+        echo '<input type="number" step="0.01" class="small-text" name="wpam_default_increment" value="' . $value . '" />';
+    }
+
     public function field_soft_close() {
         $value = esc_attr( get_option( 'wpam_soft_close', 0 ) );
         echo '<input type="number" class="small-text" name="wpam_soft_close" value="' . $value . '" />';
