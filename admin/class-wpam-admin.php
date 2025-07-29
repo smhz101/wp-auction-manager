@@ -254,6 +254,26 @@ class WPAM_Admin {
         echo '<input type="number" class="small-text" name="wpam_soft_close_extend" value="' . $value . '" />';
     }
 
+    public function field_soft_close() {
+        $value = esc_attr( get_option( 'wpam_soft_close', 0 ) );
+        echo '<input type="number" class="small-text" name="wpam_soft_close" value="' . $value . '" />';
+    }
+
+    public function field_enable_twilio() {
+        $value = get_option( 'wpam_enable_twilio', false );
+        echo '<input type="checkbox" name="wpam_enable_twilio" value="1"' . checked( 1, $value, false ) . ' />';
+    }
+
+    public function field_enable_pusher() {
+        $value = get_option( 'wpam_enable_pusher', false );
+        echo '<input type="checkbox" name="wpam_enable_pusher" value="1"' . checked( 1, $value, false ) . ' />';
+    }
+
+    public function field_enable_firebase() {
+        $value = get_option( 'wpam_enable_firebase', false );
+        echo '<input type="checkbox" name="wpam_enable_firebase" value="1"' . checked( 1, $value, false ) . ' />';
+    }
+
     public function field_realtime_provider() {
         $value = esc_attr( get_option( 'wpam_realtime_provider', 'none' ) );
         echo '<select name="wpam_realtime_provider">';
