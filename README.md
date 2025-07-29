@@ -39,6 +39,7 @@ When editing an auction product you can configure additional options in the **Au
 ### Soft-close settings
 
 Under **Auctions → Settings** you can configure the soft-close threshold and the extension duration. If a bid arrives within the threshold, the end time is extended by the duration. By default both values are 30 seconds.
+The older `Soft Close Duration` option is still honored when the new values are empty; it sets both the threshold and the extension length in seconds.
 
 ## Folder structure
 
@@ -61,6 +62,7 @@ Future versions may swap to WebSocket providers found under `includes/api-integr
 
 Under **Auctions → Settings → Realtime Integration** you can select `None` or `Pusher` as the provider. Enter your Pusher app credentials to enable realtime WebSocket updates.
 Twilio SMS notifications can be toggled via the `Enable Twilio Notifications` option (`wpam_enable_twilio`).
+Firebase push notifications are available through the `Enable Firebase` option (`wpam_enable_firebase`) once you provide a valid server key.
 
 ## Running unit tests
 

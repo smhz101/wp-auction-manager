@@ -2,18 +2,27 @@
 class WPAM_Notifications {
     public static function send_to_user( $user_id, $subject, $message ) {
         $sms_enabled   = get_option( 'wpam_enable_twilio', '0' );
+        $push_enabled  = get_option( 'wpam_enable_firebase', '0' );
 
         $user  = get_user_by( 'id', $user_id );
         if ( ! $user ) {
             return;
         }
 
-        $phone = get_user_meta( $user_id, 'billing_phone', true );
-        $provider = new WPAM_Twilio_Provider();
+        $phone   = get_user_meta( $user_id, 'billing_phone', true );
+        $token   = get_user_meta( $user_id, 'wpam_firebase_token', true );
+
+        $sms_provider  = new WPAM_Twilio_Provider();
+        $push_provider = new WPAM_Firebase_Provider();
 
         $sent = false;
-        if ( $sms_enabled && $phone ) {
-            $result = $provider->send( $phone, $message );
+        if ( $push_enabled && $token ) {
+            $result = $push_provider->send( $token, $message );
+            $sent   = ! is_wp_error( $result );
+        }
+
+        if ( ! $sent && $sms_enabled && $phone ) {
+            $result = $sms_provider->send( $phone, $message );
             $sent   = ! is_wp_error( $result );
         }
 
