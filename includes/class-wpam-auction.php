@@ -241,6 +241,7 @@ class WPAM_Auction {
         }
 
         $order->calculate_totals();
+        $order->save();
 
         update_post_meta( $auction_id, '_auction_winner', $user_id );
         update_post_meta( $auction_id, '_auction_order_id', $order->get_id() );
