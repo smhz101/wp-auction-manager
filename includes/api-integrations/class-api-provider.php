@@ -1,4 +1,4 @@
 <?php
-interface WCAP_API_Provider {
+interface WPAM_API_Provider {
     public function send( $to, $message );
 }

@@ -1,20 +1,20 @@
 <?php
-class WCAP_Admin {
+class WPAM_Admin {
     public function __construct() {
         add_action( 'admin_menu', [ $this, 'add_menu' ] );
     }
 
     public function add_menu() {
         add_menu_page( 
-            __( 'WP Auction Manager', 'wcap' ),
-            __( 'Auctions', 'wcap' ),
+            __( 'WP Auction Manager', 'wpam' ),
+            __( 'Auctions', 'wpam' ),
             'manage_options',
-            'wcap-admin',
+            'wpam-admin',
             [ $this, 'render_page' ]
         );
     }
 
     public function render_page() {
-        echo '<div class="wrap"><h1>' . esc_html__( 'WP Auction Manager', 'wcap' ) . '</h1></div>';
+        echo '<div class="wrap"><h1>' . esc_html__( 'WP Auction Manager', 'wpam' ) . '</h1></div>';
     }
 }
