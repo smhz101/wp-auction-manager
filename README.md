@@ -1,6 +1,7 @@
 # WP Auction Manager
 
 WP Auction Manager is a WordPress plugin that extends WooCommerce by adding an "Auction" product type. Store owners can schedule auctions, accept bids and let users maintain a watchlist. Bids and watchlists are stored in custom database tables.
+The plugin also supports a question and answer thread on each auction so potential bidders can communicate with the seller.
 
 ## Installation
 
@@ -19,6 +20,7 @@ WP Auction Manager is a WordPress plugin that extends WooCommerce by adding an "
 2. Choose **Auction** from the product type dropdown.
 3. Set the auction start and end dates in the Auction tab.
 4. Publish the product to start the auction at the scheduled time.
+5. When the auction ends, the highest bidder receives a WooCommerce order automatically.
 
 ### Auction options
 
@@ -50,7 +52,8 @@ wp-auction-manager/
 ├── wp-auction-manager.php  # Main plugin file
 ```
 
-## Realtime updates
+## Development
+
 
 The plugin uses AJAX polling by default to refresh the current highest bid every few seconds.
 Future versions may swap to WebSocket providers found under `includes/api-integrations`.
@@ -64,4 +67,5 @@ A `tests/` directory will contain PHPUnit tests in the future. Once available, i
 ```bash
 composer install
 vendor/bin/phpunit
+vendor/bin/phpcs
 ```

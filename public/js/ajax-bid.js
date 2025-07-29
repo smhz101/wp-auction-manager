@@ -72,5 +72,15 @@ jQuery(function($){
     }
 
     refreshBids();
-    setInterval(refreshBids, 5000);
+
+    if(wpam_ajax.pusher_enabled){
+        const pusher = new Pusher(wpam_ajax.pusher_key, {cluster: wpam_ajax.pusher_cluster});
+        const channel = pusher.subscribe(wpam_ajax.pusher_channel);
+        channel.bind('bid_update', function(data){
+            const el = $('.wpam-current-bid[data-auction-id="'+data.auction_id+'"]');
+            el.text(data.bid);
+        });
+    } else {
+        setInterval(refreshBids, 5000);
+    }
 });
