@@ -52,16 +52,12 @@ wp-auction-manager/
 ├── wp-auction-manager.php  # Main plugin file
 ```
 
-## Realtime updates
+## Development
 
-The plugin uses AJAX polling by default to refresh the current highest bid every few seconds.
-Future versions may swap to WebSocket providers found under `includes/api-integrations`.
-
-## Running unit tests
-
-A `tests/` directory will contain PHPUnit tests in the future. Once available, install development dependencies and execute:
+Install dependencies with Composer and run the automated checks:
 
 ```bash
 composer install
 vendor/bin/phpunit
+vendor/bin/phpcs
 ```
