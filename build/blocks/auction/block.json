@@ -1,0 +1,27 @@
+{
+  "apiVersion": 2,
+  "name": "wpam/auction",
+  "title": "Auction",
+  "category": "widgets",
+  "icon": "hammer",
+  "description": "Display auction countdown and bid form.",
+  "textdomain": "wpam",
+  "attributes": {
+    "auctionId": {
+      "type": "integer"
+    },
+    "showCountdown": {
+      "type": "boolean",
+      "default": true
+    },
+    "showBidForm": {
+      "type": "boolean",
+      "default": true
+    },
+    "showStatus": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "editorScript": "file:./index.js"
+}
