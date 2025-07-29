@@ -5,4 +5,5 @@
 - Implemented basic bid placement storing bids in custom table.
 - Added watchlist table and AJAX toggle handler.
 - Provided public scripts and templates for bidding and watchlist controls.
+- Automatic order creation and winner notifications on auction end.
 
