@@ -1,25 +1,43 @@
 # WP Auction Manager
 
-WP Auction Manager extends WooCommerce with auction functionality. Translation files live in the `languages` directory.
+WP Auction Manager is a WordPress plugin that extends WooCommerce by adding an "Auction" product type. Store owners can schedule auctions, accept bids and let users maintain a watchlist. Bids and watchlists are stored in custom database tables.
 
-## Updating the POT file
+## Installation
 
-Run the following command from the plugin root to regenerate the template file:
+1. Download or clone this repository into `wp-content/plugins/wp-auction-manager`.
+2. Ensure **WooCommerce** is installed and activated.
+3. Activate **WP Auction Manager** from the WordPress Plugins screen.
 
-```bash
-php wp-cli.phar i18n make-pot . languages/wp-auction-manager.pot --allow-root
+### Activation prerequisites
+
+- WordPress 5.0 or higher
+- WooCommerce 5.0 or higher
+
+## Basic usage
+
+1. In your WordPress dashboard navigate to **Products → Add New**.
+2. Choose **Auction** from the product type dropdown.
+3. Set the auction start and end dates in the Auction tab.
+4. Publish the product to start the auction at the scheduled time.
+
+## Folder structure
+
+```text
+wp-auction-manager/
+├── admin/                  # Admin menus and settings
+├── includes/               # Core classes (loader, auction, bid, watchlist)
+│   └── api-integrations/   # Placeholder for third-party providers
+├── public/                 # Frontend scripts and public hooks
+├── templates/              # Theme templates for auction pages
+├── uninstall.php           # Removes plugin data on uninstall
+├── wp-auction-manager.php  # Main plugin file
 ```
 
-## Creating translations
+## Running unit tests
 
-1. Create a `.po` file from the POT template using `msginit` or any PO editor. For example:
-   ```bash
-   msginit --locale=fr_FR --input=languages/wp-auction-manager.pot \
-     --output-file=languages/wp-auction-manager-fr_FR.po
-   ```
-2. After translating, compile the `.po` file into a `.mo` file:
-   ```bash
-   msgfmt languages/wp-auction-manager-fr_FR.po \
-     -o languages/wp-auction-manager-fr_FR.mo
-   ```
-3. Place the resulting `.mo` file in the `languages` directory.
+A `tests/` directory will contain PHPUnit tests in the future. Once available, install development dependencies and execute:
+
+```bash
+composer install
+vendor/bin/phpunit
+```
