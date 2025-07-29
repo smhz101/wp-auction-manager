@@ -6,6 +6,8 @@ class WPAM_Watchlist {
     }
 
     public function toggle_watchlist() {
+        check_ajax_referer( 'wpam_toggle_watchlist', 'nonce' );
+
         if ( empty( $_POST['auction_id'] ) ) {
             wp_send_json_error( [ 'message' => __( 'Invalid auction', 'wpam' ) ] );
         }
