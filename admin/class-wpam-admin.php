@@ -310,6 +310,7 @@ class WPAM_Admin {
         echo '<form method="get">';
         echo '<input type="hidden" name="page" value="wpam-auctions" />';
         $table->views();
+        $table->search_box( __( 'Search Auctions', 'wpam' ), 'auction-search' );
         $table->display();
         echo '</form></div>';
     }
@@ -351,11 +352,28 @@ class WPAM_Admin {
         echo '<h1>' . esc_html__( 'Auction Messages', 'wpam' ) . '</h1>';
         echo '<form method="get">';
         echo '<input type="hidden" name="page" value="wpam-messages" />';
+        $table->search_box( __( 'Search Messages', 'wpam' ), 'message-search' );
         $table->display();
         echo '</form></div>';
     }
 
     public function enqueue_scripts( $hook ) {
+        $admin_pages = [
+            'woocommerce_page_wpam-auctions',
+            'woocommerce_page_wpam-bids',
+            'woocommerce_page_wpam-messages',
+            'wpam-auctions_page_wpam-settings',
+        ];
+
+        if ( in_array( $hook, $admin_pages, true ) ) {
+            wp_enqueue_style(
+                'wpam-admin',
+                WPAM_PLUGIN_URL . 'admin/css/wpam-admin.css',
+                [ 'wp-components' ],
+                WPAM_PLUGIN_VERSION
+            );
+        }
+
         if ( 'wpam-auctions_page_wpam-settings' !== $hook ) {
             return;
         }

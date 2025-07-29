@@ -6,12 +6,17 @@ if ( ! class_exists( 'WP_List_Table' ) ) {
 }
 
 class WPAM_Auctions_Table extends \WP_List_Table {
+    protected $auction_type = '';
+
     public function prepare_items() {
-        $status = isset( $_GET['status'] ) ? sanitize_text_field( wp_unslash( $_GET['status'] ) ) : '';
+        $status       = isset( $_GET['status'] ) ? sanitize_text_field( wp_unslash( $_GET['status'] ) ) : '';
+        $this->auction_type = isset( $_GET['auction_type'] ) ? sanitize_text_field( wp_unslash( $_GET['auction_type'] ) ) : '';
+        $search       = isset( $_REQUEST['s'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['s'] ) ) : '';
         $args = [
             'post_type'      => 'product',
             'posts_per_page' => 20,
             'paged'          => $this->get_pagenum(),
+            's'              => $search,
             'tax_query'      => [
                 [
                     'taxonomy' => 'product_type',
@@ -22,6 +27,13 @@ class WPAM_Auctions_Table extends \WP_List_Table {
             'meta_query'     => [],
         ];
         $now = current_time( 'mysql' );
+        if ( $this->auction_type ) {
+            $args['meta_query'][] = [
+                'key'   => '_auction_type',
+                'value' => $this->auction_type,
+            ];
+        }
+
         if ( 'upcoming' === $status ) {
             $args['meta_query'][] = [
                 'key'     => '_auction_start',
@@ -69,6 +81,22 @@ class WPAM_Auctions_Table extends \WP_List_Table {
             'per_page'    => 20,
             'total_pages' => $query->max_num_pages,
         ] );
+    }
+
+    protected function extra_tablenav( $which ) {
+        if ( 'top' !== $which ) {
+            return;
+        }
+
+        echo '<div class="alignleft actions wpam-auctions-filter">';
+        echo '<select name="auction_type">';
+        echo '<option value="">' . esc_html__( 'All Types', 'wpam' ) . '</option>';
+        echo '<option value="standard"' . selected( $this->auction_type, 'standard', false ) . '>' . esc_html__( 'Standard', 'wpam' ) . '</option>';
+        echo '<option value="reverse"' . selected( $this->auction_type, 'reverse', false ) . '>' . esc_html__( 'Reverse', 'wpam' ) . '</option>';
+        echo '<option value="sealed"' . selected( $this->auction_type, 'sealed', false ) . '>' . esc_html__( 'Sealed', 'wpam' ) . '</option>';
+        echo '</select>';
+        submit_button( __( 'Filter', 'wpam' ), '', 'filter_action', false );
+        echo '</div>';
     }
 
     public function get_columns() {
