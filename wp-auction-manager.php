@@ -22,6 +22,14 @@ require_once WPAM_PLUGIN_DIR . 'includes/class-wpam-loader.php';
 require_once WPAM_PLUGIN_DIR . 'includes/class-wpam-install.php';
 
 /**
+ * Load plugin translation files.
+ */
+function wpam_load_textdomain() {
+    load_plugin_textdomain( 'wpam', false, basename( dirname( __FILE__ ) ) . '/languages' );
+}
+add_action( 'init', 'wpam_load_textdomain' );
+
+/**
  * Show admin notice when WooCommerce is missing.
  */
 function wpam_wc_missing_notice() {
