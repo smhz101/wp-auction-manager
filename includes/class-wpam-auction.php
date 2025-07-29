@@ -35,16 +35,76 @@ class WPAM_Auction {
 
     public function add_product_data_fields() {
         echo '<div id="auction_product_data" class="panel woocommerce_options_panel hidden">';
-        woocommerce_wp_text_input([
-            'id'          => '_auction_start',
-            'label'       => __( 'Start Date', 'wpam' ),
-            'type'        => 'datetime-local',
+
+        woocommerce_wp_select([
+            'id'      => '_auction_type',
+            'label'   => __( 'Auction Type', 'wpam' ),
+            'options' => [
+                'standard' => __( 'Standard', 'wpam' ),
+                'reverse'  => __( 'Reverse', 'wpam' ),
+                'sealed'   => __( 'Sealed', 'wpam' ),
+            ],
         ]);
+
         woocommerce_wp_text_input([
-            'id'          => '_auction_end',
-            'label'       => __( 'End Date', 'wpam' ),
-            'type'        => 'datetime-local',
+            'id'   => '_auction_start',
+            'label' => __( 'Start Date', 'wpam' ),
+            'type' => 'datetime-local',
         ]);
+
+        woocommerce_wp_text_input([
+            'id'   => '_auction_end',
+            'label' => __( 'End Date', 'wpam' ),
+            'type' => 'datetime-local',
+        ]);
+
+        woocommerce_wp_text_input([
+            'id'    => '_auction_reserve',
+            'label' => __( 'Reserve Price', 'wpam' ),
+            'type'  => 'number',
+            'custom_attributes' => [ 'step' => '0.01', 'min' => '0' ],
+        ]);
+
+        woocommerce_wp_text_input([
+            'id'    => '_auction_buy_now',
+            'label' => __( 'Buy Now Price', 'wpam' ),
+            'type'  => 'number',
+            'custom_attributes' => [ 'step' => '0.01', 'min' => '0' ],
+        ]);
+
+        woocommerce_wp_text_input([
+            'id'    => '_auction_increment',
+            'label' => __( 'Minimum Increment', 'wpam' ),
+            'type'  => 'number',
+            'custom_attributes' => [ 'step' => '0.01', 'min' => '0' ],
+        ]);
+
+        woocommerce_wp_text_input([
+            'id'    => '_auction_soft_close',
+            'label' => __( 'Soft Close Minutes', 'wpam' ),
+            'type'  => 'number',
+            'custom_attributes' => [ 'step' => '1', 'min' => '0' ],
+        ]);
+
+        woocommerce_wp_checkbox([
+            'id'    => '_auction_auto_relist',
+            'label' => __( 'Auto Relist', 'wpam' ),
+        ]);
+
+        woocommerce_wp_text_input([
+            'id'    => '_auction_max_bids',
+            'label' => __( 'Max Bids Per User', 'wpam' ),
+            'type'  => 'number',
+            'custom_attributes' => [ 'step' => '1', 'min' => '0' ],
+        ]);
+
+        woocommerce_wp_text_input([
+            'id'    => '_auction_fee',
+            'label' => __( 'Auction Fee', 'wpam' ),
+            'type'  => 'number',
+            'custom_attributes' => [ 'step' => '0.01', 'min' => '0' ],
+        ]);
+
         echo '</div>';
     }
 
@@ -54,6 +114,28 @@ class WPAM_Auction {
         }
         if ( isset( $_POST['_auction_end'] ) ) {
             update_post_meta( $post_id, '_auction_end', wc_clean( $_POST['_auction_end'] ) );
+        }
+
+        $fields = [
+            '_auction_type',
+            '_auction_reserve',
+            '_auction_buy_now',
+            '_auction_increment',
+            '_auction_soft_close',
+            '_auction_auto_relist',
+            '_auction_max_bids',
+            '_auction_fee',
+        ];
+
+        foreach ( $fields as $field ) {
+            if ( isset( $_POST[ $field ] ) ) {
+                $value = wc_clean( $_POST[ $field ] );
+                update_post_meta( $post_id, $field, $value );
+            } else {
+                if ( '_auction_auto_relist' === $field ) {
+                    update_post_meta( $post_id, $field, 'no' );
+                }
+            }
         }
     }
 }
