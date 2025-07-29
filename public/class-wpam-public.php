@@ -52,6 +52,8 @@ class WPAM_Public {
             wp_enqueue_script( 'pusher-js', 'https://js.pusher.com/7.2/pusher.min.js', [], '7.2', true );
         }
 
+        wp_enqueue_style( 'wpam-frontend', WPAM_PLUGIN_URL . 'public/css/wpam-frontend.css', [ 'woocommerce-general' ], WPAM_PLUGIN_VERSION );
+
         wp_enqueue_script( 'wpam-ajax-bid', WPAM_PLUGIN_URL . 'public/js/ajax-bid.js', [ 'jquery' ], WPAM_PLUGIN_VERSION, true );
         wp_localize_script(
             'wpam-ajax-bid',
@@ -143,7 +145,7 @@ class WPAM_Public {
         $highest = $wpdb->get_var( $wpdb->prepare( "SELECT MAX(bid_amount) FROM {$wpdb->prefix}wc_auction_bids WHERE auction_id = %d", $auction_id ) );
         $highest = $highest ? floatval( $highest ) : 0;
 
-        echo '<p class="wpam-status">' . esc_html( ucfirst( $status ) ) . '</p>';
+        echo '<p class="wpam-status woocommerce-message">' . esc_html( ucfirst( $status ) ) . '</p>';
         echo '<p class="wpam-type">' . esc_html( ucfirst( $type ) ) . '</p>';
         echo '<p class="wpam-countdown" data-end="' . esc_attr( $end_ts ) . '"></p>';
         echo '<p>' . esc_html__( 'Current Bid:', 'wpam' ) . ' <span class="wpam-current-bid" data-auction-id="' . esc_attr( $auction_id ) . '">' . esc_html( $highest ) . '</span></p>';
@@ -154,14 +156,14 @@ class WPAM_Public {
         echo '<form class="wpam-bid-form">';
         echo '<input type="number" step="0.01" class="wpam-bid-input" />';
         wp_nonce_field( 'wpam_place_bid', 'wpam_bid_nonce', false );
-        echo '<button class="wpam-bid-button" data-auction-id="' . esc_attr( $product->get_id() ) . '">' . esc_html__( 'Place Bid', 'wpam' ) . '</button>';
+        echo '<button class="button wpam-bid-button" data-auction-id="' . esc_attr( $product->get_id() ) . '">' . esc_html__( 'Place Bid', 'wpam' ) . '</button>';
         echo '</form>';
     }
 
     public function render_watchlist_button() {
         global $product;
         wp_nonce_field( 'wpam_toggle_watchlist', 'wpam_watchlist_nonce', false );
-        echo '<button class="wpam-watchlist-button" data-auction-id="' . esc_attr( $product->get_id() ) . '">' . esc_html__( 'Toggle Watchlist', 'wpam' ) . '</button>';
+        echo '<button class="button wpam-watchlist-button" data-auction-id="' . esc_attr( $product->get_id() ) . '">' . esc_html__( 'Toggle Watchlist', 'wpam' ) . '</button>';
     }
 
     public function render_messages() {
