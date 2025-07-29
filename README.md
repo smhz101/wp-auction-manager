@@ -20,6 +20,10 @@ WP Auction Manager is a WordPress plugin that extends WooCommerce by adding an "
 3. Set the auction start and end dates in the Auction tab.
 4. Publish the product to start the auction at the scheduled time.
 
+### Soft-close settings
+
+Under **Auctions → Settings** you can configure the soft-close period and how long the auction should extend when a last-second bid arrives. By default both values are 30 seconds.
+
 ## Folder structure
 
 ```text
