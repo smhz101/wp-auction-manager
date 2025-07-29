@@ -1,8 +1,16 @@
 <?php
 class WPAM_Bid {
+    protected $realtime_provider;
+
     public function __construct() {
         add_action( 'wp_ajax_wpam_place_bid', [ $this, 'place_bid' ] );
         add_action( 'wp_ajax_nopriv_wpam_place_bid', [ $this, 'place_bid' ] );
+        add_action( 'wp_ajax_wpam_get_highest_bid', [ $this, 'get_highest_bid' ] );
+        add_action( 'wp_ajax_nopriv_wpam_get_highest_bid', [ $this, 'get_highest_bid' ] );
+
+        if ( class_exists( 'WPAM_Pusher_Provider' ) ) {
+            $this->realtime_provider = new WPAM_Pusher_Provider();
+        }
     }
 
     public function place_bid() {
@@ -51,6 +59,30 @@ class WPAM_Bid {
             [ '%d', '%d', '%f', '%s' ]
         );
 
+        if ( $this->realtime_provider ) {
+            $this->realtime_provider->send_bid_update( $auction_id, $bid );
+        }
+
         wp_send_json_success( [ 'message' => __( 'Bid received', 'wpam' ) ] );
+    }
+
+    /**
+     * Return the current highest bid for an auction.
+     */
+    public function get_highest_bid() {
+        check_ajax_referer( 'wpam_get_highest_bid', 'nonce' );
+
+        if ( empty( $_REQUEST['auction_id'] ) ) {
+            wp_send_json_error( [ 'message' => __( 'Invalid auction', 'wpam' ) ] );
+        }
+
+        $auction_id = absint( $_REQUEST['auction_id'] );
+
+        global $wpdb;
+        $table   = $wpdb->prefix . 'wc_auction_bids';
+        $highest = $wpdb->get_var( $wpdb->prepare( "SELECT MAX(bid_amount) FROM $table WHERE auction_id = %d", $auction_id ) );
+        $highest = $highest ? floatval( $highest ) : 0;
+
+        wp_send_json_success( [ 'highest_bid' => $highest ] );
     }
 }
