@@ -1,4 +1,6 @@
 <?php
+namespace WPAM\Includes;
+
 class WPAM_Twilio_Provider implements WPAM_API_Provider {
     public function send( $to, $message ) {
         $sid   = get_option( 'wpam_twilio_sid' );

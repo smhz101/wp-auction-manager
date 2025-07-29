@@ -1,9 +1,11 @@
 <?php
+namespace WPAM\Admin;
+
 if ( ! class_exists( 'WP_List_Table' ) ) {
     require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
 }
 
-class WPAM_Auctions_Table extends WP_List_Table {
+class WPAM_Auctions_Table extends \WP_List_Table {
     public function prepare_items() {
         $status = isset( $_GET['status'] ) ? sanitize_text_field( wp_unslash( $_GET['status'] ) ) : '';
         $args = [

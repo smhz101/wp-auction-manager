@@ -1,4 +1,6 @@
 <?php
+namespace WPAM\Includes;
+
 class WPAM_Install {
     public static function activate() {
         global $wpdb;

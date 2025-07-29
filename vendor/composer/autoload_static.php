@@ -14,6 +14,12 @@ class ComposerStaticInit5a9cdac556bc224b8f4676ac39920f7b
     );
 
     public static $prefixLengthsPsr4 = array (
+        'W' => 
+        array (
+            'WPAM\\Public\\' => 12,
+            'WPAM\\Includes\\' => 14,
+            'WPAM\\Admin\\' => 11,
+        ),
         'P' => 
         array (
             'Pusher\\' => 7,
@@ -30,6 +36,18 @@ class ComposerStaticInit5a9cdac556bc224b8f4676ac39920f7b
     );
 
     public static $prefixDirsPsr4 = array (
+        'WPAM\\Public\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/public',
+        ),
+        'WPAM\\Includes\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/includes',
+        ),
+        'WPAM\\Admin\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/admin',
+        ),
         'Pusher\\' => 
         array (
             0 => __DIR__ . '/..' . '/pusher/pusher-php-server/src',

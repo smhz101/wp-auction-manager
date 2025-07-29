@@ -1,4 +1,6 @@
 <?php
+namespace WPAM\Includes;
+
 use Pusher\Pusher;
 
 class WPAM_Pusher_Provider implements WPAM_Realtime_Provider {

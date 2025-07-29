@@ -1,4 +1,6 @@
 <?php
+namespace WPAM\Admin;
+
 class WPAM_Admin {
     public function __construct() {
         add_action( 'admin_menu', [ $this, 'add_menu' ] );
@@ -301,7 +303,6 @@ class WPAM_Admin {
     }
 
     public function render_auctions_page() {
-        require_once WPAM_PLUGIN_DIR . 'admin/class-wpam-auctions-table.php';
         $table = new WPAM_Auctions_Table();
         $table->prepare_items();
         echo '<div class="wrap">';
@@ -314,7 +315,6 @@ class WPAM_Admin {
     }
 
     public function render_bids_page() {
-        require_once WPAM_PLUGIN_DIR . 'admin/class-wpam-bids-table.php';
         $auction_id = isset( $_GET['auction_id'] ) ? absint( $_GET['auction_id'] ) : 0;
         echo '<div class="wrap">';
         if ( ! $auction_id ) {
@@ -334,7 +334,6 @@ class WPAM_Admin {
     }
 
     public function render_messages_page() {
-        require_once WPAM_PLUGIN_DIR . 'admin/class-wpam-messages-table.php';
 
         if ( isset( $_GET['action'], $_GET['message'] ) && in_array( $_GET['action'], [ 'approve', 'unapprove' ], true ) ) {
             $message_id = absint( $_GET['message'] );

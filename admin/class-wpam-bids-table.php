@@ -1,9 +1,11 @@
 <?php
+namespace WPAM\Admin;
+
 if ( ! class_exists( 'WP_List_Table' ) ) {
     require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
 }
 
-class WPAM_Bids_Table extends WP_List_Table {
+class WPAM_Bids_Table extends \WP_List_Table {
     protected $auction_id;
 
     public function __construct( $auction_id ) {
