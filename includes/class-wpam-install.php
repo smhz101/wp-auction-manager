@@ -28,6 +28,9 @@ class WPAM_Install {
             KEY user_id (user_id)
         ) $charset_collate;";
         dbDelta( $watchlist_sql );
+
+        add_rewrite_endpoint( 'watchlist', EP_ROOT | EP_PAGES );
+        flush_rewrite_rules();
     }
 }
 
