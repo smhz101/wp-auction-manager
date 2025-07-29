@@ -33,3 +33,11 @@ msgstr ""
 #: wp-auction-manager.php
 msgid "https://muzammil.dev"
 msgstr ""
+
+#: admin/class-wpam-admin.php
+msgid "Enable Firebase"
+msgstr ""
+
+#: admin/class-wpam-admin.php
+msgid "Firebase Server Key"
+msgstr ""

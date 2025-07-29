@@ -57,6 +57,7 @@ class WPAM_Admin {
         register_setting( 'wpam_settings', 'wpam_soft_close' );
         register_setting( 'wpam_settings', 'wpam_enable_twilio' );
         register_setting( 'wpam_settings', 'wpam_enable_firebase' );
+        register_setting( 'wpam_settings', 'wpam_firebase_server_key' );
         register_setting( 'wpam_settings', 'wpam_twilio_sid' );
         register_setting( 'wpam_settings', 'wpam_twilio_token' );
         register_setting( 'wpam_settings', 'wpam_twilio_from' );
@@ -72,6 +73,7 @@ class WPAM_Admin {
         add_settings_section( 'wpam_general', __( 'Auction Defaults', 'wpam' ), '__return_false', 'wpam_settings' );
         add_settings_section( 'wpam_providers', __( 'Providers', 'wpam' ), '__return_false', 'wpam_settings' );      
         add_settings_section( 'wpam_twilio', __( 'Twilio Integration', 'wpam' ), '__return_false', 'wpam_settings' );
+        add_settings_section( 'wpam_firebase', __( 'Firebase Integration', 'wpam' ), '__return_false', 'wpam_settings' );
         add_settings_section( 'wpam_realtime', __( 'Realtime Integration', 'wpam' ), '__return_false', 'wpam_settings' );
 
         add_settings_section( 'wpam_pusher', __( 'Pusher Realtime', 'wpam' ), '__return_false', 'wpam_settings' );
@@ -123,6 +125,14 @@ class WPAM_Admin {
             [ $this, 'field_enable_firebase' ],
             'wpam_settings',
             'wpam_providers'
+        );
+
+        add_settings_field(
+            'wpam_firebase_server_key',
+            __( 'Firebase Server Key', 'wpam' ),
+            [ $this, 'field_firebase_server_key' ],
+            'wpam_settings',
+            'wpam_firebase'
         );
 
         add_settings_field(
@@ -249,6 +259,11 @@ class WPAM_Admin {
     public function field_enable_firebase() {
         $value = get_option( 'wpam_enable_firebase', false );
         echo '<input type="checkbox" name="wpam_enable_firebase" value="1"' . checked( 1, $value, false ) . ' />';
+    }
+
+    public function field_firebase_server_key() {
+        $value = esc_attr( get_option( 'wpam_firebase_server_key', '' ) );
+        echo '<input type="text" class="regular-text" name="wpam_firebase_server_key" value="' . $value . '" />';
     }
 
     public function field_realtime_provider() {

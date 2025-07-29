@@ -78,8 +78,17 @@ class WPAM_Bid {
         // Extend auction end time if within soft close window
         $extended   = false;
         $new_end_ts = $end_ts;
-        $threshold  = absint( get_option( 'wpam_soft_close_threshold', 30 ) );
-        $extension  = absint( get_option( 'wpam_soft_close_extend', 30 ) );
+        $threshold  = absint( get_option( 'wpam_soft_close_threshold', 0 ) );
+        $extension  = absint( get_option( 'wpam_soft_close_extend', 0 ) );
+        $legacy     = absint( get_option( 'wpam_soft_close', 0 ) ) * 60;
+
+        if ( 0 === $threshold ) {
+            $threshold = $legacy;
+        }
+
+        if ( 0 === $extension ) {
+            $extension = $legacy;
+        }
 
         if ( $threshold > 0 && $end_ts - $now <= $threshold ) {
             $new_end_ts = $end_ts + $extension;
