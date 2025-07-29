@@ -30,14 +30,15 @@ When editing an auction product you can configure additional options in the **Au
 - **Reserve Price** – minimum price required for the auction to have a winner.
 - **Buy Now Price** – optional instant purchase price.
 - **Minimum Increment** – smallest allowed increase between bids.
-- **Soft Close Minutes** – extend the end time if a bid is placed near closing.
+- **Soft Close Threshold** – number of seconds before closing when bids will extend the auction.
+- **Extension Duration** – seconds added to the end time when the threshold is triggered.
 - **Auto Relist** – automatically relist when no winning bid exists.
 - **Max Bids Per User** – limit how many bids each user can place.
 - **Auction Fee** – extra fee added to the winning bid.
 
 ### Soft-close settings
 
-Under **Auctions → Settings** you can configure the soft-close period and how long the auction should extend when a last-second bid arrives. By default both values are 30 seconds.
+Under **Auctions → Settings** you can configure the soft-close threshold and the extension duration. If a bid arrives within the threshold, the end time is extended by the duration. By default both values are 30 seconds.
 
 ## Folder structure
 
