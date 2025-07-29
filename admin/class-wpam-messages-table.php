@@ -9,7 +9,14 @@ class WPAM_Messages_Table extends \WP_List_Table {
     public function prepare_items() {
         global $wpdb;
         $table   = $wpdb->prefix . 'wc_auction_messages';
-        $results = $wpdb->get_results( "SELECT * FROM $table ORDER BY created_at DESC", ARRAY_A );
+        $search  = isset( $_REQUEST['s'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['s'] ) ) : '';
+        $sql     = "SELECT * FROM $table";
+        if ( $search ) {
+            $like = '%' . $wpdb->esc_like( $search ) . '%';
+            $sql  .= $wpdb->prepare( ' WHERE message LIKE %s', $like );
+        }
+        $sql    .= ' ORDER BY created_at DESC';
+        $results = $wpdb->get_results( $sql, ARRAY_A );
         $this->items = $results;
         $this->set_pagination_args( [
             'total_items' => count( $results ),

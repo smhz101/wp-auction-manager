@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.2 - 2025-07-30
+- Added search box and auction type filter to admin auctions table.
+- Admin pages now enqueue WordPress component styles.
+
 ## 1.0.1 - 2025-07-29
 - Automatic order creation and winner notifications on auction end.
 
