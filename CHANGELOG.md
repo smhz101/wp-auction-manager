@@ -7,3 +7,8 @@
 - Provided public scripts and templates for bidding and watchlist controls.
 - Introduced messages table with frontend Q&A and admin moderation screen.
 
+## Unreleased
+- Added AJAX endpoint to fetch current highest bid.
+- Frontend script now polls for bid updates every 5 seconds.
+- Introduced skeleton WebSocket provider classes for future realtime support.
+
