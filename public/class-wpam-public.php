@@ -5,6 +5,11 @@ class WPAM_Public {
     }
 
     public function enqueue_scripts() {
+        $pusher_enabled = get_option( 'wpam_pusher_enabled' );
+        if ( $pusher_enabled ) {
+            wp_enqueue_script( 'pusher-js', 'https://js.pusher.com/7.2/pusher.min.js', [], '7.2', true );
+        }
+
         wp_enqueue_script( 'wpam-ajax-bid', WPAM_PLUGIN_URL . 'public/js/ajax-bid.js', [ 'jquery' ], WPAM_PLUGIN_VERSION, true );
         wp_localize_script(
             'wpam-ajax-bid',
@@ -14,6 +19,10 @@ class WPAM_Public {
                 'bid_nonce'       => wp_create_nonce( 'wpam_place_bid' ),
                 'watchlist_nonce' => wp_create_nonce( 'wpam_toggle_watchlist' ),
                 'highest_nonce'   => wp_create_nonce( 'wpam_get_highest_bid' ),
+                'pusher_enabled'  => (bool) $pusher_enabled,
+                'pusher_key'      => get_option( 'wpam_pusher_key' ),
+                'pusher_cluster'  => get_option( 'wpam_pusher_cluster' ),
+                'pusher_channel'  => 'wpam-auctions',
             ]
         );
     }

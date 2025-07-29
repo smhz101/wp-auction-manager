@@ -2,6 +2,9 @@
 class WPAM_Loader {
     public function run() {
         // Load dependencies
+        if ( file_exists( WPAM_PLUGIN_DIR . 'vendor/autoload.php' ) ) {
+            require_once WPAM_PLUGIN_DIR . 'vendor/autoload.php';
+        }
         require_once WPAM_PLUGIN_DIR . 'includes/class-wpam-auction.php';
         require_once WPAM_PLUGIN_DIR . 'includes/class-wpam-bid.php';
         require_once WPAM_PLUGIN_DIR . 'includes/class-wpam-watchlist.php';
