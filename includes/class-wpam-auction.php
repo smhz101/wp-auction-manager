@@ -39,9 +39,12 @@ class WPAM_Auction {
         echo '<div id="auction_product_data" class="panel woocommerce_options_panel hidden">';
 
         woocommerce_wp_select([
-            'id'      => '_auction_type',
-            'label'   => __( 'Auction Type', 'wpam' ),
-            'options' => [
+
+            'id'          => '_auction_type',
+            'label'       => __( 'Auction Type', 'wpam' ),
+            'description' => __( 'Select the bidding style for this auction.', 'wpam' ),
+            'desc_tip'    => true,
+            'options'     => [
                 'standard' => __( 'Standard', 'wpam' ),
                 'reverse'  => __( 'Reverse', 'wpam' ),
                 'sealed'   => __( 'Sealed', 'wpam' ),
@@ -49,61 +52,79 @@ class WPAM_Auction {
         ]);
 
         woocommerce_wp_text_input([
-            'id'   => '_auction_start',
-            'label' => __( 'Start Date', 'wpam' ),
-            'type' => 'datetime-local',
+            'id'          => '_auction_start',
+            'label'       => __( 'Start Date', 'wpam' ),
+            'type'        => 'datetime-local',
+            'description' => __( 'When bidding opens.', 'wpam' ),
+            'desc_tip'    => true,
         ]);
 
         woocommerce_wp_text_input([
-            'id'   => '_auction_end',
-            'label' => __( 'End Date', 'wpam' ),
-            'type' => 'datetime-local',
+            'id'          => '_auction_end',
+            'label'       => __( 'End Date', 'wpam' ),
+            'type'        => 'datetime-local',
+            'description' => __( 'When the auction will close.', 'wpam' ),
+            'desc_tip'    => true,
         ]);
 
         woocommerce_wp_text_input([
-            'id'    => '_auction_reserve',
-            'label' => __( 'Reserve Price', 'wpam' ),
-            'type'  => 'number',
+            'id'          => '_auction_reserve',
+            'label'       => __( 'Reserve Price', 'wpam' ),
+            'description' => __( 'Minimum price required for a valid sale.', 'wpam' ),
+            'desc_tip'    => true,
+            'type'        => 'number',
             'custom_attributes' => [ 'step' => '0.01', 'min' => '0' ],
         ]);
 
         woocommerce_wp_text_input([
-            'id'    => '_auction_buy_now',
-            'label' => __( 'Buy Now Price', 'wpam' ),
-            'type'  => 'number',
+            'id'          => '_auction_buy_now',
+            'label'       => __( 'Buy Now Price', 'wpam' ),
+            'description' => __( 'Optional instant purchase amount.', 'wpam' ),
+            'desc_tip'    => true,
+            'type'        => 'number',
             'custom_attributes' => [ 'step' => '0.01', 'min' => '0' ],
         ]);
 
         woocommerce_wp_text_input([
-            'id'    => '_auction_increment',
-            'label' => __( 'Minimum Increment', 'wpam' ),
-            'type'  => 'number',
+            'id'          => '_auction_increment',
+            'label'       => __( 'Minimum Increment', 'wpam' ),
+            'description' => __( 'Lowest amount a new bid must increase by.', 'wpam' ),
+            'desc_tip'    => true,
+            'type'        => 'number',
             'custom_attributes' => [ 'step' => '0.01', 'min' => '0' ],
         ]);
 
         woocommerce_wp_text_input([
-            'id'    => '_auction_soft_close',
-            'label' => __( 'Soft Close Minutes', 'wpam' ),
-            'type'  => 'number',
+            'id'          => '_auction_soft_close',
+            'label'       => __( 'Soft Close Minutes', 'wpam' ),
+            'description' => __( 'Number of minutes to extend if a bid is placed near the end.', 'wpam' ),
+            'desc_tip'    => true,
+            'type'        => 'number',
             'custom_attributes' => [ 'step' => '1', 'min' => '0' ],
         ]);
 
         woocommerce_wp_checkbox([
-            'id'    => '_auction_auto_relist',
-            'label' => __( 'Auto Relist', 'wpam' ),
+            'id'          => '_auction_auto_relist',
+            'label'       => __( 'Auto Relist', 'wpam' ),
+            'description' => __( 'Relist automatically when there is no winner.', 'wpam' ),
+            'desc_tip'    => true,
         ]);
 
         woocommerce_wp_text_input([
-            'id'    => '_auction_max_bids',
-            'label' => __( 'Max Bids Per User', 'wpam' ),
-            'type'  => 'number',
+            'id'          => '_auction_max_bids',
+            'label'       => __( 'Max Bids Per User', 'wpam' ),
+            'description' => __( 'Limit how many bids each user may place.', 'wpam' ),
+            'desc_tip'    => true,
+            'type'        => 'number',
             'custom_attributes' => [ 'step' => '1', 'min' => '0' ],
         ]);
 
         woocommerce_wp_text_input([
-            'id'    => '_auction_fee',
-            'label' => __( 'Auction Fee', 'wpam' ),
-            'type'  => 'number',
+            'id'          => '_auction_fee',
+            'label'       => __( 'Auction Fee', 'wpam' ),
+            'description' => __( 'Extra fee added to the winning bid.', 'wpam' ),
+            'desc_tip'    => true,
+            'type'        => 'number',
             'custom_attributes' => [ 'step' => '0.01', 'min' => '0' ],
         ]);
 
