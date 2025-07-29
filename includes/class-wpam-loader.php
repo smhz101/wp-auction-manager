@@ -15,5 +15,6 @@ class WPAM_Loader {
         new WPAM_Messages();
         new \WPAM\Admin\WPAM_Admin();
         new \WPAM\Public\WPAM_Public();
+        new WPAM_Blocks();
     }
 }

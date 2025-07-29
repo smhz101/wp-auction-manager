@@ -68,6 +68,10 @@ Firebase push notifications are available through the `Enable Firebase` option (
 
 The plugin includes a lightweight React application that can render either a list of auctions or a single auction view. Use the `[wpam_auction_app]` shortcode on any page to load the React interface. When used on a single auction product page the current auction is automatically displayed.
 
+### Auction block
+
+WP Auction Manager ships with a dynamic block registered via `@wordpress/scripts`. Search for **Auction** in the block inserter to add a live countdown, status labels and bid form anywhere within the block editor. Block attributes allow toggling each element and optionally specifying an Auction ID when used outside of the product screen.
+
 ## Running unit tests
 
 A `tests/` directory will contain PHPUnit tests in the future. Once available, install development dependencies and execute:
