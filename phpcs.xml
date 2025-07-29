@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<ruleset name="WP Auction Manager">
+    <rule ref="WordPress" />
+    <exclude-pattern>vendor/*</exclude-pattern>
+</ruleset>

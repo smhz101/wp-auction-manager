@@ -29,7 +29,25 @@ class WPAM_Install {
         ) $charset_collate;";
         dbDelta( $watchlist_sql );
 
+        // Messages table
+        $messages_table = $wpdb->prefix . 'wc_auction_messages';
+        $messages_sql   = "CREATE TABLE IF NOT EXISTS $messages_table (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            auction_id bigint(20) unsigned NOT NULL,
+            user_id bigint(20) unsigned NOT NULL,
+            message text NOT NULL,
+            parent_id bigint(20) unsigned NOT NULL DEFAULT 0,
+            approved tinyint(1) NOT NULL DEFAULT 0,
+            created_at datetime NOT NULL,
+            PRIMARY KEY  (id),
+            KEY auction_id (auction_id),
+            KEY user_id (user_id)
+        ) $charset_collate;";
+        dbDelta( $messages_sql );
+
         add_rewrite_endpoint( 'watchlist', EP_ROOT | EP_PAGES );
+        add_rewrite_endpoint( 'my-bids', EP_ROOT | EP_PAGES );
+        add_rewrite_endpoint( 'auctions-won', EP_ROOT | EP_PAGES );
         flush_rewrite_rules();
 
         // Schedule cron events for existing auctions

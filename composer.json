@@ -1,5 +1,19 @@
 {
-    "require": {
-        "pusher/pusher-php-server": "^7.2"
+  "name": "wp-auction-manager/wp-auction-manager",
+  "type": "project",
+  "require-dev": {
+    "phpunit/phpunit": "^9",
+    "wp-phpunit/wp-phpunit": "^6",
+    "wp-coding-standards/wpcs": "^3",
+    "dealerdirect/phpcodesniffer-composer-installer": "^1",
+    "johnpbloch/wordpress": "^6",
+    "yoast/phpunit-polyfills": "^1.0",
+    "pusher/pusher-php-server": "^7.2"
+  },
+  "config": {
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true,
+      "johnpbloch/wordpress-core-installer": true
     }
+  }
 }
