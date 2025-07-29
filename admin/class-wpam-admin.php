@@ -10,8 +10,18 @@ class WPAM_Admin {
     }
 
     public function add_menu() {
+        add_menu_page(
+            __( 'Auctions', 'wpam' ),
+            __( 'Auctions', 'wpam' ),
+            'manage_options',
+            'wpam-auctions',
+            [ $this, 'render_auctions_page' ],
+            'dashicons-hammer',
+            56
+        );
+
         add_submenu_page(
-            'woocommerce',
+            'wpam-auctions',
             __( 'All Auctions', 'wpam' ),
             __( 'All Auctions', 'wpam' ),
             'manage_options',
@@ -20,7 +30,7 @@ class WPAM_Admin {
         );
 
         add_submenu_page(
-            'woocommerce',
+            'wpam-auctions',
             __( 'Bids', 'wpam' ),
             __( 'Bids', 'wpam' ),
             'manage_options',
@@ -29,7 +39,7 @@ class WPAM_Admin {
         );
 
         add_submenu_page(
-            'woocommerce',
+            'wpam-auctions',
             __( 'Messages', 'wpam' ),
             __( 'Messages', 'wpam' ),
             'manage_options',
@@ -38,7 +48,7 @@ class WPAM_Admin {
         );
 
         add_submenu_page(
-            'woocommerce',
+            'wpam-auctions',
             __( 'Integrations', 'wpam' ),
             __( 'Settings', 'wpam' ),
             'manage_options',
@@ -401,7 +411,7 @@ class WPAM_Admin {
             'wpam/v1',
             '/settings',
             [
-                'methods'             => WP_REST_Server::READABLE,
+                'methods'             => \WP_REST_Server::READABLE,
                 'callback'            => [ $this, 'rest_get_settings' ],
                 'permission_callback' => function() {
                     return current_user_can( 'manage_options' );
@@ -413,7 +423,7 @@ class WPAM_Admin {
             'wpam/v1',
             '/settings',
             [
-                'methods'             => WP_REST_Server::EDITABLE,
+                'methods'             => \WP_REST_Server::EDITABLE,
                 'callback'            => [ $this, 'rest_update_settings' ],
                 'permission_callback' => function() {
                     return current_user_can( 'manage_options' );
@@ -422,7 +432,7 @@ class WPAM_Admin {
         );
     }
 
-    public function rest_get_settings( WP_REST_Request $request ) {
+    public function rest_get_settings( \WP_REST_Request $request ) {
         $options = [];
         foreach ( $this->get_option_keys() as $key ) {
             $options[ $key ] = get_option( $key );
@@ -431,7 +441,7 @@ class WPAM_Admin {
         return rest_ensure_response( $options );
     }
 
-    public function rest_update_settings( WP_REST_Request $request ) {
+    public function rest_update_settings( \WP_REST_Request $request ) {
         $params = $request->get_json_params();
         foreach ( $this->get_option_keys() as $key ) {
             if ( isset( $params[ $key ] ) ) {

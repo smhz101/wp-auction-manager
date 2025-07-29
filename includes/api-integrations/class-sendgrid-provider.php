@@ -5,7 +5,7 @@ class WPAM_SendGrid_Provider implements WPAM_API_Provider {
     public function send( $to, $message ) {
         $key = get_option( 'wpam_sendgrid_key' );
         if ( ! $key ) {
-            return new WP_Error( 'sendgrid_credentials', __( 'SendGrid API key missing', 'wpam' ) );
+            return new \WP_Error( 'sendgrid_credentials', __( 'SendGrid API key missing', 'wpam' ) );
         }
         $body = [
             'personalizations' => [ [ 'to' => [ [ 'email' => $to ] ] ] ],
@@ -28,6 +28,6 @@ class WPAM_SendGrid_Provider implements WPAM_API_Provider {
         if ( $code >= 200 && $code < 300 ) {
             return true;
         }
-        return new WP_Error( 'sendgrid_http', wp_remote_retrieve_body( $response ) );
+        return new \WP_Error( 'sendgrid_http', wp_remote_retrieve_body( $response ) );
     }
 }

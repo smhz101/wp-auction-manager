@@ -292,7 +292,7 @@ class WPAM_Auction {
             ],
         ];
 
-        $query = new WP_Query( $args );
+        $query = new \WP_Query( $args );
         foreach ( $query->posts as $post ) {
             update_post_meta( $post->ID, '_auction_ended', 1 );
             WPAM_Notifications::notify_auction_end( $post->ID );
