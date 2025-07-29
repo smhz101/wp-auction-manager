@@ -33,11 +33,12 @@ wp-auction-manager/
 ├── wp-auction-manager.php  # Main plugin file
 ```
 
-## Running unit tests
+## Development
 
-A `tests/` directory will contain PHPUnit tests in the future. Once available, install development dependencies and execute:
+Install dependencies with Composer and run the automated checks:
 
 ```bash
 composer install
 vendor/bin/phpunit
+vendor/bin/phpcs
 ```
