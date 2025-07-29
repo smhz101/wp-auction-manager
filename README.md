@@ -33,6 +33,10 @@ When editing an auction product you can configure additional options in the **Au
 - **Max Bids Per User** – limit how many bids each user can place.
 - **Auction Fee** – extra fee added to the winning bid.
 
+### Soft-close settings
+
+Under **Auctions → Settings** you can configure the soft-close period and how long the auction should extend when a last-second bid arrives. By default both values are 30 seconds.
+
 ## Folder structure
 
 ```text
