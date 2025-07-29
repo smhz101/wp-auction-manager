@@ -60,6 +60,8 @@ class WPAM_Bid {
         );
 
 
+        WPAM_Notifications::notify_new_bid( $auction_id, $bid, $user_id );
+
         if ( $this->realtime_provider ) {
             $this->realtime_provider->send_bid_update( $auction_id, $bid );
         }
