@@ -69,10 +69,16 @@ class WPAM_Admin {
         register_setting( 'wpam_settings', 'wpam_pusher_cluster' );
         register_setting( 'wpam_settings', 'wpam_soft_close_threshold' );
         register_setting( 'wpam_settings', 'wpam_soft_close_extend' );
+        register_setting( 'wpam_settings', 'wpam_realtime_provider' );
+        register_setting( 'wpam_settings', 'wpam_pusher_app_id' );
+        register_setting( 'wpam_settings', 'wpam_pusher_key' );
+        register_setting( 'wpam_settings', 'wpam_pusher_secret' );
+        register_setting( 'wpam_settings', 'wpam_pusher_cluster' );
 
         add_settings_section( 'wpam_general', __( 'Auction Defaults', 'wpam' ), '__return_false', 'wpam_settings' );
         add_settings_section( 'wpam_providers', __( 'Providers', 'wpam' ), '__return_false', 'wpam_settings' );      
         add_settings_section( 'wpam_twilio', __( 'Twilio Integration', 'wpam' ), '__return_false', 'wpam_settings' );
+        add_settings_section( 'wpam_realtime', __( 'Realtime Integration', 'wpam' ), '__return_false', 'wpam_settings' );
 
         add_settings_section( 'wpam_pusher', __( 'Pusher Realtime', 'wpam' ), '__return_false', 'wpam_settings' );
 
@@ -157,12 +163,11 @@ class WPAM_Admin {
         );
 
         add_settings_field(
-
-            'wpam_pusher_enabled',
-            __( 'Enable Pusher WebSockets', 'wpam' ),
-            [ $this, 'field_pusher_enabled' ],
+            'wpam_realtime_provider',
+            __( 'Realtime Provider', 'wpam' ),
+            [ $this, 'field_realtime_provider' ],
             'wpam_settings',
-            'wpam_pusher'
+            'wpam_realtime'
         );
 
         add_settings_field(
@@ -170,7 +175,7 @@ class WPAM_Admin {
             __( 'Pusher App ID', 'wpam' ),
             [ $this, 'field_pusher_app_id' ],
             'wpam_settings',
-            'wpam_pusher'
+            'wpam_realtime'
         );
 
         add_settings_field(
@@ -178,7 +183,7 @@ class WPAM_Admin {
             __( 'Pusher Key', 'wpam' ),
             [ $this, 'field_pusher_key' ],
             'wpam_settings',
-            'wpam_pusher'
+            'wpam_realtime'
         );
 
         add_settings_field(
@@ -186,7 +191,7 @@ class WPAM_Admin {
             __( 'Pusher Secret', 'wpam' ),
             [ $this, 'field_pusher_secret' ],
             'wpam_settings',
-            'wpam_pusher'
+            'wpam_realtime'
         );
 
         add_settings_field(
@@ -194,7 +199,7 @@ class WPAM_Admin {
             __( 'Pusher Cluster', 'wpam' ),
             [ $this, 'field_pusher_cluster' ],
             'wpam_settings',
-            'wpam_pusher'
+            'wpam_realtime'
         );
     }
 
@@ -247,6 +252,34 @@ class WPAM_Admin {
     public function field_soft_close_extend() {
         $value = esc_attr( get_option( 'wpam_soft_close_extend', 30 ) );
         echo '<input type="number" class="small-text" name="wpam_soft_close_extend" value="' . $value . '" />';
+    }
+
+    public function field_realtime_provider() {
+        $value = esc_attr( get_option( 'wpam_realtime_provider', 'none' ) );
+        echo '<select name="wpam_realtime_provider">';
+        echo '<option value="none"' . selected( $value, 'none', false ) . '>' . esc_html__( 'None', 'wpam' ) . '</option>';
+        echo '<option value="pusher"' . selected( $value, 'pusher', false ) . '>' . esc_html__( 'Pusher', 'wpam' ) . '</option>';
+        echo '</select>';
+    }
+
+    public function field_pusher_app_id() {
+        $value = esc_attr( get_option( 'wpam_pusher_app_id', '' ) );
+        echo '<input type="text" class="regular-text" name="wpam_pusher_app_id" value="' . $value . '" />';
+    }
+
+    public function field_pusher_key() {
+        $value = esc_attr( get_option( 'wpam_pusher_key', '' ) );
+        echo '<input type="text" class="regular-text" name="wpam_pusher_key" value="' . $value . '" />';
+    }
+
+    public function field_pusher_secret() {
+        $value = esc_attr( get_option( 'wpam_pusher_secret', '' ) );
+        echo '<input type="text" class="regular-text" name="wpam_pusher_secret" value="' . $value . '" />';
+    }
+
+    public function field_pusher_cluster() {
+        $value = esc_attr( get_option( 'wpam_pusher_cluster', '' ) );
+        echo '<input type="text" class="regular-text" name="wpam_pusher_cluster" value="' . $value . '" />';
     }
 
     public function render_auctions_page() {

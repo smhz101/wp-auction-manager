@@ -14,11 +14,9 @@ class WPAM_Bid {
         add_action( 'wp_ajax_wpam_get_highest_bid', [ $this, 'get_highest_bid' ] );
         add_action( 'wp_ajax_nopriv_wpam_get_highest_bid', [ $this, 'get_highest_bid' ] );
 
-        if ( class_exists( 'WPAM_Pusher_Provider' ) ) {
-            $provider = new WPAM_Pusher_Provider();
-            if ( method_exists( $provider, 'is_active' ) && $provider->is_active() ) {
-                $this->realtime_provider = $provider;
-            }
+        $provider = get_option( 'wpam_realtime_provider', 'none' );
+        if ( 'pusher' === $provider && class_exists( 'WPAM_Pusher_Provider' ) ) {
+            $this->realtime_provider = new WPAM_Pusher_Provider();
         }
       
     }
