@@ -9,13 +9,13 @@ class WPAM_Pusher_Provider implements WPAM_Realtime_Provider {
     protected $channel = 'wpam-auctions';
 
     public function __construct() {
-        $enabled = get_option( 'wpam_pusher_enabled' );
-        $app_id  = get_option( 'wpam_pusher_app_id' );
-        $key     = get_option( 'wpam_pusher_key' );
-        $secret  = get_option( 'wpam_pusher_secret' );
-        $cluster = get_option( 'wpam_pusher_cluster' );
+        $provider = get_option( 'wpam_realtime_provider', 'none' );
+        $app_id   = get_option( 'wpam_pusher_app_id' );
+        $key      = get_option( 'wpam_pusher_key' );
+        $secret   = get_option( 'wpam_pusher_secret' );
+        $cluster  = get_option( 'wpam_pusher_cluster' );
 
-        if ( $enabled && $app_id && $key && $secret && $cluster ) {
+        if ( 'pusher' === $provider && $app_id && $key && $secret && $cluster ) {
             $this->pusher = new Pusher(
                 $key,
                 $secret,
