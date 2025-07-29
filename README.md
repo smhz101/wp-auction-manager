@@ -20,6 +20,19 @@ WP Auction Manager is a WordPress plugin that extends WooCommerce by adding an "
 3. Set the auction start and end dates in the Auction tab.
 4. Publish the product to start the auction at the scheduled time.
 
+### Auction options
+
+When editing an auction product you can configure additional options in the **Auction** tab:
+
+- **Auction Type** – choose Standard, Reverse or Sealed.
+- **Reserve Price** – minimum price required for the auction to have a winner.
+- **Buy Now Price** – optional instant purchase price.
+- **Minimum Increment** – smallest allowed increase between bids.
+- **Soft Close Minutes** – extend the end time if a bid is placed near closing.
+- **Auto Relist** – automatically relist when no winning bid exists.
+- **Max Bids Per User** – limit how many bids each user can place.
+- **Auction Fee** – extra fee added to the winning bid.
+
 ## Folder structure
 
 ```text
