@@ -1,4 +1,6 @@
 <?php
+namespace WPAM\Includes;
+
 class WPAM_Firebase_Provider implements WPAM_API_Provider {
     /**
      * Send a push notification via Firebase Cloud Messaging.

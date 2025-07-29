@@ -1,9 +1,11 @@
 <?php
+namespace WPAM\Admin;
+
 if ( ! class_exists( 'WP_List_Table' ) ) {
     require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
 }
 
-class WPAM_Messages_Table extends WP_List_Table {
+class WPAM_Messages_Table extends \WP_List_Table {
     public function prepare_items() {
         global $wpdb;
         $table   = $wpdb->prefix . 'wc_auction_messages';

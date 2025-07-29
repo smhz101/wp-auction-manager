@@ -1,4 +1,6 @@
 <?php
+namespace WPAM\Includes;
+
 class WPAM_Notifications {
     public static function send_to_user( $user_id, $subject, $message ) {
         $sms_enabled   = get_option( 'wpam_enable_twilio', '0' );

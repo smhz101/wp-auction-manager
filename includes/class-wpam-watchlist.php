@@ -1,4 +1,6 @@
 <?php
+namespace WPAM\Includes;
+
 class WPAM_Watchlist {
     public function __construct() {
         add_action( 'wp_ajax_wpam_toggle_watchlist', [ $this, 'toggle_watchlist' ] );

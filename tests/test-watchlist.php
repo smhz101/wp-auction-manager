@@ -1,4 +1,7 @@
 <?php
+use WPAM\Includes\WPAM_Watchlist;
+use WPAM\Includes\WPAM_Install;
+
 class Test_WPAM_Watchlist extends WP_Ajax_UnitTestCase {
     protected $auction_id;
     public function set_up() : void {

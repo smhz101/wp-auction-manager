@@ -1,4 +1,7 @@
 <?php
+use WPAM\Includes\WPAM_Bid;
+use WPAM\Includes\WPAM_Install;
+
 class Test_WPAM_Bid_Limit extends WP_Ajax_UnitTestCase {
     protected $auction_id;
     protected $user_id;

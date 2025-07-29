@@ -18,8 +18,9 @@ define( 'WPAM_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'WPAM_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'WPAM_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
 
-require_once WPAM_PLUGIN_DIR . 'includes/class-wpam-loader.php';
-require_once WPAM_PLUGIN_DIR . 'includes/class-wpam-install.php';
+if ( file_exists( WPAM_PLUGIN_DIR . 'vendor/autoload.php' ) ) {
+    require_once WPAM_PLUGIN_DIR . 'vendor/autoload.php';
+}
 
 /**
  * Load plugin translation files.
@@ -49,11 +50,11 @@ function wpam_activation() {
         );
     }
 
-    WPAM_Install::activate();
+    \WPAM\Includes\WPAM_Install::activate();
 }
 
 function wpam_run_plugin() {
-    $loader = new WPAM_Loader();
+    $loader = new \WPAM\Includes\WPAM_Loader();
     $loader->run();
 }
 

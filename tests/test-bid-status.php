@@ -1,4 +1,6 @@
 <?php
+use WPAM\Includes\WPAM_Bid;
+
 class Test_WPAM_Bid_Status extends WP_Ajax_UnitTestCase {
     public function set_up() : void {
         parent::set_up();

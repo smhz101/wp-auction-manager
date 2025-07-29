@@ -1,4 +1,5 @@
 <?php
+namespace WPAM\Includes;
 if ( class_exists( 'WC_Product' ) && ! class_exists( 'WC_Product_Auction' ) ) {
     class WC_Product_Auction extends WC_Product {
         public function get_type() {

@@ -1,4 +1,6 @@
 <?php
+namespace WPAM\Public;
+
 class WPAM_Public {
     public function __construct() {
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_scripts' ] );
