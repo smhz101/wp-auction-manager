@@ -370,6 +370,7 @@ class WPAM_Admin {
     public function enqueue_scripts( $hook ) {
         $admin_pages = [
             'toplevel_page_wpam-auctions',
+            'auctions_page_wpam-settings',
             'wpam-auctions_page_wpam-auctions',
             'wpam-auctions_page_wpam-bids',
             'wpam-auctions_page_wpam-messages',
@@ -385,7 +386,7 @@ class WPAM_Admin {
             );
         }
 
-        if ( 'wpam-auctions_page_wpam-settings' !== $hook ) {
+        if ( 'auctions_page_wpam-settings' !== $hook ) {
             return;
         }
 
@@ -402,7 +403,7 @@ class WPAM_Admin {
             'wpamSettings',
             [
                 'nonce'    => wp_create_nonce( 'wp_rest' ),
-                'rest_url' => esc_url_raw( rest_url( 'wpam/v1/settings' ) ),
+                'rest_endpoint' => 'wpam/v1/settings',
             ]
         );
     }

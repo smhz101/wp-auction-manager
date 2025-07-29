@@ -87,9 +87,10 @@
     }
 
     useEffect(() => {
-      apiFetch({ path: wpamSettings.rest_url, headers: { 'X-WP-Nonce': wpamSettings.nonce } }).then(
-        setSettings
-      );
+      apiFetch({
+        path: wpamSettings.rest_endpoint,
+        headers: { 'X-WP-Nonce': wpamSettings.nonce },
+      }).then(setSettings);
     }, []);
     useEffect(() => {
       if (settings) {
@@ -147,7 +148,7 @@
 
       setSaving(true);
       apiFetch({
-        path: wpamSettings.rest_url,
+        path: wpamSettings.rest_endpoint,
         method: 'POST',
         data: settings,
         headers: { 'X-WP-Nonce': wpamSettings.nonce },
@@ -335,6 +336,7 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     const root = document.getElementById('wpam-settings-root');
+    console.log('root >>', root);
     if (root) {
       render(createElement(SettingsApp), root);
     }
