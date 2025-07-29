@@ -30,6 +30,8 @@ class WPAM_Install {
         dbDelta( $watchlist_sql );
 
         add_rewrite_endpoint( 'watchlist', EP_ROOT | EP_PAGES );
+        add_rewrite_endpoint( 'my-bids', EP_ROOT | EP_PAGES );
+        add_rewrite_endpoint( 'auctions-won', EP_ROOT | EP_PAGES );
         flush_rewrite_rules();
 
         // Schedule cron events for existing auctions
