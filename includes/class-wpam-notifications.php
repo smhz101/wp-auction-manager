@@ -1,8 +1,7 @@
 <?php
 class WPAM_Notifications {
     public static function send_to_user( $user_id, $subject, $message ) {
-        $sms_enabled   = get_option( 'wpam_enable_sms_notifications', '0' );
-        $email_enabled = get_option( 'wpam_enable_email_notifications', '1' );
+        $sms_enabled   = get_option( 'wpam_enable_twilio', '0' );
 
         $user  = get_user_by( 'id', $user_id );
         if ( ! $user ) {
@@ -18,7 +17,7 @@ class WPAM_Notifications {
             $sent   = ! is_wp_error( $result );
         }
 
-        if ( ! $sent && $email_enabled ) {
+        if ( ! $sent ) {
             wp_mail( $user->user_email, $subject, $message );
         }
     }

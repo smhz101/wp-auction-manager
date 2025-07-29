@@ -60,6 +60,7 @@ The plugin uses AJAX polling by default to refresh the current highest bid every
 Future versions may swap to WebSocket providers found under `includes/api-integrations`.
 
 Under **Auctions → Settings → Realtime Integration** you can select `None` or `Pusher` as the provider. Enter your Pusher app credentials to enable realtime WebSocket updates.
+Twilio SMS notifications can be toggled via the `Enable Twilio Notifications` option (`wpam_enable_twilio`).
 
 ## Running unit tests
 
