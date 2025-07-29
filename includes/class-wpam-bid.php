@@ -84,6 +84,8 @@ class WPAM_Bid {
         if ( $threshold > 0 && $end_ts - $now <= $threshold ) {
             $new_end_ts = $end_ts + $extension;
             update_post_meta( $auction_id, '_auction_end', date( 'Y-m-d H:i:s', $new_end_ts ) );
+            wp_clear_scheduled_hook( 'wpam_auction_end', [ $auction_id ] );
+            wp_schedule_single_event( $new_end_ts, 'wpam_auction_end', [ $auction_id ] );
             $extended = true;
         }
 
