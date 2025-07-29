@@ -2,7 +2,8 @@
     const { createElement, render, useState, useEffect } = wp.element;
     const {
         TextControl,
-        CheckboxControl,
+        ToggleControl,
+        Tooltip,
         Button,
         SelectControl,
         TabPanel,
@@ -16,23 +17,53 @@
         const [ errors, setErrors ] = useState( {} );
         const [ notice, setNotice ] = useState( '' );
 
+        function labelWithTip( label, tip ) {
+            return wp.element.createElement( 'span', null, label, ' ', wp.element.createElement( Tooltip, { text: tip }, wp.element.createElement( 'span', { className: 'dashicons dashicons-info' } ) ) );
+        }
+
+        function validateRequiredKeys( opts ) {
+            const newErrors = { ...errors };
+            if ( opts.wpam_enable_twilio ) {
+                if ( ! opts.wpam_twilio_sid ) { newErrors.wpam_twilio_sid = 'Required when Twilio is enabled.'; } else { delete newErrors.wpam_twilio_sid; }
+                if ( ! opts.wpam_twilio_token ) { newErrors.wpam_twilio_token = 'Required when Twilio is enabled.'; } else { delete newErrors.wpam_twilio_token; }
+                if ( ! opts.wpam_twilio_from ) { newErrors.wpam_twilio_from = 'Required when Twilio is enabled.'; } else { delete newErrors.wpam_twilio_from; }
+            } else { delete newErrors.wpam_twilio_sid; delete newErrors.wpam_twilio_token; delete newErrors.wpam_twilio_from; }
+            if ( opts.wpam_enable_firebase ) {
+                if ( ! opts.wpam_firebase_server_key ) { newErrors.wpam_firebase_server_key = 'Server key required when Firebase is enabled.'; } else { delete newErrors.wpam_firebase_server_key; }
+            } else { delete newErrors.wpam_firebase_server_key; }
+            if ( opts.wpam_realtime_provider === 'pusher' ) {
+                if ( ! opts.wpam_pusher_app_id ) { newErrors.wpam_pusher_app_id = 'Required when using Pusher.'; } else { delete newErrors.wpam_pusher_app_id; }
+                if ( ! opts.wpam_pusher_key ) { newErrors.wpam_pusher_key = 'Required when using Pusher.'; } else { delete newErrors.wpam_pusher_key; }
+                if ( ! opts.wpam_pusher_secret ) { newErrors.wpam_pusher_secret = 'Required when using Pusher.'; } else { delete newErrors.wpam_pusher_secret; }
+                if ( ! opts.wpam_pusher_cluster ) { newErrors.wpam_pusher_cluster = 'Required when using Pusher.'; } else { delete newErrors.wpam_pusher_cluster; }
+            } else { delete newErrors.wpam_pusher_app_id; delete newErrors.wpam_pusher_key; delete newErrors.wpam_pusher_secret; delete newErrors.wpam_pusher_cluster; }
+            setErrors( newErrors );
+        }
+
+
         useEffect( () => {
             apiFetch( { path: wpamSettings.rest_url, headers: { 'X-WP-Nonce': wpamSettings.nonce } } ).then( setSettings );
         }, [] );
+        useEffect( () => {
+            if ( settings ) {
+                validateRequiredKeys( settings );
+            }
+        }, [ settings ] );
 
         if ( ! settings ) {
             return createElement( 'p', null, 'Loading...' );
         }
 
         function updateField( field, value ) {
-            setSettings( { ...settings, [ field ]: value } );
+            const newSettings = { ...settings, [ field ]: value };
+            setSettings( newSettings );
             if ( errors[ field ] ) {
                 const newErrors = { ...errors };
                 delete newErrors[ field ];
                 setErrors( newErrors );
             }
+            validateRequiredKeys( newSettings );
         }
-
         function saveSettings() {
             const newErrors = {};
             const increment = parseFloat( settings.wpam_default_increment );
@@ -104,8 +135,8 @@
                     onChange: ( v ) => updateField( 'wpam_soft_close_extend', v ),
                     error: errors.wpam_soft_close_extend,
                 } ),
-                createElement( CheckboxControl, {
-                    label: 'Require KYC Verification',
+                createElement( ToggleControl, {
+                    label: labelWithTip( 'Require KYC Verification', 'Users must verify identity before bidding.' ),
                     help: 'Users must verify identity before bidding.',
                     checked: !! settings.wpam_require_kyc,
                     onChange: ( v ) => updateField( 'wpam_require_kyc', v ? 1 : 0 )
@@ -115,8 +146,8 @@
 
         function renderNotifications() {
             return createElement( 'div', null,
-                createElement( CheckboxControl, {
-                    label: 'Enable Twilio Notifications',
+                createElement( ToggleControl, {
+                    label: labelWithTip( 'Enable Twilio Notifications', 'Send SMS messages using Twilio.' ),
                     help: 'Send SMS messages using Twilio.',
                     checked: !! settings.wpam_enable_twilio,
                     onChange: ( v ) => updateField( 'wpam_enable_twilio', v ? 1 : 0 )
@@ -149,8 +180,8 @@
                     onChange: ( v ) => updateField( 'wpam_sendgrid_key', v ),
                     error: errors.wpam_sendgrid_key,
                 } ),
-                createElement( CheckboxControl, {
-                    label: 'Enable Firebase',
+                createElement( ToggleControl, {
+                    label: labelWithTip( 'Enable Firebase', 'Push notifications via Firebase Cloud Messaging.' ),
                     help: 'Push notifications via Firebase Cloud Messaging.',
                     checked: !! settings.wpam_enable_firebase,
                     onChange: ( v ) => updateField( 'wpam_enable_firebase', v ? 1 : 0 )

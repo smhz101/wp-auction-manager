@@ -40,6 +40,13 @@ When editing an auction product you can configure additional options in the **Au
 
 Under **Auctions → Settings** you can configure the soft-close threshold and the extension duration. If a bid arrives within the threshold, the end time is extended by the duration. By default both values are 30 seconds.
 The older `Soft Close Duration` option is still honored when the new values are empty; it sets both the threshold and the extension length in seconds.
+### Integration settings
+
+The **Integrations** tab lets you connect optional services.
+- **Twilio** – enable SMS alerts and fill in your account SID, token and from number.
+- **Firebase** – toggle Firebase push notifications and provide the server key.
+- **Pusher** – choose "Pusher" under Realtime Provider and enter your app credentials for WebSocket updates.
+
 
 ## Folder structure
 
