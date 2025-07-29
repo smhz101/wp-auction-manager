@@ -20,6 +20,7 @@ The plugin also supports a question and answer thread on each auction so potenti
 2. Choose **Auction** from the product type dropdown.
 3. Set the auction start and end dates in the Auction tab.
 4. Publish the product to start the auction at the scheduled time.
+5. When the auction ends, the highest bidder receives a WooCommerce order automatically.
 
 ### Auction options
 
