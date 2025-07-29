@@ -82,18 +82,22 @@ class WPAM_Bid {
             update_post_meta( $auction_id, '_auction_end', $new_end );
         }
 
-        // Basic notification via Twilio if enabled
+        // SMS notification via Twilio if enabled
         if ( get_option( 'wpam_enable_twilio' ) ) {
             if ( class_exists( 'WPAM_Twilio_Provider' ) ) {
                 $provider = new WPAM_Twilio_Provider();
-                $provider->send( get_option( 'wpam_twilio_from' ), sprintf( __( 'New bid of %s on auction #%d', 'wpam' ), $bid, $auction_id ) );
+                $provider->send(
+                    get_option( 'wpam_twilio_from' ),
+                    sprintf( __( 'New bid of %s on auction #%d', 'wpam' ), $bid, $auction_id )
+                );
             }
+        }
 
-            WPAM_Notifications::notify_new_bid( $auction_id, $bid, $user_id );
+        // Always send internal notifications and realtime updates
+        WPAM_Notifications::notify_new_bid( $auction_id, $bid, $user_id );
 
-            if ( $this->realtime_provider ) {
-                $this->realtime_provider->send_bid_update( $auction_id, $bid );
-            }
+        if ( $this->realtime_provider ) {
+            $this->realtime_provider->send_bid_update( $auction_id, $bid );
         }
 
         wp_send_json_success( [ 'message' => __( 'Bid received', 'wpam' ) ] );
