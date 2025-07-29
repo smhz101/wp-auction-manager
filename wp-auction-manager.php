@@ -5,6 +5,7 @@ Description: Convert WooCommerce products into auctions with optional real-time 
 Version: 1.0.0
 Author: Muzammil Hussain
 Author URI: https://muzammil.dev
+Uninstall: uninstall.php
 */
 
 if ( ! defined( 'ABSPATH' ) ) {
