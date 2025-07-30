@@ -423,6 +423,12 @@
           error: errors.wpam_sendgrid_key,
         }),
         createElement(ToggleControl, {
+          label: 'Enable Toast Notices',
+          help: 'Show on-screen bid status messages.',
+          checked: !!settings.wpam_enable_toasts,
+          onChange: (v) => updateField('wpam_enable_toasts', v ? 1 : 0),
+        }),
+        createElement(ToggleControl, {
           label: labelWithTip(
             'Enable Firebase',
             'Push notifications via Firebase Cloud Messaging.'

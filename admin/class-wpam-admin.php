@@ -605,9 +605,10 @@ class WPAM_Admin {
 			'wpam_enable_proxy_bidding',
 			'wpam_enable_silent_bidding',
 			'wpam_buyer_premium',
-			'wpam_seller_fee',
-			'wpam_webhook_url',
-		);
+                        'wpam_seller_fee',
+                        'wpam_webhook_url',
+                        'wpam_enable_toasts',
+                );
 
 		register_rest_route(
 			'wpam/v1',
