@@ -5,6 +5,7 @@ class WPAM_Notifications {
     public static function send_to_user( $user_id, $subject, $message ) {
         $sms_enabled   = get_option( 'wpam_enable_twilio', '0' );
         $push_enabled  = get_option( 'wpam_enable_firebase', '0' );
+        $email_enabled = get_option( 'wpam_enable_email', '1' );
         $sendgrid_key  = get_option( 'wpam_sendgrid_key', '' );
 
         $user  = get_user_by( 'id', $user_id );
@@ -30,13 +31,16 @@ class WPAM_Notifications {
             $sent   = ! is_wp_error( $result );
         }
 
-        if ( ! $sent && $sendgrid_key ) {
-            $result = $sendgrid_provider->send( $user->user_email, $message );
-            $sent   = ! is_wp_error( $result );
-        }
+        if ( ! $sent && $email_enabled ) {
+            if ( $sendgrid_key ) {
+                $result = $sendgrid_provider->send( $user->user_email, $message );
+                $sent   = ! is_wp_error( $result );
+            }
 
-        if ( ! $sent ) {
-            wp_mail( $user->user_email, $subject, $message );
+            if ( ! $sent ) {
+                wp_mail( $user->user_email, $subject, $message );
+                $sent = true;
+            }
         }
     }
 

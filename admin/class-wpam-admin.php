@@ -78,8 +78,9 @@ class WPAM_Admin {
 	public function register_settings() {
 		register_setting( 'wpam_settings', 'wpam_default_increment' );
 		register_setting( 'wpam_settings', 'wpam_soft_close' );
-		register_setting( 'wpam_settings', 'wpam_enable_twilio' );
-		register_setting( 'wpam_settings', 'wpam_enable_firebase' );
+                register_setting( 'wpam_settings', 'wpam_enable_twilio' );
+                register_setting( 'wpam_settings', 'wpam_enable_firebase' );
+                register_setting( 'wpam_settings', 'wpam_enable_email' );
 		register_setting( 'wpam_settings', 'wpam_firebase_server_key' );
 		register_setting( 'wpam_settings', 'wpam_sendgrid_key' );
 		register_setting( 'wpam_settings', 'wpam_require_kyc' );
@@ -152,13 +153,21 @@ class WPAM_Admin {
 			'wpam_general'
 		);
 
-		add_settings_field(
-			'wpam_enable_twilio',
-			__( 'Enable Twilio Notifications', 'wpam' ),
-			array( $this, 'field_enable_twilio' ),
-			'wpam_settings',
-			'wpam_providers'
-		);
+                add_settings_field(
+                        'wpam_enable_twilio',
+                        __( 'Enable Twilio Notifications', 'wpam' ),
+                        array( $this, 'field_enable_twilio' ),
+                        'wpam_settings',
+                        'wpam_providers'
+                );
+
+                add_settings_field(
+                        'wpam_enable_email',
+                        __( 'Enable Email Notifications', 'wpam' ),
+                        array( $this, 'field_enable_email' ),
+                        'wpam_settings',
+                        'wpam_providers'
+                );
 
 		add_settings_field(
 			'wpam_enable_firebase',
@@ -330,10 +339,15 @@ class WPAM_Admin {
 		echo '<input type="number" class="small-text" name="wpam_soft_close" value="' . $value . '" />';
 	}
 
-	public function field_enable_twilio() {
-		$value = get_option( 'wpam_enable_twilio', false );
-		echo '<input type="checkbox" name="wpam_enable_twilio" value="1"' . checked( 1, $value, false ) . ' />';
-	}
+        public function field_enable_twilio() {
+                $value = get_option( 'wpam_enable_twilio', false );
+                echo '<input type="checkbox" name="wpam_enable_twilio" value="1"' . checked( 1, $value, false ) . ' />';
+        }
+
+        public function field_enable_email() {
+                $value = get_option( 'wpam_enable_email', true );
+                echo '<input type="checkbox" name="wpam_enable_email" value="1"' . checked( 1, $value, false ) . ' />';
+        }
 
 	public function field_enable_firebase() {
 		$value = get_option( 'wpam_enable_firebase', false );
@@ -567,9 +581,10 @@ class WPAM_Admin {
 		return array(
 			'wpam_default_increment',
 			'wpam_soft_close',
-			'wpam_enable_twilio',
-			'wpam_enable_firebase',
-			'wpam_firebase_server_key',
+                        'wpam_enable_twilio',
+                        'wpam_enable_firebase',
+                        'wpam_enable_email',
+                        'wpam_firebase_server_key',
 			'wpam_sendgrid_key',
 			'wpam_twilio_sid',
 			'wpam_twilio_token',
