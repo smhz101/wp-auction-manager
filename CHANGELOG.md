@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.3 - 2025-07-31
+- Pre-populate default start and end dates for new auctions.
+- Date fields now use flatpickr for easier selection.
+
 ## 1.0.2 - 2025-07-30
 - Added search box and auction type filter to admin auctions table.
 - Admin pages now enqueue WordPress component styles.

@@ -73,10 +73,21 @@ class WPAM_Auction {
             'value'       => get_post_meta( $post_id, '_auction_type', true ),
         ]);
 
-        $start_value   = get_post_meta( $post_id, '_auction_start', true );
         $timezone      = wp_timezone();
-        $start_timestamp = $start_value ? ( new \DateTimeImmutable( $start_value, $timezone ) )->getTimestamp() : false;
-        $is_past_start   = $start_timestamp && $start_timestamp < ( new \DateTimeImmutable( 'now', $timezone ) )->getTimestamp();
+        $current_ts    = current_datetime()->getTimestamp();
+        $start_value   = get_post_meta( $post_id, '_auction_start', true );
+
+        if ( ! $start_value ) {
+            $start_value = wp_date( 'Y-m-d H:i:s', $current_ts + HOUR_IN_SECONDS, $timezone );
+        }
+
+        $start_timestamp = ( new \DateTimeImmutable( $start_value, $timezone ) )->getTimestamp();
+        $is_past_start   = $start_timestamp < $current_ts;
+
+        $end_value = get_post_meta( $post_id, '_auction_end', true );
+        if ( ! $end_value ) {
+            $end_value = wp_date( 'Y-m-d H:i:s', $start_timestamp + DAY_IN_SECONDS, $timezone );
+        }
 
         woocommerce_wp_text_input([
             'id'          => '_auction_start',
@@ -98,7 +109,7 @@ class WPAM_Auction {
             'type'        => 'datetime-local',
             'description' => __( 'When the auction will close.', 'wpam' ),
             'desc_tip'    => true,
-            'value'       => get_post_meta( $post_id, '_auction_end', true ),
+            'value'       => $end_value,
         ]);
 
         woocommerce_wp_text_input([
