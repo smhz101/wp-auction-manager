@@ -154,6 +154,10 @@ The plugin includes a lightweight React application that can render either a lis
 
 WP Auction Manager ships with a dynamic block registered via `@wordpress/scripts`. Search for **Auction** in the block inserter to add a live countdown, status labels and bid form anywhere within the block editor. Block attributes allow toggling each element and optionally specifying an Auction ID when used outside of the product screen.
 
+### Building block assets
+
+If you modify any files under `src/blocks`, run `npm install` once then `npm run build` to compile the assets into the `build/` directory. The plugin registers blocks from the compiled location, so rebuilt files are required for the block to appear correctly on the front end.
+
 ## REST API
 
 Authenticated users can perform actions over the REST API using the `wpam/v1` namespace. Include a valid `X-WP-Nonce` header obtained with `wp_create_nonce( 'wp_rest' )` when using cookie authentication.

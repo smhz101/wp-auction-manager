@@ -8,6 +8,7 @@ class WPAM_Blocks {
     }
 
     public function register_blocks() {
+        // Blocks are compiled to the build directory via `npm run build`.
         register_block_type(
             WPAM_PLUGIN_DIR . 'build/blocks/auction',
             [
