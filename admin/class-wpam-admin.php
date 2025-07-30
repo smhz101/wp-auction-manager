@@ -368,6 +368,18 @@ class WPAM_Admin {
     }
 
     public function enqueue_scripts( $hook ) {
+        $screen = get_current_screen();
+
+        if ( 'post-new.php' === $hook && 'product' === $screen->post_type && 'add' === $screen->action ) {
+            wp_enqueue_script(
+                'wpam-select-auction-type',
+                WPAM_PLUGIN_URL . 'admin/js/select-auction-product-type.js',
+                [ 'jquery' ],
+                WPAM_PLUGIN_VERSION,
+                true
+            );
+        }
+
         $slug        = 'auctions';
         $admin_pages = [
             'toplevel_page_wpam-' . $slug,
