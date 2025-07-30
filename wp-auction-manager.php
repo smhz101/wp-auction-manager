@@ -96,9 +96,38 @@ function wpam_run_plugin() {
 }
 
 register_activation_hook( __FILE__, 'wpam_activation' );
-register_deactivation_hook( __FILE__, function() {
-    // Reserved for future cleanup tasks
-} );
+/**
+ * Deactivation hook to clear cron events and cached data.
+ */
+function wpam_deactivation() {
+    $hooks = [
+        'wpam_check_ended_auctions',
+        'wpam_update_auction_states',
+        'wpam_auction_start',
+        'wpam_auction_end',
+        'wpam_handle_auction_end',
+    ];
+
+    foreach ( $hooks as $hook ) {
+        wp_clear_scheduled_hook( $hook );
+    }
+
+    global $wpdb;
+    $patterns   = [
+        "_transient_wpam_%",
+        "_site_transient_wpam_%",
+    ];
+    foreach ( $patterns as $like ) {
+        $results = $wpdb->get_col( $wpdb->prepare( "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s", $like ) );
+        foreach ( $results as $option_name ) {
+            $transient = str_replace( [ '_transient_', '_site_transient_' ], '', $option_name );
+            delete_transient( $transient );
+            delete_site_transient( $transient );
+        }
+    }
+}
+
+register_deactivation_hook( __FILE__, 'wpam_deactivation' );
 
 /**
  * Initialize the plugin only when WooCommerce is active.
