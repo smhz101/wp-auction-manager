@@ -287,13 +287,13 @@ class WPAM_Admin {
 	}
 
 	public function field_pusher_cluster() {
-					$value = esc_attr( get_option( 'wpam_pusher_cluster', '' ) );
-					echo '<input type="text" class="regular-text" name="wpam_pusher_cluster" value="' . $value . '" />';
+		$value = esc_attr( get_option( 'wpam_pusher_cluster', '' ) );
+		echo '<input type="text" class="regular-text" name="wpam_pusher_cluster" value="' . $value . '" />';
 	}
 
 	public function field_webhook_url() {
-					$value = esc_attr( get_option( 'wpam_webhook_url', '' ) );
-					echo '<input type="text" class="regular-text" name="wpam_webhook_url" value="' . $value . '" />';
+		$value = esc_attr( get_option( 'wpam_webhook_url', '' ) );
+		echo '<input type="text" class="regular-text" name="wpam_webhook_url" value="' . $value . '" />';
 	}
 
 	public function field_soft_close_threshold() {
