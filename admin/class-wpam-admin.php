@@ -463,15 +463,15 @@ class WPAM_Admin {
 			);
 		}
 
-                $slug        = 'wpam-auctions';
-                $admin_pages = array(
-                        'toplevel_page_' . $slug,
-                        $slug . '_page_wpam-auctions',
-                        $slug . '_page_wpam-bids',
-                        $slug . '_page_wpam-messages',
-                        $slug . '_page_wpam-logs',
-                        $slug . '_page_wpam-settings',
-                );
+               $slug        = 'auctions';
+               $admin_pages = array(
+                       'toplevel_page_wpam-' . $slug,
+                       $slug . '_page_wpam-auctions',
+                       $slug . '_page_wpam-bids',
+                       $slug . '_page_wpam-messages',
+                       $slug . '_page_wpam-logs',
+                       $slug . '_page_wpam-settings',
+               );
 
 		if ( in_array( $hook, $admin_pages, true ) ) {
 			wp_enqueue_style(

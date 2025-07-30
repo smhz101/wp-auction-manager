@@ -409,10 +409,16 @@
     );
   }
 
-  document.addEventListener('DOMContentLoaded', function () {
+  function init() {
     const root = document.getElementById('wpam-settings-root');
     if (root) {
       render(createElement(SettingsApp), root);
     }
-  });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 })(window.wp);
