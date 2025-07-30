@@ -2,7 +2,7 @@
 /*
 Plugin Name: WP Auction Manager
 Description: Convert WooCommerce products into auctions with optional real-time and notification integrations.
-Version: 1.0.2
+Version: 1.0.3
 Author: Muzammil Hussain
 Author URI: https://muzammil.dev
 Uninstall: uninstall.php
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 
-define( 'WPAM_PLUGIN_VERSION', '1.0.2' );
+define( 'WPAM_PLUGIN_VERSION', '1.0.3' );
 define( 'WPAM_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'WPAM_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'WPAM_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );

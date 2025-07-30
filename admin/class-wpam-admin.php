@@ -386,6 +386,29 @@ class WPAM_Admin {
             );
         }
 
+        if ( in_array( $hook, [ 'post-new.php', 'post.php' ], true ) && 'product' === $screen->post_type ) {
+            wp_enqueue_style(
+                'flatpickr',
+                'https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css',
+                [],
+                '4.6.13'
+            );
+            wp_enqueue_script(
+                'flatpickr',
+                'https://cdn.jsdelivr.net/npm/flatpickr',
+                [],
+                '4.6.13',
+                true
+            );
+            wp_enqueue_script(
+                'wpam-date-picker',
+                WPAM_PLUGIN_URL . 'admin/js/auction-date-picker.js',
+                [ 'jquery', 'flatpickr' ],
+                WPAM_PLUGIN_VERSION,
+                true
+            );
+        }
+
         $slug        = 'auctions';
         $admin_pages = [
             'toplevel_page_wpam-' . $slug,
