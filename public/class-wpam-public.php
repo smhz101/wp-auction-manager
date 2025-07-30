@@ -51,7 +51,7 @@ class WPAM_Public {
 		$pusher_enabled = ( 'pusher' === $provider );
 
 		if ( $pusher_enabled ) {
-			wp_enqueue_script( 'pusher-js', 'https://js.pusher.com/7.2/pusher.min.js', array(), '7.2', true );
+			wp_enqueue_script( 'pusher-js', 'https://cdnjs.cloudflare.com/ajax/libs/pusher/8.4.0/pusher.min.js', array(), '8.3.0', true );
 		}
 
 		wp_enqueue_style( 'wpam-frontend', WPAM_PLUGIN_URL . 'public/css/wpam-frontend.css', array( 'woocommerce-general' ), WPAM_PLUGIN_VERSION );
