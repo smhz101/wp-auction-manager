@@ -1,4 +1,6 @@
 jQuery(function ($) {
+  toastr.options.positionClass = 'toast-top-right';
+  toastr.options.timeOut = 3000;
   function updateCountdown() {
     $('.wpam-countdown').each(function () {
       const $el = $(this);
@@ -22,17 +24,11 @@ jQuery(function ($) {
   const userBids = {};
   const bidStatus = {};
 
-  function showToast(msg) {
+  function showToast(msg, type = 'info') {
     if (!wpam_ajax.show_notices) {
       return;
     }
-    const toast = $('<div class="wpam-toast"></div>').text(msg).appendTo('body');
-    toast.fadeIn(200);
-    setTimeout(function () {
-      toast.fadeOut(400, function () {
-        $(this).remove();
-      });
-    }, 3000);
+    toastr[type](msg);
   }
 
   function checkBidStatus(id, highest) {
@@ -64,8 +60,8 @@ jQuery(function ($) {
         nonce: wpam_ajax.bid_nonce,
       },
       function (res) {
-        alert(res.data.message);
         if (res.success) {
+          toastr.success(res.data.message);
           userBids[auctionId] = parseFloat(bidInput.val());
           bidStatus[auctionId] = 'winning';
           showToast("You're winning");
@@ -75,6 +71,8 @@ jQuery(function ($) {
               .attr('data-end', res.data.new_end_ts);
             updateCountdown();
           }
+        } else {
+          toastr.error(res.data.message);
         }
       }
     );
@@ -91,7 +89,11 @@ jQuery(function ($) {
         nonce: wpam_ajax.watchlist_nonce,
       },
       function (res) {
-        alert(res.data.message);
+        if (res.success) {
+          toastr.success(res.data.message);
+        } else {
+          toastr.error(res.data.message);
+        }
       }
     );
   });
