@@ -17,14 +17,12 @@ return function( $attributes ) {
     );
 
     $auction_id = absint( $atts['auctionId'] );
-    if ( ! $auction_id && is_singular( 'product' ) ) {
-        $product = wc_get_product( get_queried_object_id() );
-        if ( $product && 'auction' === $product->get_type() ) {
-            $auction_id = $product->get_id();
-        }
+    if ( ! $auction_id ) {
+        $auction_id = get_the_ID();
     }
 
-    if ( ! $auction_id ) {
+    $product = $auction_id ? wc_get_product( $auction_id ) : null;
+    if ( ! $product || 'auction' !== $product->get_type() ) {
         return '';
     }
 
