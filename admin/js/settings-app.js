@@ -113,78 +113,158 @@
       validateRequiredKeys(newSettings);
     }
 
+    // function saveSettings() {
+    //   const newErrors = {};
+    //   let hasError = false;
+
+    //   const increment = parseFloat(settings.wpam_default_increment);
+    //   if (isNaN(increment) || increment <= 0) {
+    //     newErrors.wpam_default_increment = 'Enter a positive number.';
+    //     hasError = true;
+    //   }
+
+    //   if (settings.wpam_soft_close) {
+    //     const sc = parseInt(settings.wpam_soft_close, 10);
+    //     if (isNaN(sc) || sc < 0) {
+    //       newErrors.wpam_soft_close = 'Must be zero or more.';
+    //       hasError = true;
+    //     }
+    //   }
+
+    //   if (settings.wpam_buyer_premium) {
+    //     const prem = parseFloat(settings.wpam_buyer_premium);
+    //     if (isNaN(prem) || prem < 0) {
+    //       newErrors.wpam_buyer_premium = 'Must be zero or more.';
+    //       hasError = true;
+    //     }
+    //   }
+
+    //   if (settings.wpam_seller_fee) {
+    //     const fee = parseFloat(settings.wpam_seller_fee);
+    //     if (isNaN(fee) || fee < 0) {
+    //       newErrors.wpam_seller_fee = 'Must be zero or more.';
+    //       hasError = true;
+    //     }
+    //   }
+
+    //   const threshold = parseInt(settings.wpam_soft_close_threshold, 10);
+    //   if (isNaN(threshold) || threshold < 0) {
+    //     newErrors.wpam_soft_close_threshold = 'Must be zero or more.';
+    //     hasError = true;
+    //   }
+
+    //   const extend = parseInt(settings.wpam_soft_close_extend, 10);
+    //   if (isNaN(extend) || extend <= 0) {
+    //     newErrors.wpam_soft_close_extend = 'Enter a positive number.';
+    //     hasError = true;
+    //   }
+
+    //   const maxExt = parseInt(settings.wpam_max_extensions, 10);
+    //   if (isNaN(maxExt) || maxExt < 0) {
+    //     newErrors.wpam_max_extensions = 'Must be zero or more.';
+    //     hasError = true;
+    //   }
+
+    //   if (settings.wpam_enable_twilio) {
+    //     if (!settings.wpam_twilio_sid) {
+    //       newErrors.wpam_twilio_sid = 'Required when Twilio is enabled.';
+    //       hasError = true;
+    //     }
+    //     if (!settings.wpam_twilio_token) {
+    //       newErrors.wpam_twilio_token = 'Required when Twilio is enabled.';
+    //       hasError = true;
+    //     }
+    //     if (!settings.wpam_twilio_from) {
+    //       newErrors.wpam_twilio_from = 'Required when Twilio is enabled.';
+    //       hasError = true;
+    //     }
+    //   }
+
+    //   if (hasError) {
+    //     setErrors(newErrors);
+    //     setNotice('Please fix the highlighted errors before saving.');
+    //     return;
+    //   }
+
+    //   setSaving(true);
+    //   setNotice(''); // Clear previous notices
+
+    //   apiFetch({
+    //     path: wpamSettings.rest_endpoint,
+    //     method: 'POST',
+    //     data: settings,
+    //     headers: { 'X-WP-Nonce': wpamSettings.nonce },
+    //   })
+    //     .then((response) => {
+    //       setSettings(response);
+    //       setSaving(false);
+    //       setErrors({});
+    //       setNotice('Settings saved.');
+    //       setTimeout(() => setNotice(''), 3000);
+    //     })
+    //     .catch((err) => {
+    //       setSaving(false);
+    //       setNotice('Failed to save settings. Please try again.');
+    //       console.error('Save failed:', err);
+    //     });
+    // }
+
     function saveSettings() {
       const newErrors = {};
-      let hasError = false;
 
-      const increment = parseFloat(settings.wpam_default_increment);
-      if (isNaN(increment) || increment <= 0) {
-        newErrors.wpam_default_increment = 'Enter a positive number.';
-        hasError = true;
-      }
-
-      if (settings.wpam_soft_close) {
-        const sc = parseInt(settings.wpam_soft_close, 10);
-        if (isNaN(sc) || sc < 0) {
-          newErrors.wpam_soft_close = 'Must be zero or more.';
-          hasError = true;
+      // Optional: You may still warn for incorrect numeric values if needed (not block save)
+      const warnIfInvalid = (key, value, test, message) => {
+        if (value !== '' && !test(value)) {
+          newErrors[key] = message;
         }
-      }
+      };
 
-      if (settings.wpam_buyer_premium) {
-        const prem = parseFloat(settings.wpam_buyer_premium);
-        if (isNaN(prem) || prem < 0) {
-          newErrors.wpam_buyer_premium = 'Must be zero or more.';
-          hasError = true;
-        }
-      }
+      warnIfInvalid(
+        'wpam_default_increment',
+        parseFloat(settings.wpam_default_increment),
+        (v) => v > 0,
+        'Should be a positive number.'
+      );
+      warnIfInvalid(
+        'wpam_soft_close',
+        parseInt(settings.wpam_soft_close, 10),
+        (v) => v >= 0,
+        'Should be zero or more.'
+      );
+      warnIfInvalid(
+        'wpam_buyer_premium',
+        parseFloat(settings.wpam_buyer_premium),
+        (v) => v >= 0,
+        'Should be zero or more.'
+      );
+      warnIfInvalid(
+        'wpam_seller_fee',
+        parseFloat(settings.wpam_seller_fee),
+        (v) => v >= 0,
+        'Should be zero or more.'
+      );
+      warnIfInvalid(
+        'wpam_soft_close_threshold',
+        parseInt(settings.wpam_soft_close_threshold, 10),
+        (v) => v >= 0,
+        'Should be zero or more.'
+      );
+      warnIfInvalid(
+        'wpam_soft_close_extend',
+        parseInt(settings.wpam_soft_close_extend, 10),
+        (v) => v > 0,
+        'Should be a positive number.'
+      );
+      warnIfInvalid(
+        'wpam_max_extensions',
+        parseInt(settings.wpam_max_extensions, 10),
+        (v) => v >= 0,
+        'Should be zero or more.'
+      );
 
-      if (settings.wpam_seller_fee) {
-        const fee = parseFloat(settings.wpam_seller_fee);
-        if (isNaN(fee) || fee < 0) {
-          newErrors.wpam_seller_fee = 'Must be zero or more.';
-          hasError = true;
-        }
-      }
-
-      const threshold = parseInt(settings.wpam_soft_close_threshold, 10);
-      if (isNaN(threshold) || threshold < 0) {
-        newErrors.wpam_soft_close_threshold = 'Must be zero or more.';
-        hasError = true;
-      }
-
-      const extend = parseInt(settings.wpam_soft_close_extend, 10);
-      if (isNaN(extend) || extend <= 0) {
-        newErrors.wpam_soft_close_extend = 'Enter a positive number.';
-        hasError = true;
-      }
-
-      const maxExt = parseInt(settings.wpam_max_extensions, 10);
-      if (isNaN(maxExt) || maxExt < 0) {
-        newErrors.wpam_max_extensions = 'Must be zero or more.';
-        hasError = true;
-      }
-
-      if (settings.wpam_enable_twilio) {
-        if (!settings.wpam_twilio_sid) {
-          newErrors.wpam_twilio_sid = 'Required when Twilio is enabled.';
-          hasError = true;
-        }
-        if (!settings.wpam_twilio_token) {
-          newErrors.wpam_twilio_token = 'Required when Twilio is enabled.';
-          hasError = true;
-        }
-        if (!settings.wpam_twilio_from) {
-          newErrors.wpam_twilio_from = 'Required when Twilio is enabled.';
-          hasError = true;
-        }
-      }
-
-      if (hasError) {
-        setErrors(newErrors);
-        setNotice('Please fix the highlighted errors before saving.');
-        return;
-      }
+      // Allow all empty keys for Twilio, Firebase, Pusher
+      // Errors are just informative, not blockers
+      setErrors(newErrors);
 
       setSaving(true);
       setNotice(''); // Clear previous notices
@@ -198,7 +278,6 @@
         .then((response) => {
           setSettings(response);
           setSaving(false);
-          setErrors({});
           setNotice('Settings saved.');
           setTimeout(() => setNotice(''), 3000);
         })
@@ -301,7 +380,10 @@
         'div',
         null,
         createElement(ToggleControl, {
-          label: labelWithTip('Enable Email Notifications', 'Send emails via WordPress or SendGrid.'),
+          label: labelWithTip(
+            'Enable Email Notifications',
+            'Send emails via WordPress or SendGrid.'
+          ),
           help: 'Send emails via WordPress or SendGrid.',
           checked: !!settings.wpam_enable_email,
           onChange: (v) => updateField('wpam_enable_email', v ? 1 : 0),
