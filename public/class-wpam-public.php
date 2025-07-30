@@ -130,11 +130,15 @@ class WPAM_Public {
 	public function render_auction_meta() {
 		global $product;
 		$auction_id = $product->get_id();
-		$end        = get_post_meta( $auction_id, '_auction_end', true );
-		$end_ts     = $end ? strtotime( $end ) : 0;
+               $end        = get_post_meta( $auction_id, '_auction_end', true );
+               $end_ts     = 0;
+               if ( $end ) {
+                       $date   = new \DateTimeImmutable( $end, wp_timezone() );
+                       $end_ts = $date->getTimestamp();
+               }
 		$type       = get_post_meta( $auction_id, '_auction_type', true );
 		$status     = get_post_meta( $auction_id, '_auction_state', true );
-		$now        = current_time( 'timestamp' );
+               $now        = current_datetime()->getTimestamp();
 
 		global $wpdb;
 		$highest = $wpdb->get_var( $wpdb->prepare( "SELECT MAX(bid_amount) FROM {$wpdb->prefix}wc_auction_bids WHERE auction_id = %d", $auction_id ) );
