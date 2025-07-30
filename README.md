@@ -144,6 +144,7 @@ Future versions may swap to WebSocket providers found under `includes/api-integr
 Under **Auctions → Settings → Realtime Integration** you can select `None` or `Pusher` as the provider. Enter your Pusher app credentials to enable realtime WebSocket updates.
 Twilio SMS notifications can be toggled via the `Enable Twilio Notifications` option (`wpam_enable_twilio`).
 Firebase push notifications are available through the `Enable Firebase` option (`wpam_enable_firebase`) once you provide a valid server key.
+Email alerts are on by default. They can be disabled via the `Enable Email Notifications` option (`wpam_enable_email`). If a SendGrid API key is provided emails will be sent through SendGrid.
 
 ### React frontend
 

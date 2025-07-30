@@ -301,6 +301,12 @@
         'div',
         null,
         createElement(ToggleControl, {
+          label: labelWithTip('Enable Email Notifications', 'Send emails via WordPress or SendGrid.'),
+          help: 'Send emails via WordPress or SendGrid.',
+          checked: !!settings.wpam_enable_email,
+          onChange: (v) => updateField('wpam_enable_email', v ? 1 : 0),
+        }),
+        createElement(ToggleControl, {
           label: labelWithTip('Enable Twilio Notifications', 'Send SMS messages using Twilio.'),
           help: 'Send SMS messages using Twilio.',
           checked: !!settings.wpam_enable_twilio,
