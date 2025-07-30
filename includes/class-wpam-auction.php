@@ -159,6 +159,73 @@ class WPAM_Auction {
             'value'       => get_post_meta( $post_id, '_auction_fee', true ),
         ]);
 
+        woocommerce_wp_select([
+            'id'          => '_product_condition',
+            'label'       => __( 'Product Condition', 'wpam' ),
+            'options'     => [
+                'new'         => __( 'New', 'wpam' ),
+                'used'        => __( 'Used', 'wpam' ),
+                'refurbished' => __( 'Refurbished', 'wpam' ),
+                'other'       => __( 'Other', 'wpam' ),
+            ],
+            'value'       => get_post_meta( $post_id, '_product_condition', true ),
+        ]);
+
+        woocommerce_wp_text_input([
+            'id'          => '_sku',
+            'label'       => __( 'SKU', 'wpam' ),
+            'desc_tip'    => true,
+            'description' => __( 'Stock keeping unit.', 'wpam' ),
+            'value'       => get_post_meta( $post_id, '_sku', true ),
+        ]);
+
+        if ( get_option( 'wpam_enable_proxy_bidding' ) ) {
+            woocommerce_wp_checkbox([
+                'id'    => '_auction_proxy_bidding',
+                'label' => __( 'Enable Proxy Bidding', 'wpam' ),
+                'value' => get_post_meta( $post_id, '_auction_proxy_bidding', true ),
+            ]);
+        }
+
+        if ( get_option( 'wpam_enable_silent_bidding' ) ) {
+            woocommerce_wp_checkbox([
+                'id'    => '_auction_silent_bidding',
+                'label' => __( 'Enable Silent Bidding', 'wpam' ),
+                'value' => get_post_meta( $post_id, '_auction_silent_bidding', true ),
+            ]);
+        }
+
+        woocommerce_wp_text_input([
+            'id'          => '_auction_opening_price',
+            'label'       => __( 'Opening Price', 'wpam' ),
+            'type'        => 'number',
+            'custom_attributes' => [ 'step' => '0.01', 'min' => '0' ],
+            'value'       => get_post_meta( $post_id, '_auction_opening_price', true ),
+        ]);
+
+        woocommerce_wp_text_input([
+            'id'          => '_auction_lowest_price',
+            'label'       => __( 'Lowest Price', 'wpam' ),
+            'type'        => 'number',
+            'custom_attributes' => [ 'step' => '0.01', 'min' => '0' ],
+            'value'       => get_post_meta( $post_id, '_auction_lowest_price', true ),
+        ]);
+
+        woocommerce_wp_checkbox([
+            'id'    => '_auction_variable_increment',
+            'label' => __( 'Use Variable Bid Increment', 'wpam' ),
+            'value' => get_post_meta( $post_id, '_auction_variable_increment', true ),
+        ]);
+
+        echo '<div class="show_if_variable_increment">';
+        woocommerce_wp_textarea_input([
+            'id'          => '_auction_variable_increment_rules',
+            'label'       => __( 'Increment Rules', 'wpam' ),
+            'description' => __( 'One "max|increment" pair per line.', 'wpam' ),
+            'value'       => get_post_meta( $post_id, '_auction_variable_increment_rules', true ),
+        ]);
+        echo '</div>';
+
         echo '</div>';
     }
 
@@ -194,6 +261,14 @@ class WPAM_Auction {
             '_auction_auto_relist',
             '_auction_max_bids',
             '_auction_fee',
+            '_product_condition',
+            '_sku',
+            '_auction_proxy_bidding',
+            '_auction_silent_bidding',
+            '_auction_opening_price',
+            '_auction_lowest_price',
+            '_auction_variable_increment',
+            '_auction_variable_increment_rules',
         ];
 
         foreach ( $meta_keys as $key ) {
