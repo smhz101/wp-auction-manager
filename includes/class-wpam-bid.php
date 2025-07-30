@@ -45,6 +45,10 @@ class WPAM_Bid {
             ],
             [ '%d', '%d', '%s', '%s', '%s' ]
         );
+
+        if ( class_exists( '\\WPAM\\Includes\\WPAM_Fraud_Detector' ) ) {
+            \WPAM\Includes\WPAM_Fraud_Detector::analyze_bid( $bid_id, $user_id );
+        }
     }
 
     public function place_bid() {

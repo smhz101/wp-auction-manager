@@ -60,7 +60,19 @@ class WPAM_Install {
             KEY bid_id (bid_id),
             KEY user_id (user_id)
         ) $charset_collate;";
-		dbDelta( $audit_sql );
+        dbDelta( $audit_sql );
+
+                // Flagged users table
+                $flag_table = $wpdb->prefix . 'wpam_flagged_users';
+                $flag_sql   = "CREATE TABLE IF NOT EXISTS $flag_table (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            user_id bigint(20) unsigned NOT NULL,
+            reason varchar(255) NOT NULL,
+            flagged_at datetime NOT NULL,
+            PRIMARY KEY  (id),
+            KEY user_id (user_id)
+        ) $charset_collate;";
+                dbDelta( $flag_sql );
 
 		// Admin logs table
 		$logs_table = $wpdb->prefix . 'wc_auction_logs';
