@@ -1,4 +1,6 @@
 jQuery(function($){
+    toastr.options.positionClass = 'toast-top-right';
+    toastr.options.timeOut = 3000;
     function loadMessages(auctionId){
         $.post(
             wpam_messages.ajax_url,
@@ -32,10 +34,12 @@ jQuery(function($){
                 nonce: wpam_messages.message_nonce
             },
             function(res){
-                alert(res.data.message);
                 if(res.success){
+                    toastr.success(res.data.message);
                     textarea.val('');
                     loadMessages(auctionId);
+                } else {
+                    toastr.error(res.data.message);
                 }
             }
         );
