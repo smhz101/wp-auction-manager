@@ -101,6 +101,8 @@ class WPAM_Bid {
         $highest      = $highest_row ? floatval( $highest_row['bid_amount'] ) : 0;
         $highest_user = $highest_row ? intval( $highest_row['user_id'] ) : 0;
 
+        $prev_highest_user = $highest_user;
+
         $proxy_enabled  = $reverse ? false : self::proxy_enabled( $auction_id );
         $silent_enabled = $sealed ? true : self::silent_enabled( $auction_id );
         $max_bid        = isset( $_POST['max_bid'] ) ? floatval( $_POST['max_bid'] ) : $bid;
@@ -221,14 +223,35 @@ class WPAM_Bid {
             }
         }
 
+        // Determine new highest bid after processing
+        $new_highest_row  = $wpdb->get_row( $wpdb->prepare( "SELECT user_id, bid_amount FROM $table WHERE auction_id = %d ORDER BY bid_amount {$order}, id DESC LIMIT 1", $auction_id ), ARRAY_A );
+        $new_highest_user = $new_highest_row ? intval( $new_highest_row['user_id'] ) : 0;
+        $new_highest      = $new_highest_row ? floatval( $new_highest_row['bid_amount'] ) : 0;
+
         // SMS notification via Twilio if enabled
-        if ( ! $silent_enabled && get_option( 'wpam_enable_twilio' ) ) {
+        if ( ! $silent_enabled && get_option( 'wpam_enable_twilio' ) && get_option( 'wpam_lead_sms_alerts' ) ) {
             if ( class_exists( 'WPAM_Twilio_Provider' ) ) {
                 $provider = new WPAM_Twilio_Provider();
-                $provider->send(
-                    get_option( 'wpam_twilio_from' ),
-                    sprintf( __( 'New bid of %s on auction #%d', 'wpam' ), $bid, $auction_id )
-                );
+
+                if ( $new_highest_user === $user_id && $prev_highest_user !== $user_id ) {
+                    $phone = get_user_meta( $user_id, 'billing_phone', true );
+                    if ( $phone ) {
+                        $msg = sprintf(
+                            __( 'You are now the highest bidder on "%1$s" with %2$s', 'wpam' ),
+                            get_the_title( $auction_id ),
+                            function_exists( 'wc_price' ) ? wc_price( $new_highest ) : $new_highest
+                        );
+                        $provider->send( $phone, $msg );
+                    }
+                }
+
+                if ( $prev_highest_user && $prev_highest_user !== $new_highest_user ) {
+                    $prev_phone = get_user_meta( $prev_highest_user, 'billing_phone', true );
+                    if ( $prev_phone ) {
+                        $msg = sprintf( __( 'You have been outbid on "%s".', 'wpam' ), get_the_title( $auction_id ) );
+                        $provider->send( $prev_phone, $msg );
+                    }
+                }
             }
         }
 
@@ -316,6 +339,8 @@ class WPAM_Bid {
         $highest_row  = $wpdb->get_row( $wpdb->prepare( "SELECT user_id, bid_amount FROM $table WHERE auction_id = %d ORDER BY bid_amount {$order}, id DESC LIMIT 1", $auction_id ), ARRAY_A );
         $highest      = $highest_row ? floatval( $highest_row['bid_amount'] ) : 0;
         $highest_user = $highest_row ? intval( $highest_row['user_id'] ) : 0;
+
+        $prev_highest_user = $highest_user;
 
         $proxy_enabled  = $reverse ? false : self::proxy_enabled( $auction_id );
         $silent_enabled = $sealed ? true : self::silent_enabled( $auction_id );
@@ -437,13 +462,33 @@ class WPAM_Bid {
             }
         }
 
-        if ( ! $silent_enabled && get_option( 'wpam_enable_twilio' ) ) {
+        $new_highest_row  = $wpdb->get_row( $wpdb->prepare( "SELECT user_id, bid_amount FROM $table WHERE auction_id = %d ORDER BY bid_amount {$order}, id DESC LIMIT 1", $auction_id ), ARRAY_A );
+        $new_highest_user = $new_highest_row ? intval( $new_highest_row['user_id'] ) : 0;
+        $new_highest      = $new_highest_row ? floatval( $new_highest_row['bid_amount'] ) : 0;
+
+        if ( ! $silent_enabled && get_option( 'wpam_enable_twilio' ) && get_option( 'wpam_lead_sms_alerts' ) ) {
             if ( class_exists( 'WPAM_Twilio_Provider' ) ) {
                 $provider = new WPAM_Twilio_Provider();
-                $provider->send(
-                    get_option( 'wpam_twilio_from' ),
-                    sprintf( __( 'New bid of %s on auction #%d', 'wpam' ), $bid, $auction_id )
-                );
+
+                if ( $new_highest_user === $user_id && $prev_highest_user !== $user_id ) {
+                    $phone = get_user_meta( $user_id, 'billing_phone', true );
+                    if ( $phone ) {
+                        $msg = sprintf(
+                            __( 'You are now the highest bidder on "%1$s" with %2$s', 'wpam' ),
+                            get_the_title( $auction_id ),
+                            function_exists( 'wc_price' ) ? wc_price( $new_highest ) : $new_highest
+                        );
+                        $provider->send( $phone, $msg );
+                    }
+                }
+
+                if ( $prev_highest_user && $prev_highest_user !== $new_highest_user ) {
+                    $prev_phone = get_user_meta( $prev_highest_user, 'billing_phone', true );
+                    if ( $prev_phone ) {
+                        $msg = sprintf( __( 'You have been outbid on "%s".', 'wpam' ), get_the_title( $auction_id ) );
+                        $provider->send( $prev_phone, $msg );
+                    }
+                }
             }
         }
 

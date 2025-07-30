@@ -82,6 +82,7 @@ class WPAM_Admin {
 		register_setting( 'wpam_settings', 'wpam_default_increment' );
 		register_setting( 'wpam_settings', 'wpam_soft_close' );
                 register_setting( 'wpam_settings', 'wpam_enable_twilio' );
+                register_setting( 'wpam_settings', 'wpam_lead_sms_alerts' );
                 register_setting( 'wpam_settings', 'wpam_enable_firebase' );
                 register_setting( 'wpam_settings', 'wpam_enable_email' );
 		register_setting( 'wpam_settings', 'wpam_firebase_server_key' );
@@ -204,13 +205,21 @@ class WPAM_Admin {
 			'wpam_twilio'
 		);
 
-		add_settings_field(
-			'wpam_twilio_from',
-			__( 'Twilio From Number', 'wpam' ),
-			array( $this, 'field_twilio_from' ),
-			'wpam_settings',
-			'wpam_twilio'
-		);
+                add_settings_field(
+                        'wpam_twilio_from',
+                        __( 'Twilio From Number', 'wpam' ),
+                        array( $this, 'field_twilio_from' ),
+                        'wpam_settings',
+                        'wpam_twilio'
+                );
+
+                add_settings_field(
+                        'wpam_lead_sms_alerts',
+                        __( 'Enable Bid SMS Alerts', 'wpam' ),
+                        array( $this, 'field_lead_sms_alerts' ),
+                        'wpam_settings',
+                        'wpam_twilio'
+                );
 
 		add_settings_field(
 			'wpam_sendgrid_key',
@@ -287,10 +296,15 @@ class WPAM_Admin {
 		echo '<input type="text" class="regular-text" name="wpam_twilio_token" value="' . $value . '" />';
 	}
 
-	public function field_twilio_from() {
-		$value = esc_attr( get_option( 'wpam_twilio_from', '' ) );
-		echo '<input type="text" class="regular-text" name="wpam_twilio_from" value="' . $value . '" />';
-	}
+        public function field_twilio_from() {
+                $value = esc_attr( get_option( 'wpam_twilio_from', '' ) );
+                echo '<input type="text" class="regular-text" name="wpam_twilio_from" value="' . $value . '" />';
+        }
+
+        public function field_lead_sms_alerts() {
+                $value = get_option( 'wpam_lead_sms_alerts', false );
+                echo '<input type="checkbox" name="wpam_lead_sms_alerts" value="1"' . checked( 1, $value, false ) . ' />';
+        }
 
 	public function field_pusher_app_id() {
 		$value = esc_attr( get_option( 'wpam_pusher_app_id', '' ) );
@@ -585,6 +599,7 @@ class WPAM_Admin {
 			'wpam_default_increment',
 			'wpam_soft_close',
                         'wpam_enable_twilio',
+                        'wpam_lead_sms_alerts',
                         'wpam_enable_firebase',
                         'wpam_enable_email',
                         'wpam_firebase_server_key',

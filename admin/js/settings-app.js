@@ -415,6 +415,12 @@
           onChange: (v) => updateField('wpam_twilio_from', v),
           error: errors.wpam_twilio_from,
         }),
+        createElement(ToggleControl, {
+          label: 'Enable Bid SMS Alerts',
+          help: 'Notify bidders via SMS when bids take or lose the lead.',
+          checked: !!settings.wpam_lead_sms_alerts,
+          onChange: (v) => updateField('wpam_lead_sms_alerts', v ? 1 : 0),
+        }),
         createElement(TextControl, {
           label: 'SendGrid API Key',
           help: 'Used for sending email notifications.',
