@@ -46,17 +46,19 @@ class WPAM_Public {
 		return $template;
 	}
 
-	public function enqueue_scripts() {
-		$provider       = get_option( 'wpam_realtime_provider', 'none' );
-		$pusher_enabled = ( 'pusher' === $provider );
+        public function enqueue_scripts() {
+                $provider       = get_option( 'wpam_realtime_provider', 'none' );
+                $pusher_enabled = ( 'pusher' === $provider );
 
-		if ( $pusher_enabled ) {
-			wp_enqueue_script( 'pusher-js', 'https://cdnjs.cloudflare.com/ajax/libs/pusher/8.4.0/pusher.min.js', array(), '8.3.0', true );
-		}
+                if ( $pusher_enabled ) {
+                        wp_enqueue_script( 'pusher-js', 'https://cdnjs.cloudflare.com/ajax/libs/pusher/8.4.0/pusher.min.js', array(), '8.3.0', true );
+                }
+
+                wp_enqueue_script( 'countdown', 'https://cdn.jsdelivr.net/npm/countdown@2.6.0/countdown.min.js', array(), '2.6.0', true );
 
 		wp_enqueue_style( 'wpam-frontend', WPAM_PLUGIN_URL . 'public/css/wpam-frontend.css', array( 'woocommerce-general' ), WPAM_PLUGIN_VERSION );
 
-		wp_enqueue_script( 'wpam-ajax-bid', WPAM_PLUGIN_URL . 'public/js/ajax-bid.js', array( 'jquery' ), WPAM_PLUGIN_VERSION, true );
+                wp_enqueue_script( 'wpam-ajax-bid', WPAM_PLUGIN_URL . 'public/js/ajax-bid.js', array( 'jquery', 'countdown' ), WPAM_PLUGIN_VERSION, true );
 		wp_localize_script(
 			'wpam-ajax-bid',
 			'wpam_ajax',
