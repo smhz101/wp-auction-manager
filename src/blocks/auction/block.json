@@ -1,27 +1,37 @@
 {
-    "apiVersion": 2,
-    "name": "wpam/auction",
-    "title": "Auction",
-    "category": "widgets",
-    "icon": "hammer",
-    "description": "Display auction countdown and bid form.",
-    "textdomain": "wpam",
-    "attributes": {
-        "auctionId": {
-            "type": "integer"
-        },
-        "showCountdown": {
-            "type": "boolean",
-            "default": true
-        },
-        "showBidForm": {
-            "type": "boolean",
-            "default": true
-        },
-        "showStatus": {
-            "type": "boolean",
-            "default": true
-        }
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "wpam/auction",
+  "version": "0.1.0",
+  "title": "Auction",
+  "category": "widgets",
+  "icon": "hammer",
+  "description": "Display auction countdown and bid form.",
+  "example": {},
+  "supports": {
+    "html": false
+  },
+  "attributes": {
+    "auctionId": {
+      "type": "integer"
     },
-    "editorScript": "file:./index.js"
+    "showCountdown": {
+      "type": "boolean",
+      "default": true
+    },
+    "showBidForm": {
+      "type": "boolean",
+      "default": true
+    },
+    "showStatus": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "textdomain": "wpam",
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "style": "file:./style-index.css",
+  "render": "file:./render.php",
+  "viewScript": "file:./view.js"
 }
