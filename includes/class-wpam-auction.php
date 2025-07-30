@@ -12,6 +12,7 @@ class WPAM_Auction {
     public function __construct() {
         add_action( 'init', [ $this, 'register_product_type' ] );
         add_filter( 'woocommerce_product_data_tabs', [ $this, 'add_product_data_tab' ] );
+        add_filter( 'woocommerce_product_data_tabs', [ $this, 'reorder_product_tabs' ], 20 );
         add_action( 'woocommerce_product_data_panels', [ $this, 'add_product_data_fields' ] );
         add_action( 'woocommerce_process_product_meta_auction', [ $this, 'save_product_data' ] );
         add_action( 'wpam_handle_auction_end', [ $this, 'handle_auction_end' ] );
@@ -39,10 +40,25 @@ class WPAM_Auction {
         return $tabs;
     }
 
+    public function reorder_product_tabs( $tabs ) {
+        if ( isset( $tabs['auction'] ) ) {
+            $auction_tab = $tabs['auction'];
+            unset( $tabs['auction'] );
+            foreach ( $tabs as $key => $tab ) {
+                if ( ! isset( $tabs[ $key ]['class'] ) ) {
+                    $tabs[ $key ]['class'] = [];
+                }
+                $tabs[ $key ]['class'][] = 'hide_if_auction';
+            }
+            $tabs = array_merge( [ 'auction' => $auction_tab ], $tabs );
+        }
+        return $tabs;
+    }
+
     public function add_product_data_fields() {
         global $post;
         $post_id = $post ? $post->ID : 0;
-        echo '<div id="auction_product_data" class="panel woocommerce_options_panel hidden">';
+        echo '<div id="auction_product_data" class="panel woocommerce_options_panel hidden show_if_auction">';
 
         woocommerce_wp_select([
             'id'          => '_auction_type',
