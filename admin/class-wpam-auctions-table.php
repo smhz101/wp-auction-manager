@@ -26,7 +26,7 @@ class WPAM_Auctions_Table extends \WP_List_Table {
 			),
 			'meta_query'     => array(),
 		);
-		$now                = current_time( 'mysql' );
+               $now                = wp_date( 'Y-m-d H:i:s', current_datetime()->getTimestamp(), wp_timezone() );
 		if ( $this->auction_type ) {
 			$args['meta_query'][] = array(
 				'key'   => '_auction_type',
