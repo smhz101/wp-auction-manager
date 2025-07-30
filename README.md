@@ -144,6 +144,7 @@ Future versions may swap to WebSocket providers found under `includes/api-integr
 Under **Auctions → Settings → Realtime Integration** you can select `None` or `Pusher` as the provider. Enter your Pusher app credentials to enable realtime WebSocket updates.
 Twilio SMS notifications can be toggled via the `Enable Twilio Notifications` option (`wpam_enable_twilio`).
 Firebase push notifications are available through the `Enable Firebase` option (`wpam_enable_firebase`) once you provide a valid server key.
+Email alerts are on by default. They can be disabled via the `Enable Email Notifications` option (`wpam_enable_email`). If a SendGrid API key is provided emails will be sent through SendGrid.
 
 ### React frontend
 
@@ -152,6 +153,10 @@ The plugin includes a lightweight React application that can render either a lis
 ### Auction block
 
 WP Auction Manager ships with a dynamic block registered via `@wordpress/scripts`. Search for **Auction** in the block inserter to add a live countdown, status labels and bid form anywhere within the block editor. Block attributes allow toggling each element and optionally specifying an Auction ID when used outside of the product screen.
+
+### Building block assets
+
+If you modify any files under `src/blocks`, run `npm install` once then `npm run build` to compile the assets into the `build/` directory. The plugin registers blocks from the compiled location, so rebuilt files are required for the block to appear correctly on the front end.
 
 ## REST API
 
