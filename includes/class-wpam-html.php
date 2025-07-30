@@ -33,13 +33,13 @@ class WPAM_HTML {
     $now    = current_datetime()->getTimestamp();
 
     global $wpdb;
-    $highest = $wpdb->get_var( $wpdb->prepare(
-      "SELECT MAX(bid_amount) FROM {$wpdb->prefix}wc_auction_bids WHERE auction_id = %d",
-      $auction_id
-    ) );
+    $query   = ( 'reverse' === $type )
+      ? $wpdb->prepare( "SELECT MIN(bid_amount) FROM {$wpdb->prefix}wc_auction_bids WHERE auction_id = %d", $auction_id )
+      : $wpdb->prepare( "SELECT MAX(bid_amount) FROM {$wpdb->prefix}wc_auction_bids WHERE auction_id = %d", $auction_id );
+    $highest = $wpdb->get_var( $query );
     $highest = $highest ? floatval( $highest ) : 0;
 
-    $silent          = get_option( 'wpam_enable_silent_bidding' ) && get_post_meta( $auction_id, '_auction_silent_bidding', true );
+    $silent          = ( 'sealed' === $type ) || ( get_option( 'wpam_enable_silent_bidding' ) && get_post_meta( $auction_id, '_auction_silent_bidding', true ) );
     $display_highest = ( $silent && $now < $end_ts ) ? __( 'Hidden', 'wpam' ) : wc_price( $highest );
 
     ob_start();
@@ -54,7 +54,8 @@ class WPAM_HTML {
       echo '<p class="wpam-countdown" data-end="' . esc_attr( $end_ts ) . '"></p>';
     }
 
-    echo '<p>' . esc_html__( 'Current Bid:', 'wpam' ) .
+    $label = ( 'reverse' === $type ) ? __( 'Lowest Bid:', 'wpam' ) : __( 'Current Bid:', 'wpam' );
+    echo '<p>' . esc_html( $label ) .
          ' <span class="wpam-current-bid" data-auction-id="' . esc_attr( $auction_id ) . '">' .
          esc_html( $display_highest ) . '</span></p>';
 
