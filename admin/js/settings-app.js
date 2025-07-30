@@ -112,17 +112,22 @@
       }
       validateRequiredKeys(newSettings);
     }
+
     function saveSettings() {
       const newErrors = {};
+      let hasError = false;
+
       const increment = parseFloat(settings.wpam_default_increment);
       if (isNaN(increment) || increment <= 0) {
         newErrors.wpam_default_increment = 'Enter a positive number.';
+        hasError = true;
       }
 
       if (settings.wpam_soft_close) {
         const sc = parseInt(settings.wpam_soft_close, 10);
         if (isNaN(sc) || sc < 0) {
           newErrors.wpam_soft_close = 'Must be zero or more.';
+          hasError = true;
         }
       }
 
@@ -130,6 +135,7 @@
         const prem = parseFloat(settings.wpam_buyer_premium);
         if (isNaN(prem) || prem < 0) {
           newErrors.wpam_buyer_premium = 'Must be zero or more.';
+          hasError = true;
         }
       }
 
@@ -137,48 +143,64 @@
         const fee = parseFloat(settings.wpam_seller_fee);
         if (isNaN(fee) || fee < 0) {
           newErrors.wpam_seller_fee = 'Must be zero or more.';
+          hasError = true;
         }
       }
 
       const threshold = parseInt(settings.wpam_soft_close_threshold, 10);
       if (isNaN(threshold) || threshold < 0) {
         newErrors.wpam_soft_close_threshold = 'Must be zero or more.';
+        hasError = true;
       }
 
       const extend = parseInt(settings.wpam_soft_close_extend, 10);
       if (isNaN(extend) || extend <= 0) {
         newErrors.wpam_soft_close_extend = 'Enter a positive number.';
+        hasError = true;
       }
 
       if (settings.wpam_enable_twilio) {
         if (!settings.wpam_twilio_sid) {
           newErrors.wpam_twilio_sid = 'Required when Twilio is enabled.';
+          hasError = true;
         }
         if (!settings.wpam_twilio_token) {
           newErrors.wpam_twilio_token = 'Required when Twilio is enabled.';
+          hasError = true;
         }
         if (!settings.wpam_twilio_from) {
           newErrors.wpam_twilio_from = 'Required when Twilio is enabled.';
+          hasError = true;
         }
       }
 
-      if (Object.keys(newErrors).length) {
+      if (hasError) {
         setErrors(newErrors);
+        setNotice('Please fix the highlighted errors before saving.');
         return;
       }
 
       setSaving(true);
+      setNotice(''); // Clear previous notices
+
       apiFetch({
         path: wpamSettings.rest_endpoint,
         method: 'POST',
         data: settings,
         headers: { 'X-WP-Nonce': wpamSettings.nonce },
-      }).then((response) => {
-        setSettings(response);
-        setSaving(false);
-        setNotice('Settings saved.');
-        setTimeout(() => setNotice(''), 3000);
-      });
+      })
+        .then((response) => {
+          setSettings(response);
+          setSaving(false);
+          setErrors({});
+          setNotice('Settings saved.');
+          setTimeout(() => setNotice(''), 3000);
+        })
+        .catch((err) => {
+          setSaving(false);
+          setNotice('Failed to save settings. Please try again.');
+          console.error('Save failed:', err);
+        });
     }
 
     function renderGeneral() {
@@ -212,7 +234,7 @@
             'Users must verify identity before bidding.'
           ),
           help: 'Users must verify identity before bidding.',
-          checked: !!settings.wpam_require_kyc,
+          checked: settings.wpam_require_kyc == 1, // allow both int 1 and string "1"
           onChange: (v) => updateField('wpam_require_kyc', v ? 1 : 0),
         })
       );
@@ -373,7 +395,15 @@
     return createElement(
       'div',
       null,
-      notice && createElement(Notice, { status: 'success', isDismissible: false }, notice),
+      notice &&
+        createElement(
+          Notice,
+          {
+            status: Object.keys(errors).length ? 'error' : 'success',
+            isDismissible: false,
+          },
+          notice
+        ),
       createElement(
         TabPanel,
         {
