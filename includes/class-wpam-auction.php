@@ -16,7 +16,7 @@ class WPAM_Auction {
 		add_filter( 'woocommerce_product_data_tabs', array( $this, 'add_product_data_tab' ) );
 		add_filter( 'woocommerce_product_data_tabs', array( $this, 'reorder_product_tabs' ), 20 );
 		add_action( 'woocommerce_product_data_panels', array( $this, 'add_product_data_fields' ) );
-		add_action( 'woocommerce_process_product_meta_auction', array( $this, 'save_product_data' ) );
+                add_action( 'woocommerce_process_product_meta_auction', array( $this, 'save_product_data' ) );
 		add_action( 'wpam_handle_auction_end', array( $this, 'handle_auction_end' ) );
 		add_action( 'init', array( $this, 'schedule_cron' ) );
 		add_action( 'init', array( $this, 'register_meta_fields' ) );
@@ -388,12 +388,12 @@ class WPAM_Auction {
 			}
 		}
 
-		$meta_keys = array(
-			'_auction_type',
-			'_auction_reserve',
-			'_auction_buy_now',
-			'_auction_increment',
-			'_auction_soft_close',
+                $meta_keys = array(
+                        '_auction_type',
+                        '_auction_reserve',
+                        '_auction_buy_now',
+                        '_auction_increment',
+                        '_auction_soft_close',
 			'_auction_auto_relist',
 			'_auction_max_bids',
 			'_auction_fee',
@@ -404,14 +404,23 @@ class WPAM_Auction {
 			'_auction_opening_price',
 			'_auction_lowest_price',
 			'_auction_variable_increment',
-			'_auction_variable_increment_rules',
-		);
+                        '_auction_variable_increment_rules',
+                );
 
-		foreach ( $meta_keys as $key ) {
-			if ( isset( $_POST[ $key ] ) ) {
-				update_post_meta( $post_id, $key, wc_clean( wp_unslash( $_POST[ $key ] ) ) );
-			}
-		}
+                $old_opening_price = get_post_meta( $post_id, '_auction_opening_price', true );
+
+                foreach ( $meta_keys as $key ) {
+                        if ( isset( $_POST[ $key ] ) ) {
+                                update_post_meta( $post_id, $key, wc_clean( wp_unslash( $_POST[ $key ] ) ) );
+                        }
+                }
+
+                if ( isset( $_POST['_auction_opening_price'] ) ) {
+                        $new_opening_price = wc_clean( wp_unslash( $_POST['_auction_opening_price'] ) );
+                        if ( $new_opening_price !== $old_opening_price ) {
+                                WPAM_Admin_Log::log_price_edit( $post_id, $old_opening_price, $new_opening_price );
+                        }
+                }
 
 		$state = $this->determine_state( $post_id );
 		update_post_meta( $post_id, '_auction_state', $state );
