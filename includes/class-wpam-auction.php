@@ -73,14 +73,23 @@ class WPAM_Auction {
             'value'       => get_post_meta( $post_id, '_auction_type', true ),
         ]);
 
+        $start_value     = get_post_meta( $post_id, '_auction_start', true );
+        $start_timestamp = $start_value ? strtotime( $start_value ) : false;
+        $is_past_start   = $start_timestamp && $start_timestamp < current_time( 'timestamp' );
+
         woocommerce_wp_text_input([
             'id'          => '_auction_start',
             'label'       => __( 'Start Date', 'wpam' ),
             'type'        => 'datetime-local',
             'description' => __( 'When bidding opens.', 'wpam' ),
             'desc_tip'    => true,
-            'value'       => get_post_meta( $post_id, '_auction_start', true ),
+            'value'       => $start_value,
+            'custom_attributes' => $is_past_start ? [ 'disabled' => 'disabled' ] : [],
         ]);
+
+        if ( $is_past_start ) {
+            echo '<input type="hidden" name="_auction_start" value="' . esc_attr( $start_value ) . '" />';
+        }
 
         woocommerce_wp_text_input([
             'id'          => '_auction_end',
