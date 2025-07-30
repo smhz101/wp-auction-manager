@@ -314,6 +314,13 @@
           value: settings.wpam_firebase_server_key || '',
           onChange: (v) => updateField('wpam_firebase_server_key', v),
           error: errors.wpam_firebase_server_key,
+        }),
+        createElement(TextControl, {
+          label: 'Webhook URL',
+          help: 'POST requests will be sent here on auction events.',
+          value: settings.wpam_webhook_url || '',
+          onChange: (v) => updateField('wpam_webhook_url', v),
+          error: errors.wpam_webhook_url,
         })
       );
     }
