@@ -1,13 +1,16 @@
 <?php
 namespace WPAM\Admin;
 
+use WPAM\Includes\WPAM_Admin_Log;
+
 class WPAM_Admin {
-	public function __construct() {
-		add_action( 'admin_menu', array( $this, 'add_menu' ) );
-		add_action( 'admin_init', array( $this, 'register_settings' ) );
-		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
-		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
-	}
+       public function __construct() {
+               add_action( 'admin_menu', array( $this, 'add_menu' ) );
+               add_action( 'admin_init', array( $this, 'register_settings' ) );
+               add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
+               add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
+               add_action( 'transition_post_status', array( $this, 'maybe_log_status_change' ), 10, 3 );
+       }
 
 	public function add_menu() {
 		add_menu_page(
@@ -653,10 +656,35 @@ class WPAM_Admin {
 		);
 	}
 
-	public function render_settings_page() {
-		echo '<div class="wrap">';
-		echo '<h1>' . esc_html__( 'Settings', 'wpam' ) . '</h1>';
-		echo '<div id="wpam-settings-root"></div>';
-		echo '</div>';
-	}
+        public function render_settings_page() {
+                echo '<div class="wrap">';
+                echo '<h1>' . esc_html__( 'Settings', 'wpam' ) . '</h1>';
+                echo '<div id="wpam-settings-root"></div>';
+                echo '</div>';
+        }
+
+       /**
+        * Log when an auction is suspended or cancelled via status changes.
+        *
+        * @param string   $new_status New post status.
+        * @param string   $old_status Old post status.
+        * @param \WP_Post $post       Post object.
+        */
+       public function maybe_log_status_change( $new_status, $old_status, $post ) {
+               if ( 'product' !== $post->post_type ) {
+                       return;
+               }
+
+               if ( ! has_term( 'auction', 'product_type', $post ) ) {
+                       return;
+               }
+
+               if ( 'publish' === $old_status && 'draft' === $new_status ) {
+                       WPAM_Admin_Log::log_suspend( $post->ID );
+               }
+
+               if ( 'trash' === $new_status ) {
+                       WPAM_Admin_Log::log_cancel( $post->ID );
+               }
+       }
 }
