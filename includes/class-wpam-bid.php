@@ -20,7 +20,15 @@ class WPAM_Bid {
         if ( 'pusher' === $provider && class_exists( 'WPAM_Pusher_Provider' ) ) {
             $this->realtime_provider = new WPAM_Pusher_Provider();
         }
-      
+
+    }
+
+    private function proxy_enabled( $auction_id ) {
+        return get_option( 'wpam_enable_proxy_bidding' ) && get_post_meta( $auction_id, '_auction_proxy_bidding', true );
+    }
+
+    private function silent_enabled( $auction_id ) {
+        return get_option( 'wpam_enable_silent_bidding' ) && get_post_meta( $auction_id, '_auction_silent_bidding', true );
     }
 
     public function place_bid() {
@@ -55,9 +63,17 @@ class WPAM_Bid {
         }
 
         global $wpdb;
-        $table   = $wpdb->prefix . 'wc_auction_bids';
-        $highest = $wpdb->get_var( $wpdb->prepare( "SELECT MAX(bid_amount) FROM $table WHERE auction_id = %d", $auction_id ) );
-        $highest = $highest ? floatval( $highest ) : 0;
+        $table        = $wpdb->prefix . 'wc_auction_bids';
+        $highest_row  = $wpdb->get_row( $wpdb->prepare( "SELECT user_id, bid_amount FROM $table WHERE auction_id = %d ORDER BY bid_amount DESC, id DESC LIMIT 1", $auction_id ), ARRAY_A );
+        $highest      = $highest_row ? floatval( $highest_row['bid_amount'] ) : 0;
+        $highest_user = $highest_row ? intval( $highest_row['user_id'] ) : 0;
+
+        $proxy_enabled  = $this->proxy_enabled( $auction_id );
+        $silent_enabled = $this->silent_enabled( $auction_id );
+        $max_bid        = isset( $_POST['max_bid'] ) ? floatval( $_POST['max_bid'] ) : $bid;
+        if ( $max_bid < $bid ) {
+            $max_bid = $bid;
+        }
 
         $max_bids = intval( get_post_meta( $auction_id, '_auction_max_bids', 0 ) );
         if ( $max_bids > 0 ) {
@@ -73,22 +89,68 @@ class WPAM_Bid {
         }
         $increment = floatval( $increment );
 
-        if ( $bid < $highest + $increment ) {
-            wp_send_json_error( [ 'message' => __( 'Bid too low', 'wpam' ) ] );
+        if ( ! $proxy_enabled ) {
+            if ( $bid < $highest + $increment ) {
+                wp_send_json_error( [ 'message' => __( 'Bid too low', 'wpam' ) ] );
+            }
+
+            $wpdb->insert(
+                $table,
+                [
+                    'auction_id' => $auction_id,
+                    'user_id'    => $user_id,
+                    'bid_amount' => $bid,
+                    'bid_time'   => current_time( 'mysql' ),
+                ],
+                [ '%d', '%d', '%f', '%s' ]
+            );
+
+            do_action( 'wpam_bid_placed', $auction_id, $user_id, $bid );
+        } else {
+            if ( $max_bid < $highest + $increment ) {
+                wp_send_json_error( [ 'message' => __( 'Bid too low', 'wpam' ) ] );
+            }
+
+            $place_bid = ( $highest > 0 ) ? min( $max_bid, $highest + $increment ) : $max_bid;
+            $wpdb->insert(
+                $table,
+                [
+                    'auction_id' => $auction_id,
+                    'user_id'    => $user_id,
+                    'bid_amount' => $place_bid,
+                    'bid_time'   => current_time( 'mysql' ),
+                ],
+                [ '%d', '%d', '%f', '%s' ]
+            );
+            do_action( 'wpam_bid_placed', $auction_id, $user_id, $place_bid );
+            update_user_meta( $user_id, 'wpam_proxy_max_' . $auction_id, $max_bid );
+
+            $bid = $place_bid;
+
+            if ( $highest_user && $highest_user !== $user_id ) {
+                $prev_max = get_user_meta( $highest_user, 'wpam_proxy_max_' . $auction_id, true );
+                $prev_max = $prev_max ? floatval( $prev_max ) : $highest;
+                if ( $prev_max > $place_bid ) {
+                    $auto_bid = min( $prev_max, $place_bid + $increment );
+                    $wpdb->insert(
+                        $table,
+                        [
+                            'auction_id' => $auction_id,
+                            'user_id'    => $highest_user,
+                            'bid_amount' => $auto_bid,
+                            'bid_time'   => current_time( 'mysql' ),
+                        ],
+                        [ '%d', '%d', '%f', '%s' ]
+                    );
+                    do_action( 'wpam_bid_placed', $auction_id, $highest_user, $auto_bid );
+                    $bid = $auto_bid;
+                } else {
+                    $highest_user = $user_id;
+                }
+            } else {
+                $highest_user = $user_id;
+            }
         }
-
-        $wpdb->insert(
-            $table,
-            [
-                'auction_id' => $auction_id,
-                'user_id'    => $user_id,
-                'bid_amount' => $bid,
-                'bid_time'   => current_time( 'mysql' ),
-            ],
-            [ '%d', '%d', '%f', '%s' ]
-        );
-
-        do_action( 'wpam_bid_placed', $auction_id, $user_id, $bid );
 
 
         // Extend auction end time if within soft close window
@@ -115,7 +177,7 @@ class WPAM_Bid {
         }
 
         // SMS notification via Twilio if enabled
-        if ( get_option( 'wpam_enable_twilio' ) ) {
+        if ( ! $silent_enabled && get_option( 'wpam_enable_twilio' ) ) {
             if ( class_exists( 'WPAM_Twilio_Provider' ) ) {
                 $provider = new WPAM_Twilio_Provider();
                 $provider->send(
@@ -125,10 +187,10 @@ class WPAM_Bid {
             }
         }
 
-        // Always send internal notifications and realtime updates
-        WPAM_Notifications::notify_new_bid( $auction_id, $bid, $user_id );
+        // Always send internal notifications
+        WPAM_Notifications::notify_new_bid( $auction_id, $bid, $highest_user );
 
-        if ( $this->realtime_provider ) {
+        if ( ! $silent_enabled && $this->realtime_provider ) {
             $this->realtime_provider->send_bid_update( $auction_id, $bid );
         }
 
@@ -156,6 +218,14 @@ class WPAM_Bid {
         $table   = $wpdb->prefix . 'wc_auction_bids';
         $highest = $wpdb->get_var( $wpdb->prepare( "SELECT MAX(bid_amount) FROM $table WHERE auction_id = %d", $auction_id ) );
         $highest = $highest ? floatval( $highest ) : 0;
+
+        if ( $this->silent_enabled( $auction_id ) ) {
+            $end   = get_post_meta( $auction_id, '_auction_end', true );
+            $end_ts = $end ? strtotime( $end ) : 0;
+            if ( current_time( 'timestamp' ) < $end_ts ) {
+                $highest = 0;
+            }
+        }
 
         wp_send_json_success( [ 'highest_bid' => $highest ] );
     }
