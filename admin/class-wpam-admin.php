@@ -47,14 +47,23 @@ class WPAM_Admin {
 			array( $this, 'render_messages_page' )
 		);
 
-		add_submenu_page(
-			'wpam-auctions',
-			__( 'Logs', 'wpam' ),
-			__( 'Logs', 'wpam' ),
-			'manage_options',
-			'wpam-logs',
-			array( $this, 'render_logs_page' )
-		);
+                add_submenu_page(
+                        'wpam-auctions',
+                        __( 'Logs', 'wpam' ),
+                        __( 'Logs', 'wpam' ),
+                        'manage_options',
+                        'wpam-logs',
+                        array( $this, 'render_logs_page' )
+                );
+
+                add_submenu_page(
+                        'wpam-auctions',
+                        __( 'Flagged Users', 'wpam' ),
+                        __( 'Flagged Users', 'wpam' ),
+                        'manage_options',
+                        'wpam-flagged',
+                        array( $this, 'render_flagged_page' )
+                );
 
 		add_submenu_page(
 			'wpam-auctions',
@@ -396,16 +405,27 @@ class WPAM_Admin {
 		echo '</form></div>';
 	}
 
-	public function render_logs_page() {
-		$table = new WPAM_Logs_Table();
-		$table->prepare_items();
-		echo '<div class="wrap">';
-		echo '<h1>' . esc_html__( 'Admin Logs', 'wpam' ) . '</h1>';
-		echo '<form method="get">';
-		echo '<input type="hidden" name="page" value="wpam-logs" />';
-		$table->display();
-		echo '</form></div>';
-	}
+        public function render_logs_page() {
+                $table = new WPAM_Logs_Table();
+                $table->prepare_items();
+                echo '<div class="wrap">';
+                echo '<h1>' . esc_html__( 'Admin Logs', 'wpam' ) . '</h1>';
+                echo '<form method="get">';
+                echo '<input type="hidden" name="page" value="wpam-logs" />';
+                $table->display();
+                echo '</form></div>';
+        }
+
+        public function render_flagged_page() {
+                $table = new WPAM_Flagged_Table();
+                $table->prepare_items();
+                echo '<div class="wrap">';
+                echo '<h1>' . esc_html__( 'Flagged Users', 'wpam' ) . '</h1>';
+                echo '<form method="get">';
+                echo '<input type="hidden" name="page" value="wpam-flagged" />';
+                $table->display();
+                echo '</form></div>';
+        }
 
 	public function enqueue_scripts( $hook ) {
 		$screen = get_current_screen();
