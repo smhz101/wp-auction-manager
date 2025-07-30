@@ -73,9 +73,10 @@ class WPAM_Auction {
             'value'       => get_post_meta( $post_id, '_auction_type', true ),
         ]);
 
-        $start_value     = get_post_meta( $post_id, '_auction_start', true );
-        $start_timestamp = $start_value ? strtotime( $start_value ) : false;
-        $is_past_start   = $start_timestamp && $start_timestamp < current_time( 'timestamp' );
+        $start_value   = get_post_meta( $post_id, '_auction_start', true );
+        $timezone      = wp_timezone();
+        $start_timestamp = $start_value ? ( new \DateTimeImmutable( $start_value, $timezone ) )->getTimestamp() : false;
+        $is_past_start   = $start_timestamp && $start_timestamp < ( new \DateTimeImmutable( 'now', $timezone ) )->getTimestamp();
 
         woocommerce_wp_text_input([
             'id'          => '_auction_start',
@@ -299,13 +300,14 @@ class WPAM_Auction {
 
         if ( ! $highest ) {
             if ( get_post_meta( $auction_id, '_auction_auto_relist', true ) ) {
+                $timezone = wp_timezone();
                 $duration = strtotime( get_post_meta( $auction_id, '_auction_end', true ) ) - strtotime( get_post_meta( $auction_id, '_auction_start', true ) );
-                $start = current_time( 'mysql' );
-                $end   = date( 'Y-m-d H:i:s', current_time( 'timestamp' ) + $duration );
+                $start = wp_date( 'Y-m-d H:i:s', null, $timezone );
+                $end   = wp_date( 'Y-m-d H:i:s', current_datetime()->getTimestamp() + $duration, $timezone );
                 update_post_meta( $auction_id, '_auction_start', $start );
                 update_post_meta( $auction_id, '_auction_end', $end );
                 delete_post_meta( $auction_id, '_auction_ended' );
-                wp_schedule_single_event( strtotime( $end ), 'wpam_auction_end', [ $auction_id ] );
+                wp_schedule_single_event( (int) get_gmt_from_date( $end, 'U' ), 'wpam_auction_end', [ $auction_id ] );
             }
             return;
         }
@@ -316,13 +318,14 @@ class WPAM_Auction {
         $reserve = floatval( get_post_meta( $auction_id, '_auction_reserve', 0 ) );
         if ( $reserve && $amount < $reserve ) {
             if ( get_post_meta( $auction_id, '_auction_auto_relist', true ) ) {
+                $timezone = wp_timezone();
                 $duration = strtotime( get_post_meta( $auction_id, '_auction_end', true ) ) - strtotime( get_post_meta( $auction_id, '_auction_start', true ) );
-                $start = current_time( 'mysql' );
-                $end   = date( 'Y-m-d H:i:s', current_time( 'timestamp' ) + $duration );
+                $start = wp_date( 'Y-m-d H:i:s', null, $timezone );
+                $end   = wp_date( 'Y-m-d H:i:s', current_datetime()->getTimestamp() + $duration, $timezone );
                 update_post_meta( $auction_id, '_auction_start', $start );
                 update_post_meta( $auction_id, '_auction_end', $end );
                 delete_post_meta( $auction_id, '_auction_ended' );
-                wp_schedule_single_event( strtotime( $end ), 'wpam_auction_end', [ $auction_id ] );
+                wp_schedule_single_event( (int) get_gmt_from_date( $end, 'U' ), 'wpam_auction_end', [ $auction_id ] );
             }
             return;
         }
@@ -369,7 +372,7 @@ class WPAM_Auction {
 
     public function schedule_cron() {
         if ( ! wp_next_scheduled( 'wpam_check_ended_auctions' ) ) {
-            wp_schedule_event( time(), 'hourly', 'wpam_check_ended_auctions' );
+            wp_schedule_event( current_datetime()->getTimestamp(), 'hourly', 'wpam_check_ended_auctions' );
         }
     }
 
@@ -381,7 +384,7 @@ class WPAM_Auction {
             'meta_query'     => [
                 [
                     'key'     => '_auction_end',
-                    'value'   => current_time( 'mysql' ),
+                    'value'   => wp_date( 'Y-m-d H:i:s', null, wp_timezone() ),
                     'compare' => '<=',
                     'type'    => 'DATETIME',
                 ],
