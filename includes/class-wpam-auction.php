@@ -26,7 +26,7 @@ class WPAM_Auction {
     }
 
     public function add_product_type( $types ) {
-        $types['auction'] = __( 'Auction', 'wpam' );
+        $types['auction'] = __( 'Auction product', 'wpam' );
         return $types;
     }
 
