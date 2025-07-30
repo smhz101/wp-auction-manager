@@ -31,6 +31,14 @@ class WPAM_Bid {
         return get_option( 'wpam_enable_silent_bidding' ) && get_post_meta( $auction_id, '_auction_silent_bidding', true );
     }
 
+    private static function is_reverse( $auction_id ) {
+        return 'reverse' === get_post_meta( $auction_id, '_auction_type', true );
+    }
+
+    private static function is_sealed( $auction_id ) {
+        return 'sealed' === get_post_meta( $auction_id, '_auction_type', true );
+    }
+
     private static function log_bid( $bid_id, $user_id ) {
         global $wpdb;
         $table = $wpdb->prefix . 'wc_auction_audit';
@@ -84,13 +92,17 @@ class WPAM_Bid {
         }
 
         global $wpdb;
-        $table        = $wpdb->prefix . 'wc_auction_bids';
-        $highest_row  = $wpdb->get_row( $wpdb->prepare( "SELECT user_id, bid_amount FROM $table WHERE auction_id = %d ORDER BY bid_amount DESC, id DESC LIMIT 1", $auction_id ), ARRAY_A );
+        $table  = $wpdb->prefix . 'wc_auction_bids';
+        $reverse = self::is_reverse( $auction_id );
+        $sealed  = self::is_sealed( $auction_id );
+
+        $order        = $reverse ? 'ASC' : 'DESC';
+        $highest_row  = $wpdb->get_row( $wpdb->prepare( "SELECT user_id, bid_amount FROM $table WHERE auction_id = %d ORDER BY bid_amount {$order}, id DESC LIMIT 1", $auction_id ), ARRAY_A );
         $highest      = $highest_row ? floatval( $highest_row['bid_amount'] ) : 0;
         $highest_user = $highest_row ? intval( $highest_row['user_id'] ) : 0;
 
-        $proxy_enabled  = self::proxy_enabled( $auction_id );
-        $silent_enabled = self::silent_enabled( $auction_id );
+        $proxy_enabled  = $reverse ? false : self::proxy_enabled( $auction_id );
+        $silent_enabled = $sealed ? true : self::silent_enabled( $auction_id );
         $max_bid        = isset( $_POST['max_bid'] ) ? floatval( $_POST['max_bid'] ) : $bid;
         if ( $max_bid < $bid ) {
             $max_bid = $bid;
@@ -107,8 +119,14 @@ class WPAM_Bid {
         $increment = WPAM_Auction::get_bid_increment( $auction_id, $highest );
 
         if ( ! $proxy_enabled ) {
-            if ( $bid < $highest + $increment ) {
-                wp_send_json_error( [ 'message' => __( 'Bid too low', 'wpam' ) ] );
+            if ( $reverse ) {
+                if ( $highest_row && $bid > $highest - $increment ) {
+                    wp_send_json_error( [ 'message' => __( 'Bid too high', 'wpam' ) ] );
+                }
+            } else {
+                if ( $bid < $highest + $increment ) {
+                    wp_send_json_error( [ 'message' => __( 'Bid too low', 'wpam' ) ] );
+                }
             }
 
             $wpdb->insert(
@@ -243,10 +261,14 @@ class WPAM_Bid {
 
         global $wpdb;
         $table   = $wpdb->prefix . 'wc_auction_bids';
-        $highest = $wpdb->get_var( $wpdb->prepare( "SELECT MAX(bid_amount) FROM $table WHERE auction_id = %d", $auction_id ) );
+        $reverse = self::is_reverse( $auction_id );
+        $sealed  = self::is_sealed( $auction_id );
+
+        $query   = $reverse ? "SELECT MIN(bid_amount) FROM $table WHERE auction_id = %d" : "SELECT MAX(bid_amount) FROM $table WHERE auction_id = %d";
+        $highest = $wpdb->get_var( $wpdb->prepare( $query, $auction_id ) );
         $highest = $highest ? floatval( $highest ) : 0;
 
-        if ( self::silent_enabled( $auction_id ) ) {
+        if ( $sealed || self::silent_enabled( $auction_id ) ) {
             $end   = get_post_meta( $auction_id, '_auction_end', true );
             $end_ts = $end ? ( new \DateTimeImmutable( $end, wp_timezone() ) )->getTimestamp() : 0;
             if ( ( new \DateTimeImmutable( 'now', wp_timezone() ) )->getTimestamp() < $end_ts ) {
@@ -286,13 +308,17 @@ class WPAM_Bid {
         }
 
         global $wpdb;
-        $table        = $wpdb->prefix . 'wc_auction_bids';
-        $highest_row  = $wpdb->get_row( $wpdb->prepare( "SELECT user_id, bid_amount FROM $table WHERE auction_id = %d ORDER BY bid_amount DESC, id DESC LIMIT 1", $auction_id ), ARRAY_A );
+        $table   = $wpdb->prefix . 'wc_auction_bids';
+        $reverse = self::is_reverse( $auction_id );
+        $sealed  = self::is_sealed( $auction_id );
+
+        $order        = $reverse ? 'ASC' : 'DESC';
+        $highest_row  = $wpdb->get_row( $wpdb->prepare( "SELECT user_id, bid_amount FROM $table WHERE auction_id = %d ORDER BY bid_amount {$order}, id DESC LIMIT 1", $auction_id ), ARRAY_A );
         $highest      = $highest_row ? floatval( $highest_row['bid_amount'] ) : 0;
         $highest_user = $highest_row ? intval( $highest_row['user_id'] ) : 0;
 
-        $proxy_enabled  = self::proxy_enabled( $auction_id );
-        $silent_enabled = self::silent_enabled( $auction_id );
+        $proxy_enabled  = $reverse ? false : self::proxy_enabled( $auction_id );
+        $silent_enabled = $sealed ? true : self::silent_enabled( $auction_id );
         if ( null === $max_bid ) {
             $max_bid = $bid;
         }
@@ -311,8 +337,14 @@ class WPAM_Bid {
         $increment = WPAM_Auction::get_bid_increment( $auction_id, $highest );
 
         if ( ! $proxy_enabled ) {
-            if ( $bid < $highest + $increment ) {
-                return new \WP_Error( 'wpam_low', __( 'Bid too low', 'wpam' ), [ 'status' => 400 ] );
+            if ( $reverse ) {
+                if ( $highest_row && $bid > $highest - $increment ) {
+                    return new \WP_Error( 'wpam_high', __( 'Bid too high', 'wpam' ), [ 'status' => 400 ] );
+                }
+            } else {
+                if ( $bid < $highest + $increment ) {
+                    return new \WP_Error( 'wpam_low', __( 'Bid too low', 'wpam' ), [ 'status' => 400 ] );
+                }
             }
 
             $wpdb->insert(
@@ -432,10 +464,14 @@ class WPAM_Bid {
         $auction_id = absint( $request['auction_id'] );
         global $wpdb;
         $table   = $wpdb->prefix . 'wc_auction_bids';
-        $highest = $wpdb->get_var( $wpdb->prepare( "SELECT MAX(bid_amount) FROM $table WHERE auction_id = %d", $auction_id ) );
+        $reverse = self::is_reverse( $auction_id );
+        $sealed  = self::is_sealed( $auction_id );
+
+        $query   = $reverse ? "SELECT MIN(bid_amount) FROM $table WHERE auction_id = %d" : "SELECT MAX(bid_amount) FROM $table WHERE auction_id = %d";
+        $highest = $wpdb->get_var( $wpdb->prepare( $query, $auction_id ) );
         $highest = $highest ? floatval( $highest ) : 0;
 
-        if ( self::silent_enabled( $auction_id ) ) {
+        if ( $sealed || self::silent_enabled( $auction_id ) ) {
             $end   = get_post_meta( $auction_id, '_auction_end', true );
             $end_ts = $end ? ( new \DateTimeImmutable( $end, wp_timezone() ) )->getTimestamp() : 0;
             if ( ( new \DateTimeImmutable( 'now', wp_timezone() ) )->getTimestamp() < $end_ts ) {

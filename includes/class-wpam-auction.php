@@ -434,8 +434,10 @@ class WPAM_Auction {
 	public function handle_auction_end( $auction_id ) {
 		global $wpdb;
 
-		$table   = $wpdb->prefix . 'wc_auction_bids';
-		$highest = $wpdb->get_row( $wpdb->prepare( "SELECT user_id, bid_amount FROM $table WHERE auction_id = %d ORDER BY bid_amount DESC LIMIT 1", $auction_id ), ARRAY_A );
+                $table   = $wpdb->prefix . 'wc_auction_bids';
+                $reverse = get_post_meta( $auction_id, '_auction_type', true ) === 'reverse';
+                $order   = $reverse ? 'ASC' : 'DESC';
+                $highest = $wpdb->get_row( $wpdb->prepare( "SELECT user_id, bid_amount FROM $table WHERE auction_id = %d ORDER BY bid_amount {$order} LIMIT 1", $auction_id ), ARRAY_A );
 
 		$ending_reason = '';
 
