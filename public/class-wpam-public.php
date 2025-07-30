@@ -59,21 +59,23 @@ class WPAM_Public {
 		wp_enqueue_style( 'wpam-frontend', WPAM_PLUGIN_URL . 'public/css/wpam-frontend.css', array( 'woocommerce-general' ), WPAM_PLUGIN_VERSION );
 
                 wp_enqueue_script( 'wpam-ajax-bid', WPAM_PLUGIN_URL . 'public/js/ajax-bid.js', array( 'jquery', 'countdown' ), WPAM_PLUGIN_VERSION, true );
-		wp_localize_script(
-			'wpam-ajax-bid',
-			'wpam_ajax',
-			array(
-				'ajax_url'            => admin_url( 'admin-ajax.php' ),
-				'bid_nonce'           => wp_create_nonce( 'wpam_place_bid' ),
-				'watchlist_nonce'     => wp_create_nonce( 'wpam_toggle_watchlist' ),
-				'watchlist_get_nonce' => wp_create_nonce( 'wpam_get_watchlist' ),
-				'highest_nonce'       => wp_create_nonce( 'wpam_get_highest_bid' ),
-				'pusher_enabled'      => $pusher_enabled,
-				'pusher_key'          => get_option( 'wpam_pusher_key' ),
-				'pusher_cluster'      => get_option( 'wpam_pusher_cluster' ),
-				'pusher_channel'      => 'wpam-auctions',
-			)
-		);
+                wp_localize_script(
+                        'wpam-ajax-bid',
+                        'wpam_ajax',
+                        array(
+                                'ajax_url'            => admin_url( 'admin-ajax.php' ),
+                                'bid_nonce'           => wp_create_nonce( 'wpam_place_bid' ),
+                                'watchlist_nonce'     => wp_create_nonce( 'wpam_toggle_watchlist' ),
+                                'watchlist_get_nonce' => wp_create_nonce( 'wpam_get_watchlist' ),
+                                'highest_nonce'       => wp_create_nonce( 'wpam_get_highest_bid' ),
+                                'pusher_enabled'      => $pusher_enabled,
+                                'pusher_key'          => get_option( 'wpam_pusher_key' ),
+                                'pusher_cluster'      => get_option( 'wpam_pusher_cluster' ),
+                                'pusher_channel'      => 'wpam-auctions',
+                                'current_user_id'     => get_current_user_id(),
+                                'show_notices'        => (bool) get_option( 'wpam_enable_toasts', 1 ),
+                        )
+                );
 
 		wp_enqueue_script( 'wpam-ajax-messages', WPAM_PLUGIN_URL . 'public/js/ajax-messages.js', array( 'jquery' ), WPAM_PLUGIN_VERSION, true );
 		wp_localize_script(

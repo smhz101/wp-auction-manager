@@ -19,6 +19,38 @@ jQuery(function ($) {
   setInterval(updateCountdown, 1000);
   updateCountdown();
 
+  const userBids = {};
+  const bidStatus = {};
+
+  function showToast(msg) {
+    if (!wpam_ajax.show_notices) {
+      return;
+    }
+    const toast = $('<div class="wpam-toast"></div>').text(msg).appendTo('body');
+    toast.fadeIn(200);
+    setTimeout(function () {
+      toast.fadeOut(400, function () {
+        $(this).remove();
+      });
+    }, 3000);
+  }
+
+  function checkBidStatus(id, highest) {
+    if (typeof userBids[id] === 'undefined') {
+      return;
+    }
+    let status = '';
+    if (highest > userBids[id]) {
+      status = 'outbid';
+    } else if (highest === userBids[id]) {
+      status = 'winning';
+    }
+    if (status && bidStatus[id] !== status) {
+      bidStatus[id] = status;
+      showToast(status === 'winning' ? "You're winning" : "You've been outbid");
+    }
+  }
+
   $('.wpam-bid-button').on('click', function (e) {
     e.preventDefault();
     const bidInput = $(this).closest('form').find('.wpam-bid-input');
@@ -33,9 +65,16 @@ jQuery(function ($) {
       },
       function (res) {
         alert(res.data.message);
-        if (res.success && res.data.new_end_ts) {
-          $('.wpam-countdown').data('end', res.data.new_end_ts).attr('data-end', res.data.new_end_ts);
-          updateCountdown();
+        if (res.success) {
+          userBids[auctionId] = parseFloat(bidInput.val());
+          bidStatus[auctionId] = 'winning';
+          showToast("You're winning");
+          if (res.data.new_end_ts) {
+            $('.wpam-countdown')
+              .data('end', res.data.new_end_ts)
+              .attr('data-end', res.data.new_end_ts);
+            updateCountdown();
+          }
         }
       }
     );
@@ -70,7 +109,9 @@ jQuery(function ($) {
         },
         function (res) {
           if (res.success) {
+            const highest = parseFloat(res.data.highest_bid);
             bidEl.text(res.data.highest_bid);
+            checkBidStatus(auctionId, highest);
           }
         }
       );
@@ -85,6 +126,7 @@ jQuery(function ($) {
     channel.bind('bid_update', function (data) {
       const el = $('.wpam-current-bid[data-auction-id="' + data.auction_id + '"]');
       el.text(data.bid);
+      checkBidStatus(data.auction_id, parseFloat(data.bid));
     });
   } else {
     setInterval(refreshBids, 5000);
