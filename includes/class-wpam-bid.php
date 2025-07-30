@@ -31,6 +31,22 @@ class WPAM_Bid {
         return get_option( 'wpam_enable_silent_bidding' ) && get_post_meta( $auction_id, '_auction_silent_bidding', true );
     }
 
+    private function log_bid( $bid_id, $user_id ) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'wc_auction_audit';
+        $wpdb->insert(
+            $table,
+            [
+                'bid_id'     => $bid_id,
+                'user_id'    => $user_id,
+                'ip'         => isset( $_SERVER['REMOTE_ADDR'] ) ? $_SERVER['REMOTE_ADDR'] : '',
+                'user_agent' => isset( $_SERVER['HTTP_USER_AGENT'] ) ? $_SERVER['HTTP_USER_AGENT'] : '',
+                'logged_at'  => wp_date( 'Y-m-d H:i:s', null, wp_timezone() ),
+            ],
+            [ '%d', '%d', '%s', '%s', '%s' ]
+        );
+    }
+
     public function place_bid() {
         check_ajax_referer( 'wpam_place_bid', 'nonce' );
 
@@ -105,6 +121,7 @@ class WPAM_Bid {
                 ],
                 [ '%d', '%d', '%f', '%s' ]
             );
+            $this->log_bid( $wpdb->insert_id, $user_id );
 
             do_action( 'wpam_bid_placed', $auction_id, $user_id, $bid );
         } else {
@@ -123,6 +140,7 @@ class WPAM_Bid {
                 ],
                 [ '%d', '%d', '%f', '%s' ]
             );
+            $this->log_bid( $wpdb->insert_id, $user_id );
             do_action( 'wpam_bid_placed', $auction_id, $user_id, $place_bid );
             update_user_meta( $user_id, 'wpam_proxy_max_' . $auction_id, $max_bid );
 
@@ -143,6 +161,7 @@ class WPAM_Bid {
                         ],
                         [ '%d', '%d', '%f', '%s' ]
                     );
+                    $this->log_bid( $wpdb->insert_id, $highest_user );
                     do_action( 'wpam_bid_placed', $auction_id, $highest_user, $auto_bid );
                     $bid = $auto_bid;
                 } else {
@@ -307,5 +326,34 @@ class WPAM_Bid {
         }
 
         return $won;
+    }
+
+    public function get_recent_logs_for_auction( $auction_id, $limit = 10 ) {
+        global $wpdb;
+        $audit = $wpdb->prefix . 'wc_auction_audit';
+        $bids  = $wpdb->prefix . 'wc_auction_bids';
+
+        return $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT a.* FROM $audit a JOIN $bids b ON a.bid_id = b.id WHERE b.auction_id = %d ORDER BY a.logged_at DESC LIMIT %d",
+                $auction_id,
+                $limit
+            ),
+            ARRAY_A
+        );
+    }
+
+    public function get_recent_logs_for_user( $user_id, $limit = 10 ) {
+        global $wpdb;
+        $audit = $wpdb->prefix . 'wc_auction_audit';
+
+        return $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT * FROM $audit WHERE user_id = %d ORDER BY logged_at DESC LIMIT %d",
+                $user_id,
+                $limit
+            ),
+            ARRAY_A
+        );
     }
 }
