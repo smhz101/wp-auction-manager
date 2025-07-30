@@ -159,6 +159,12 @@
         hasError = true;
       }
 
+      const maxExt = parseInt(settings.wpam_max_extensions, 10);
+      if (isNaN(maxExt) || maxExt < 0) {
+        newErrors.wpam_max_extensions = 'Must be zero or more.';
+        hasError = true;
+      }
+
       if (settings.wpam_enable_twilio) {
         if (!settings.wpam_twilio_sid) {
           newErrors.wpam_twilio_sid = 'Required when Twilio is enabled.';
@@ -227,6 +233,13 @@
           value: settings.wpam_soft_close_extend || '',
           onChange: (v) => updateField('wpam_soft_close_extend', v),
           error: errors.wpam_soft_close_extend,
+        }),
+        createElement(TextControl, {
+          label: 'Maximum Extensions',
+          help: 'Limit how many times an auction can be extended. 0 = unlimited.',
+          value: settings.wpam_max_extensions || '',
+          onChange: (v) => updateField('wpam_max_extensions', v),
+          error: errors.wpam_max_extensions,
         }),
         createElement(ToggleControl, {
           label: labelWithTip(

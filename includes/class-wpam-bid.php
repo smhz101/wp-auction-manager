@@ -192,13 +192,19 @@ class WPAM_Bid {
             $extension = $legacy;
         }
 
+        $extension_count = (int) get_post_meta( $auction_id, '_auction_extension_count', true );
+        $max_extensions  = absint( get_option( 'wpam_max_extensions', 0 ) );
+
         if ( $threshold > 0 && $end_ts - $now <= $threshold ) {
-            $new_end_ts = $end_ts + $extension;
-            $new_end    = wp_date( 'Y-m-d H:i:s', $new_end_ts, wp_timezone() );
-            update_post_meta( $auction_id, '_auction_end', $new_end );
-            wp_clear_scheduled_hook( 'wpam_auction_end', [ $auction_id ] );
-            wp_schedule_single_event( (int) get_gmt_from_date( $new_end, 'U' ), 'wpam_auction_end', [ $auction_id ] );
-            $extended = true;
+            if ( 0 === $max_extensions || $extension_count < $max_extensions ) {
+                $new_end_ts = $end_ts + $extension;
+                $new_end    = wp_date( 'Y-m-d H:i:s', $new_end_ts, wp_timezone() );
+                update_post_meta( $auction_id, '_auction_end', $new_end );
+                update_post_meta( $auction_id, '_auction_extension_count', $extension_count + 1 );
+                wp_clear_scheduled_hook( 'wpam_auction_end', [ $auction_id ] );
+                wp_schedule_single_event( (int) get_gmt_from_date( $new_end, 'U' ), 'wpam_auction_end', [ $auction_id ] );
+                $extended = true;
+            }
         }
 
         // SMS notification via Twilio if enabled
@@ -392,13 +398,19 @@ class WPAM_Bid {
             $extension = $legacy;
         }
 
+        $extension_count = (int) get_post_meta( $auction_id, '_auction_extension_count', true );
+        $max_extensions  = absint( get_option( 'wpam_max_extensions', 0 ) );
+
         if ( $threshold > 0 && $end_ts - $now <= $threshold ) {
-            $new_end_ts = $end_ts + $extension;
-            $new_end    = wp_date( 'Y-m-d H:i:s', $new_end_ts, wp_timezone() );
-            update_post_meta( $auction_id, '_auction_end', $new_end );
-            wp_clear_scheduled_hook( 'wpam_auction_end', [ $auction_id ] );
-            wp_schedule_single_event( (int) get_gmt_from_date( $new_end, 'U' ), 'wpam_auction_end', [ $auction_id ] );
-            $extended = true;
+            if ( 0 === $max_extensions || $extension_count < $max_extensions ) {
+                $new_end_ts = $end_ts + $extension;
+                $new_end    = wp_date( 'Y-m-d H:i:s', $new_end_ts, wp_timezone() );
+                update_post_meta( $auction_id, '_auction_end', $new_end );
+                update_post_meta( $auction_id, '_auction_extension_count', $extension_count + 1 );
+                wp_clear_scheduled_hook( 'wpam_auction_end', [ $auction_id ] );
+                wp_schedule_single_event( (int) get_gmt_from_date( $new_end, 'U' ), 'wpam_auction_end', [ $auction_id ] );
+                $extended = true;
+            }
         }
 
         if ( ! $silent_enabled && get_option( 'wpam_enable_twilio' ) ) {
