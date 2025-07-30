@@ -119,6 +119,27 @@
         newErrors.wpam_default_increment = 'Enter a positive number.';
       }
 
+      if (settings.wpam_soft_close) {
+        const sc = parseInt(settings.wpam_soft_close, 10);
+        if (isNaN(sc) || sc < 0) {
+          newErrors.wpam_soft_close = 'Must be zero or more.';
+        }
+      }
+
+      if (settings.wpam_buyer_premium) {
+        const prem = parseFloat(settings.wpam_buyer_premium);
+        if (isNaN(prem) || prem < 0) {
+          newErrors.wpam_buyer_premium = 'Must be zero or more.';
+        }
+      }
+
+      if (settings.wpam_seller_fee) {
+        const fee = parseFloat(settings.wpam_seller_fee);
+        if (isNaN(fee) || fee < 0) {
+          newErrors.wpam_seller_fee = 'Must be zero or more.';
+        }
+      }
+
       const threshold = parseInt(settings.wpam_soft_close_threshold, 10);
       if (isNaN(threshold) || threshold < 0) {
         newErrors.wpam_soft_close_threshold = 'Must be zero or more.';
@@ -193,6 +214,49 @@
           help: 'Users must verify identity before bidding.',
           checked: !!settings.wpam_require_kyc,
           onChange: (v) => updateField('wpam_require_kyc', v ? 1 : 0),
+        })
+      );
+    }
+
+    function renderAuctions() {
+      return createElement(
+        'div',
+        null,
+        createElement(SelectControl, {
+          label: 'Default Auction Type',
+          value: settings.wpam_default_auction_type || 'standard',
+          options: [
+            { label: 'Standard', value: 'standard' },
+            { label: 'Sealed', value: 'sealed' },
+          ],
+          onChange: (v) => updateField('wpam_default_auction_type', v),
+        }),
+        createElement(ToggleControl, {
+          label: 'Enable Proxy Bidding',
+          checked: !!settings.wpam_enable_proxy_bidding,
+          onChange: (v) => updateField('wpam_enable_proxy_bidding', v ? 1 : 0),
+        }),
+        createElement(ToggleControl, {
+          label: 'Enable Silent Bidding',
+          checked: !!settings.wpam_enable_silent_bidding,
+          onChange: (v) => updateField('wpam_enable_silent_bidding', v ? 1 : 0),
+        }),
+        createElement(TextControl, {
+          label: 'Soft Close Minutes',
+          help: 'Duration added when soft close triggers.',
+          value: settings.wpam_soft_close || '',
+          onChange: (v) => updateField('wpam_soft_close', v),
+          error: errors.wpam_soft_close,
+        }),
+        createElement(TextControl, {
+          label: 'Buyer Premium (%)',
+          value: settings.wpam_buyer_premium || '',
+          onChange: (v) => updateField('wpam_buyer_premium', v),
+        }),
+        createElement(TextControl, {
+          label: 'Seller Fee (%)',
+          value: settings.wpam_seller_fee || '',
+          onChange: (v) => updateField('wpam_seller_fee', v),
         })
       );
     }
@@ -309,6 +373,7 @@
           className: 'wpam-settings-tabs',
           tabs: [
             { name: 'general', title: 'General' },
+            { name: 'auctions', title: 'Auctions' },
             { name: 'notifications', title: 'Notifications' },
             { name: 'realtime', title: 'Realtime' },
           ],
@@ -316,6 +381,9 @@
         (tab) => {
           if (tab.name === 'general') {
             return renderGeneral();
+          }
+          if (tab.name === 'auctions') {
+            return renderAuctions();
           }
           if (tab.name === 'notifications') {
             return renderNotifications();

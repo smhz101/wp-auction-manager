@@ -77,6 +77,12 @@ class WPAM_Admin {
         register_setting( 'wpam_settings', 'wpam_soft_close_extend' );
         register_setting( 'wpam_settings', 'wpam_realtime_provider' );
 
+        register_setting( 'wpam_settings', 'wpam_default_auction_type' );
+        register_setting( 'wpam_settings', 'wpam_enable_proxy_bidding' );
+        register_setting( 'wpam_settings', 'wpam_enable_silent_bidding' );
+        register_setting( 'wpam_settings', 'wpam_buyer_premium' );
+        register_setting( 'wpam_settings', 'wpam_seller_fee' );
+
         add_settings_section( 'wpam_general', __( 'Auction Defaults', 'wpam' ), '__return_false', 'wpam_settings' );
         add_settings_section( 'wpam_providers', __( 'Providers', 'wpam' ), '__return_false', 'wpam_settings' );      
         add_settings_section( 'wpam_twilio', __( 'Twilio Integration', 'wpam' ), '__return_false', 'wpam_settings' );
@@ -485,6 +491,11 @@ class WPAM_Admin {
             'wpam_soft_close_extend',
             'wpam_realtime_provider',
             'wpam_require_kyc',
+            'wpam_default_auction_type',
+            'wpam_enable_proxy_bidding',
+            'wpam_enable_silent_bidding',
+            'wpam_buyer_premium',
+            'wpam_seller_fee',
         ];
     }
 
