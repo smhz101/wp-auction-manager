@@ -45,9 +45,9 @@ The older `Soft Close Duration` option is still honored when the new values are 
 
 ### Integration settings
 
-The **Integrations** tab lets you connect optional services.
+-The **Integrations** tab lets you connect optional services.
 
-- **Twilio** – enable SMS alerts and fill in your account SID, token and from number.
+- **Twilio** – enable SMS alerts and fill in your account SID, token and from number. Enable "Bid SMS Alerts" to text bidders when they take or lose the lead.
 - **Firebase** – toggle Firebase push notifications and provide the server key.
 - **Pusher** – choose "Pusher" under Realtime Provider and enter your app credentials for WebSocket updates.
 
@@ -142,7 +142,7 @@ The plugin uses AJAX polling by default to refresh the current highest bid every
 Future versions may swap to WebSocket providers found under `includes/api-integrations`.
 
 Under **Auctions → Settings → Realtime Integration** you can select `None` or `Pusher` as the provider. Enter your Pusher app credentials to enable realtime WebSocket updates.
-Twilio SMS notifications can be toggled via the `Enable Twilio Notifications` option (`wpam_enable_twilio`).
+Twilio SMS notifications can be toggled via the `Enable Twilio Notifications` option (`wpam_enable_twilio`). When enabled, bid lead alerts are controlled by the `Enable Bid SMS Alerts` option (`wpam_lead_sms_alerts`).
 Firebase push notifications are available through the `Enable Firebase` option (`wpam_enable_firebase`) once you provide a valid server key.
 Email alerts are on by default. They can be disabled via the `Enable Email Notifications` option (`wpam_enable_email`). If a SendGrid API key is provided emails will be sent through SendGrid.
 
