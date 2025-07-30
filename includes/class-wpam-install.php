@@ -47,6 +47,21 @@ class WPAM_Install {
         ) $charset_collate;";
         dbDelta( $messages_sql );
 
+        // Audit table
+        $audit_table = $wpdb->prefix . 'wc_auction_audit';
+        $audit_sql   = "CREATE TABLE IF NOT EXISTS $audit_table (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            bid_id bigint(20) unsigned NOT NULL,
+            user_id bigint(20) unsigned NOT NULL,
+            ip varchar(100) NOT NULL,
+            user_agent varchar(255) NOT NULL,
+            logged_at datetime NOT NULL,
+            PRIMARY KEY  (id),
+            KEY bid_id (bid_id),
+            KEY user_id (user_id)
+        ) $charset_collate;";
+        dbDelta( $audit_sql );
+
         add_rewrite_endpoint( 'watchlist', EP_ROOT | EP_PAGES );
         add_rewrite_endpoint( 'my-bids', EP_ROOT | EP_PAGES );
         add_rewrite_endpoint( 'auctions-won', EP_ROOT | EP_PAGES );
