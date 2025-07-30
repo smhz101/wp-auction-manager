@@ -1,1 +1,1 @@
-<?php return array('dependencies' => array(), 'version' => '71c9fd310c1be3deaa0c');
+<?php return array('dependencies' => array('countdown'), 'version' => '64e5fb89f3e49a6992d9');

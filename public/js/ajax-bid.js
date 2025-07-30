@@ -1,15 +1,19 @@
 jQuery(function ($) {
   function updateCountdown() {
     $('.wpam-countdown').each(function () {
-      const end = parseInt($(this).data('end'), 10);
-      const now = Math.floor(Date.now() / 1000);
-      let diff = end - now;
-      if (diff < 0) {
-        diff = 0;
+      const $el = $(this);
+      const start = parseInt($el.data('start'), 10) * 1000;
+      const end = parseInt($el.data('end'), 10) * 1000;
+      const now = Date.now();
+      if (now >= end) {
+        $el.text('0:00');
+        return;
       }
+      const target = now < start ? start : end;
+      const diff = countdown(now, new Date(target)).value / 1000;
       const mins = Math.floor(diff / 60);
-      const secs = diff % 60;
-      $(this).text(mins + ':' + ('0' + secs).slice(-2));
+      const secs = Math.floor(diff % 60);
+      $el.text(mins + ':' + ('0' + secs).slice(-2));
     });
   }
   setInterval(updateCountdown, 1000);
@@ -30,7 +34,7 @@ jQuery(function ($) {
       function (res) {
         alert(res.data.message);
         if (res.success && res.data.new_end_ts) {
-          $('.wpam-countdown').data('end', res.data.new_end_ts);
+          $('.wpam-countdown').data('end', res.data.new_end_ts).attr('data-end', res.data.new_end_ts);
           updateCountdown();
         }
       }

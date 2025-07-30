@@ -26,8 +26,10 @@ class WPAM_HTML {
     ];
     $atts = wp_parse_args( $atts, $defaults );
 
-    $end    = get_post_meta( $auction_id, '_auction_end', true );
-    $end_ts = $end ? ( new \DateTimeImmutable( $end, wp_timezone() ) )->getTimestamp() : 0;
+    $start    = get_post_meta( $auction_id, '_auction_start', true );
+    $start_ts = $start ? ( new \DateTimeImmutable( $start, wp_timezone() ) )->getTimestamp() : 0;
+    $end      = get_post_meta( $auction_id, '_auction_end', true );
+    $end_ts   = $end ? ( new \DateTimeImmutable( $end, wp_timezone() ) )->getTimestamp() : 0;
     $type   = get_post_meta( $auction_id, '_auction_type', true );
     $status = get_post_meta( $auction_id, '_auction_state', true );
     $now    = current_datetime()->getTimestamp();
@@ -51,7 +53,7 @@ class WPAM_HTML {
     }
 
     if ( $atts['showCountdown'] ) {
-      echo '<p class="wpam-countdown" data-end="' . esc_attr( $end_ts ) . '"></p>';
+      echo '<p class="wpam-countdown" data-start="' . esc_attr( $start_ts ) . '" data-end="' . esc_attr( $end_ts ) . '"></p>';
     }
 
     $label = ( 'reverse' === $type ) ? __( 'Lowest Bid:', 'wpam' ) : __( 'Current Bid:', 'wpam' );
