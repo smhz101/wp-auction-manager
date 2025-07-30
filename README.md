@@ -35,6 +35,8 @@ When editing an auction product you can configure additional options in the **Au
 - **Auto Relist** – automatically relist when no winning bid exists.
 - **Max Bids Per User** – limit how many bids each user can place.
 - **Auction Fee** – extra fee added to the winning bid.
+- **Proxy Bidding** – automatically outbid others up to a maximum amount.
+- **Silent Bidding** – hides all bids until the auction ends.
 
 ### Soft-close settings
 

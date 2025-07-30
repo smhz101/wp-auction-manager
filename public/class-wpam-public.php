@@ -147,10 +147,16 @@ class WPAM_Public {
         $highest = $wpdb->get_var( $wpdb->prepare( "SELECT MAX(bid_amount) FROM {$wpdb->prefix}wc_auction_bids WHERE auction_id = %d", $auction_id ) );
         $highest = $highest ? floatval( $highest ) : 0;
 
+        $silent = get_option( 'wpam_enable_silent_bidding' ) && get_post_meta( $auction_id, '_auction_silent_bidding', true );
+        $display_highest = $highest;
+        if ( $silent && $now < $end_ts ) {
+            $display_highest = __( 'Hidden', 'wpam' );
+        }
+
         echo '<p class="wpam-status woocommerce-message">' . esc_html( ucfirst( $status ) ) . '</p>';
         echo '<p class="wpam-type">' . esc_html( ucfirst( $type ) ) . '</p>';
         echo '<p class="wpam-countdown" data-end="' . esc_attr( $end_ts ) . '"></p>';
-        echo '<p>' . esc_html__( 'Current Bid:', 'wpam' ) . ' <span class="wpam-current-bid" data-auction-id="' . esc_attr( $auction_id ) . '">' . esc_html( $highest ) . '</span></p>';
+        echo '<p>' . esc_html__( 'Current Bid:', 'wpam' ) . ' <span class="wpam-current-bid" data-auction-id="' . esc_attr( $auction_id ) . '">' . esc_html( $display_highest ) . '</span></p>';
     }
 
     public function render_bid_form() {
