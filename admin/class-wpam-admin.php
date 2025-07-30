@@ -47,23 +47,23 @@ class WPAM_Admin {
 			array( $this, 'render_messages_page' )
 		);
 
-                add_submenu_page(
-                        'wpam-auctions',
-                        __( 'Logs', 'wpam' ),
-                        __( 'Logs', 'wpam' ),
-                        'manage_options',
-                        'wpam-logs',
-                        array( $this, 'render_logs_page' )
-                );
+		add_submenu_page(
+			'wpam-auctions',
+			__( 'Logs', 'wpam' ),
+			__( 'Logs', 'wpam' ),
+			'manage_options',
+			'wpam-logs',
+			array( $this, 'render_logs_page' )
+		);
 
-                add_submenu_page(
-                        'wpam-auctions',
-                        __( 'Flagged Users', 'wpam' ),
-                        __( 'Flagged Users', 'wpam' ),
-                        'manage_options',
-                        'wpam-flagged',
-                        array( $this, 'render_flagged_page' )
-                );
+		add_submenu_page(
+			'wpam-auctions',
+			__( 'Flagged Users', 'wpam' ),
+			__( 'Flagged Users', 'wpam' ),
+			'manage_options',
+			'wpam-flagged',
+			array( $this, 'render_flagged_page' )
+		);
 
 		add_submenu_page(
 			'wpam-auctions',
@@ -99,17 +99,17 @@ class WPAM_Admin {
 		register_setting( 'wpam_settings', 'wpam_enable_proxy_bidding' );
 		register_setting( 'wpam_settings', 'wpam_enable_silent_bidding' );
 		register_setting( 'wpam_settings', 'wpam_buyer_premium' );
-                register_setting( 'wpam_settings', 'wpam_seller_fee' );
-                register_setting( 'wpam_settings', 'wpam_webhook_url' );
+		register_setting( 'wpam_settings', 'wpam_seller_fee' );
+		register_setting( 'wpam_settings', 'wpam_webhook_url' );
 
 		add_settings_section( 'wpam_general', __( 'Auction Defaults', 'wpam' ), '__return_false', 'wpam_settings' );
 		add_settings_section( 'wpam_providers', __( 'Providers', 'wpam' ), '__return_false', 'wpam_settings' );
 		add_settings_section( 'wpam_twilio', __( 'Twilio Integration', 'wpam' ), '__return_false', 'wpam_settings' );
 		add_settings_section( 'wpam_firebase', __( 'Firebase Integration', 'wpam' ), '__return_false', 'wpam_settings' );
-                add_settings_section( 'wpam_realtime', __( 'Realtime Integration', 'wpam' ), '__return_false', 'wpam_settings' );
+		add_settings_section( 'wpam_realtime', __( 'Realtime Integration', 'wpam' ), '__return_false', 'wpam_settings' );
 
-                add_settings_section( 'wpam_pusher', __( 'Pusher Realtime', 'wpam' ), '__return_false', 'wpam_settings' );
-                add_settings_section( 'wpam_webhooks', __( 'Webhooks', 'wpam' ), '__return_false', 'wpam_settings' );
+		add_settings_section( 'wpam_pusher', __( 'Pusher Realtime', 'wpam' ), '__return_false', 'wpam_settings' );
+		add_settings_section( 'wpam_webhooks', __( 'Webhooks', 'wpam' ), '__return_false', 'wpam_settings' );
 
 		add_settings_field(
 			'wpam_soft_close_threshold',
@@ -239,22 +239,22 @@ class WPAM_Admin {
 			'wpam_realtime'
 		);
 
-                add_settings_field(
-                        'wpam_pusher_cluster',
-                        __( 'Pusher Cluster', 'wpam' ),
-                        array( $this, 'field_pusher_cluster' ),
-                        'wpam_settings',
-                        'wpam_realtime'
-                );
+		add_settings_field(
+			'wpam_pusher_cluster',
+			__( 'Pusher Cluster', 'wpam' ),
+			array( $this, 'field_pusher_cluster' ),
+			'wpam_settings',
+			'wpam_realtime'
+		);
 
-                add_settings_field(
-                        'wpam_webhook_url',
-                        __( 'Webhook URL', 'wpam' ),
-                        array( $this, 'field_webhook_url' ),
-                        'wpam_settings',
-                        'wpam_webhooks'
-                );
-        }
+		add_settings_field(
+			'wpam_webhook_url',
+			__( 'Webhook URL', 'wpam' ),
+			array( $this, 'field_webhook_url' ),
+			'wpam_settings',
+			'wpam_webhooks'
+		);
+	}
 
 	public function field_twilio_sid() {
 		$value = esc_attr( get_option( 'wpam_twilio_sid', '' ) );
@@ -271,7 +271,6 @@ class WPAM_Admin {
 		echo '<input type="text" class="regular-text" name="wpam_twilio_from" value="' . $value . '" />';
 	}
 
-
 	public function field_pusher_app_id() {
 		$value = esc_attr( get_option( 'wpam_pusher_app_id', '' ) );
 		echo '<input type="text" class="regular-text" name="wpam_pusher_app_id" value="' . $value . '" />';
@@ -287,15 +286,15 @@ class WPAM_Admin {
 		echo '<input type="text" class="regular-text" name="wpam_pusher_secret" value="' . $value . '" />';
 	}
 
-        public function field_pusher_cluster() {
-                $value = esc_attr( get_option( 'wpam_pusher_cluster', '' ) );
-                echo '<input type="text" class="regular-text" name="wpam_pusher_cluster" value="' . $value . '" />';
-        }
+	public function field_pusher_cluster() {
+					$value = esc_attr( get_option( 'wpam_pusher_cluster', '' ) );
+					echo '<input type="text" class="regular-text" name="wpam_pusher_cluster" value="' . $value . '" />';
+	}
 
-        public function field_webhook_url() {
-                $value = esc_attr( get_option( 'wpam_webhook_url', '' ) );
-                echo '<input type="text" class="regular-text" name="wpam_webhook_url" value="' . $value . '" />';
-        }
+	public function field_webhook_url() {
+					$value = esc_attr( get_option( 'wpam_webhook_url', '' ) );
+					echo '<input type="text" class="regular-text" name="wpam_webhook_url" value="' . $value . '" />';
+	}
 
 	public function field_soft_close_threshold() {
 		$value = esc_attr( get_option( 'wpam_soft_close_threshold', 30 ) );
@@ -405,27 +404,27 @@ class WPAM_Admin {
 		echo '</form></div>';
 	}
 
-        public function render_logs_page() {
-                $table = new WPAM_Logs_Table();
-                $table->prepare_items();
-                echo '<div class="wrap">';
-                echo '<h1>' . esc_html__( 'Admin Logs', 'wpam' ) . '</h1>';
-                echo '<form method="get">';
-                echo '<input type="hidden" name="page" value="wpam-logs" />';
-                $table->display();
-                echo '</form></div>';
-        }
+	public function render_logs_page() {
+		$table = new WPAM_Logs_Table();
+		$table->prepare_items();
+		echo '<div class="wrap">';
+		echo '<h1>' . esc_html__( 'Admin Logs', 'wpam' ) . '</h1>';
+		echo '<form method="get">';
+		echo '<input type="hidden" name="page" value="wpam-logs" />';
+		$table->display();
+		echo '</form></div>';
+	}
 
-        public function render_flagged_page() {
-                $table = new WPAM_Flagged_Table();
-                $table->prepare_items();
-                echo '<div class="wrap">';
-                echo '<h1>' . esc_html__( 'Flagged Users', 'wpam' ) . '</h1>';
-                echo '<form method="get">';
-                echo '<input type="hidden" name="page" value="wpam-flagged" />';
-                $table->display();
-                echo '</form></div>';
-        }
+	public function render_flagged_page() {
+		$table = new WPAM_Flagged_Table();
+		$table->prepare_items();
+		echo '<div class="wrap">';
+		echo '<h1>' . esc_html__( 'Flagged Users', 'wpam' ) . '</h1>';
+		echo '<form method="get">';
+		echo '<input type="hidden" name="page" value="wpam-flagged" />';
+		$table->display();
+		echo '</form></div>';
+	}
 
 	public function enqueue_scripts( $hook ) {
 		$screen = get_current_screen();
@@ -463,15 +462,15 @@ class WPAM_Admin {
 			);
 		}
 
-               $slug        = 'auctions';
-               $admin_pages = array(
-                       'toplevel_page_wpam-' . $slug,
-                       $slug . '_page_wpam-auctions',
-                       $slug . '_page_wpam-bids',
-                       $slug . '_page_wpam-messages',
-                       $slug . '_page_wpam-logs',
-                       $slug . '_page_wpam-settings',
-               );
+		$slug        = 'auctions';
+		$admin_pages = array(
+						'toplevel_page_wpam-' . $slug,
+						$slug . '_page_wpam-auctions',
+						$slug . '_page_wpam-bids',
+						$slug . '_page_wpam-messages',
+						$slug . '_page_wpam-logs',
+						$slug . '_page_wpam-settings',
+		);
 
 		if ( in_array( $hook, $admin_pages, true ) ) {
 			wp_enqueue_style(
@@ -482,9 +481,9 @@ class WPAM_Admin {
 			);
 		}
 
-                if ( $slug . '_page_wpam-settings' !== $hook ) {
-                        return;
-                }
+		if ( $slug . '_page_wpam-settings' !== $hook ) {
+						return;
+		}
 
 		wp_enqueue_script(
 			'wpam-settings-app',
@@ -505,9 +504,9 @@ class WPAM_Admin {
 	}
 
 	public function register_rest_routes() {
-                register_rest_route(
-                        'wpam/v1',
-                        '/settings',
+		register_rest_route(
+			'wpam/v1',
+			'/settings',
 			array(
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => array( $this, 'rest_get_settings' ),
@@ -573,56 +572,56 @@ class WPAM_Admin {
 			'wpam_enable_proxy_bidding',
 			'wpam_enable_silent_bidding',
 			'wpam_buyer_premium',
-                        'wpam_seller_fee',
-                        'wpam_webhook_url',
-                );
+			'wpam_seller_fee',
+			'wpam_webhook_url',
+		);
 
-                register_rest_route(
-                        'wpam/v1',
-                        '/bid',
-                        array(
-                                'methods'             => \WP_REST_Server::CREATABLE,
-                                'callback'            => array( '\\WPAM\\Includes\\WPAM_Bid', 'rest_place_bid' ),
-                                'permission_callback' => function () {
-                                        return is_user_logged_in();
-                                },
-                        )
-                );
+		register_rest_route(
+			'wpam/v1',
+			'/bid',
+			array(
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => array( '\\WPAM\\Includes\\WPAM_Bid', 'rest_place_bid' ),
+				'permission_callback' => function () {
+					return is_user_logged_in();
+				},
+			)
+		);
 
-                register_rest_route(
-                        'wpam/v1',
-                        '/auction/(?P<auction_id>\\d+)/highest',
-                        array(
-                                'methods'             => \WP_REST_Server::READABLE,
-                                'callback'            => array( '\\WPAM\\Includes\\WPAM_Bid', 'rest_get_highest_bid' ),
-                                'permission_callback' => '__return_true',
-                        )
-                );
+		register_rest_route(
+			'wpam/v1',
+			'/auction/(?P<auction_id>\\d+)/highest',
+			array(
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => array( '\\WPAM\\Includes\\WPAM_Bid', 'rest_get_highest_bid' ),
+				'permission_callback' => '__return_true',
+			)
+		);
 
-                register_rest_route(
-                        'wpam/v1',
-                        '/watchlist',
-                        array(
-                                'methods'             => \WP_REST_Server::CREATABLE,
-                                'callback'            => array( '\\WPAM\\Includes\\WPAM_Watchlist', 'rest_toggle_watchlist' ),
-                                'permission_callback' => function () {
-                                        return is_user_logged_in();
-                                },
-                        )
-                );
+		register_rest_route(
+			'wpam/v1',
+			'/watchlist',
+			array(
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => array( '\\WPAM\\Includes\\WPAM_Watchlist', 'rest_toggle_watchlist' ),
+				'permission_callback' => function () {
+					return is_user_logged_in();
+				},
+			)
+		);
 
-                register_rest_route(
-                        'wpam/v1',
-                        '/watchlist',
-                        array(
-                                'methods'             => \WP_REST_Server::READABLE,
-                                'callback'            => array( '\\WPAM\\Includes\\WPAM_Watchlist', 'rest_get_watchlist' ),
-                                'permission_callback' => function () {
-                                        return is_user_logged_in();
-                                },
-                        )
-                );
-        }
+		register_rest_route(
+			'wpam/v1',
+			'/watchlist',
+			array(
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => array( '\\WPAM\\Includes\\WPAM_Watchlist', 'rest_get_watchlist' ),
+				'permission_callback' => function () {
+					return is_user_logged_in();
+				},
+			)
+		);
+	}
 
 	public function render_settings_page() {
 		echo '<div class="wrap">';
