@@ -1,0 +1,1 @@
+document.addEventListener("DOMContentLoaded",function(){"undefined"!=typeof jQuery&&jQuery(function(t){function e(){t(".wpam-countdown").each(function(){let e=parseInt(t(this).data("end"),10)-Math.floor(Date.now()/1e3);e<0&&(e=0);const n=Math.floor(e/60),o=e%60;t(this).text(n+":"+("0"+o).slice(-2))})}e(),setInterval(e,1e3)})});
