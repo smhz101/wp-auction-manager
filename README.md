@@ -81,6 +81,21 @@ The plugin includes a lightweight React application that can render either a lis
 
 WP Auction Manager ships with a dynamic block registered via `@wordpress/scripts`. Search for **Auction** in the block inserter to add a live countdown, status labels and bid form anywhere within the block editor. Block attributes allow toggling each element and optionally specifying an Auction ID when used outside of the product screen.
 
+## REST API
+
+Authenticated users can perform actions over the REST API using the `wpam/v1` namespace. Include a valid `X-WP-Nonce` header obtained with `wp_create_nonce( 'wp_rest' )` when using cookie authentication.
+
+- `POST /wp-json/wpam/v1/bid` – Place a bid. Body parameters: `auction_id` (int), `bid` (float) and optional `max_bid` for proxy bidding.
+- `GET  /wp-json/wpam/v1/auction/<id>/highest` – Fetch the current highest bid.
+- `POST /wp-json/wpam/v1/watchlist` – Toggle the current user’s watchlist for an auction (`auction_id`).
+- `GET  /wp-json/wpam/v1/watchlist` – Retrieve the user’s watchlist items.
+
+Webhook events can be sent by configuring a URL under **Auctions → Settings → Webhooks**. A `POST` request is triggered on `wpam_auction_end` with JSON like:
+
+```json
+{ "event": "auction_end", "auction_id": 123 }
+```
+
 ## Running unit tests
 
 A `tests/` directory will contain PHPUnit tests in the future. Once available, install development dependencies and execute:

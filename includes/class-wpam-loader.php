@@ -17,5 +17,6 @@ class WPAM_Loader {
         new \WPAM\Admin\WPAM_Admin();
         new \WPAM\Public\WPAM_Public();
         new WPAM_Blocks();
+        new WPAM_Webhooks();
     }
 }
