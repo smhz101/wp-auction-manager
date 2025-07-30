@@ -368,9 +368,9 @@ class WPAM_Admin {
     }
 
     public function enqueue_scripts( $hook ) {
-        $slug        = 'wpam-auctions';
+        $slug        = 'auctions';
         $admin_pages = [
-            'toplevel_page_' . $slug,
+            'toplevel_page_wpam-' . $slug,
             $slug . '_page_wpam-auctions',
             $slug . '_page_wpam-bids',
             $slug . '_page_wpam-messages',
