@@ -1,429 +1,587 @@
 <?php
 namespace WPAM\Includes;
+
 if ( class_exists( 'WC_Product' ) && ! class_exists( 'WC_Product_Auction' ) ) {
-    class WC_Product_Auction extends \WC_Product {
-        public function get_type() {
-            return 'auction';
-        }
-    }
+	class WC_Product_Auction extends \WC_Product {
+		public function get_type() {
+			return 'auction';
+		}
+	}
 }
 
 class WPAM_Auction {
-    public function __construct() {
-        add_action( 'init', [ $this, 'register_product_type' ] );
-        add_filter( 'woocommerce_product_data_tabs', [ $this, 'add_product_data_tab' ] );
-        add_filter( 'woocommerce_product_data_tabs', [ $this, 'reorder_product_tabs' ], 20 );
-        add_action( 'woocommerce_product_data_panels', [ $this, 'add_product_data_fields' ] );
-        add_action( 'woocommerce_process_product_meta_auction', [ $this, 'save_product_data' ] );
-        add_action( 'wpam_handle_auction_end', [ $this, 'handle_auction_end' ] );
-        add_action( 'init', [ $this, 'schedule_cron' ] );
-        add_action( 'wpam_check_ended_auctions', [ $this, 'check_ended_auctions' ] );
-        add_action( 'wpam_auction_start', [ $this, 'handle_auction_start' ] );
-        add_action( 'wpam_auction_end', [ $this, 'handle_auction_end' ] );
-    }
+	const ABOUT_TO_START_THRESHOLD = HOUR_IN_SECONDS;
+	public function __construct() {
+		add_action( 'init', array( $this, 'register_product_type' ) );
+		add_filter( 'woocommerce_product_data_tabs', array( $this, 'add_product_data_tab' ) );
+		add_filter( 'woocommerce_product_data_tabs', array( $this, 'reorder_product_tabs' ), 20 );
+		add_action( 'woocommerce_product_data_panels', array( $this, 'add_product_data_fields' ) );
+		add_action( 'woocommerce_process_product_meta_auction', array( $this, 'save_product_data' ) );
+		add_action( 'wpam_handle_auction_end', array( $this, 'handle_auction_end' ) );
+		add_action( 'init', array( $this, 'schedule_cron' ) );
+		add_action( 'init', array( $this, 'register_meta_fields' ) );
+		add_action( 'wpam_check_ended_auctions', array( $this, 'check_ended_auctions' ) );
+		add_action( 'wpam_update_auction_states', array( $this, 'update_auction_states' ) );
+		add_action( 'wpam_auction_start', array( $this, 'handle_auction_start' ) );
+		add_action( 'wpam_auction_end', array( $this, 'handle_auction_end' ) );
+	}
 
-    public function register_product_type() {
-        add_filter( 'product_type_selector', [ $this, 'add_product_type' ] );
-    }
+	public function register_meta_fields() {
+		register_post_meta(
+			'product',
+			'_auction_state',
+			array(
+				'show_in_rest'  => true,
+				'single'        => true,
+				'type'          => 'string',
+				'auth_callback' => '__return_true',
+			)
+		);
 
-    public function add_product_type( $types ) {
-        $types['auction'] = __( 'Auction product', 'wpam' );
-        return $types;
-    }
+		register_post_meta(
+			'product',
+			'_auction_ending_reason',
+			array(
+				'show_in_rest'  => true,
+				'single'        => true,
+				'type'          => 'string',
+				'auth_callback' => '__return_true',
+			)
+		);
+	}
 
-    public function add_product_data_tab( $tabs ) {
-        $tabs['auction'] = [
-            'label'  => __( 'Auction', 'wpam' ),
-            'target' => 'auction_product_data',
-            'class'  => [ 'show_if_auction', 'auction_tab' ],
-        ];
-        return $tabs;
-    }
+	public function register_product_type() {
+		add_filter( 'product_type_selector', array( $this, 'add_product_type' ) );
+	}
 
-    public function reorder_product_tabs( $tabs ) {
-        if ( isset( $tabs['auction'] ) ) {
-            $auction_tab = $tabs['auction'];
-            unset( $tabs['auction'] );
-            foreach ( $tabs as $key => $tab ) {
-                if ( ! isset( $tabs[ $key ]['class'] ) ) {
-                    $tabs[ $key ]['class'] = [];
-                }
-                $tabs[ $key ]['class'][] = 'hide_if_auction';
-            }
-            $tabs = array_merge( [ 'auction' => $auction_tab ], $tabs );
-        }
-        return $tabs;
-    }
+	public function add_product_type( $types ) {
+		$types['auction'] = __( 'Auction product', 'wpam' );
+		return $types;
+	}
 
-    public function add_product_data_fields() {
-        global $post;
-        $post_id = $post ? $post->ID : 0;
-        echo '<div id="auction_product_data" class="panel woocommerce_options_panel hidden show_if_auction">';
+	public function add_product_data_tab( $tabs ) {
+		$tabs['auction'] = array(
+			'label'  => __( 'Auction', 'wpam' ),
+			'target' => 'auction_product_data',
+			'class'  => array( 'show_if_auction', 'auction_tab' ),
+		);
+		return $tabs;
+	}
 
-        woocommerce_wp_select([
-            'id'          => '_auction_type',
-            'label'       => __( 'Auction Type', 'wpam' ),
-            'description' => __( 'Select the bidding style for this auction.', 'wpam' ),
-            'desc_tip'    => true,
-            'options'     => [
-                'standard' => __( 'Standard', 'wpam' ),
-                'reverse'  => __( 'Reverse', 'wpam' ),
-                'sealed'   => __( 'Sealed', 'wpam' ),
-            ],
-            'value'       => get_post_meta( $post_id, '_auction_type', true ),
-        ]);
+	public function reorder_product_tabs( $tabs ) {
+		if ( isset( $tabs['auction'] ) ) {
+			$auction_tab = $tabs['auction'];
+			unset( $tabs['auction'] );
+			foreach ( $tabs as $key => $tab ) {
+				if ( ! isset( $tabs[ $key ]['class'] ) ) {
+					$tabs[ $key ]['class'] = array();
+				}
+				$tabs[ $key ]['class'][] = 'hide_if_auction';
+			}
+			$tabs = array_merge( array( 'auction' => $auction_tab ), $tabs );
+		}
+		return $tabs;
+	}
 
-        $timezone      = wp_timezone();
-        $current_ts    = current_datetime()->getTimestamp();
-        $start_value   = get_post_meta( $post_id, '_auction_start', true );
+	public function add_product_data_fields() {
+		global $post;
+		$post_id = $post ? $post->ID : 0;
+		echo '<div id="auction_product_data" class="panel woocommerce_options_panel hidden show_if_auction">';
 
-        if ( ! $start_value ) {
-            $start_value = wp_date( 'Y-m-d H:i:s', $current_ts + HOUR_IN_SECONDS, $timezone );
-        }
+		woocommerce_wp_select(
+			array(
+				'id'          => '_auction_type',
+				'label'       => __( 'Auction Type', 'wpam' ),
+				'description' => __( 'Select the bidding style for this auction.', 'wpam' ),
+				'desc_tip'    => true,
+				'options'     => array(
+					'standard' => __( 'Standard', 'wpam' ),
+					'reverse'  => __( 'Reverse', 'wpam' ),
+					'sealed'   => __( 'Sealed', 'wpam' ),
+				),
+				'value'       => get_post_meta( $post_id, '_auction_type', true ),
+			)
+		);
 
-        $start_timestamp = ( new \DateTimeImmutable( $start_value, $timezone ) )->getTimestamp();
-        $is_past_start   = $start_timestamp < $current_ts;
+		$timezone    = wp_timezone();
+		$current_ts  = current_datetime()->getTimestamp();
+		$start_value = get_post_meta( $post_id, '_auction_start', true );
 
-        $end_value = get_post_meta( $post_id, '_auction_end', true );
-        if ( ! $end_value ) {
-            $end_value = wp_date( 'Y-m-d H:i:s', $start_timestamp + DAY_IN_SECONDS, $timezone );
-        }
+		if ( ! $start_value ) {
+			$start_value = wp_date( 'Y-m-d H:i:s', $current_ts + HOUR_IN_SECONDS, $timezone );
+		}
 
-        woocommerce_wp_text_input([
-            'id'          => '_auction_start',
-            'label'       => __( 'Start Date', 'wpam' ),
-            'type'        => 'datetime-local',
-            'description' => __( 'When bidding opens.', 'wpam' ),
-            'desc_tip'    => true,
-            'value'       => $start_value,
-            'custom_attributes' => $is_past_start ? [ 'disabled' => 'disabled' ] : [],
-        ]);
+		$start_timestamp = ( new \DateTimeImmutable( $start_value, $timezone ) )->getTimestamp();
+		$is_past_start   = $start_timestamp < $current_ts;
 
-        if ( $is_past_start ) {
-            echo '<input type="hidden" name="_auction_start" value="' . esc_attr( $start_value ) . '" />';
-        }
+		$end_value = get_post_meta( $post_id, '_auction_end', true );
+		if ( ! $end_value ) {
+			$end_value = wp_date( 'Y-m-d H:i:s', $start_timestamp + DAY_IN_SECONDS, $timezone );
+		}
 
-        woocommerce_wp_text_input([
-            'id'          => '_auction_end',
-            'label'       => __( 'End Date', 'wpam' ),
-            'type'        => 'datetime-local',
-            'description' => __( 'When the auction will close.', 'wpam' ),
-            'desc_tip'    => true,
-            'value'       => $end_value,
-        ]);
+		woocommerce_wp_text_input(
+			array(
+				'id'                => '_auction_start',
+				'label'             => __( 'Start Date', 'wpam' ),
+				'type'              => 'datetime-local',
+				'description'       => __( 'When bidding opens.', 'wpam' ),
+				'desc_tip'          => true,
+				'value'             => $start_value,
+				'custom_attributes' => $is_past_start ? array( 'disabled' => 'disabled' ) : array(),
+			)
+		);
 
-        woocommerce_wp_text_input([
-            'id'          => '_auction_reserve',
-            'label'       => __( 'Reserve Price', 'wpam' ),
-            'description' => __( 'Minimum price required for a valid sale.', 'wpam' ),
-            'desc_tip'    => true,
-            'type'        => 'number',
-            'custom_attributes' => [ 'step' => '0.01', 'min' => '0' ],
-            'value'       => get_post_meta( $post_id, '_auction_reserve', true ),
-        ]);
+		if ( $is_past_start ) {
+			echo '<input type="hidden" name="_auction_start" value="' . esc_attr( $start_value ) . '" />';
+		}
 
-        woocommerce_wp_text_input([
-            'id'          => '_auction_buy_now',
-            'label'       => __( 'Buy Now Price', 'wpam' ),
-            'description' => __( 'Optional instant purchase amount.', 'wpam' ),
-            'desc_tip'    => true,
-            'type'        => 'number',
-            'custom_attributes' => [ 'step' => '0.01', 'min' => '0' ],
-            'value'       => get_post_meta( $post_id, '_auction_buy_now', true ),
-        ]);
+		woocommerce_wp_text_input(
+			array(
+				'id'          => '_auction_end',
+				'label'       => __( 'End Date', 'wpam' ),
+				'type'        => 'datetime-local',
+				'description' => __( 'When the auction will close.', 'wpam' ),
+				'desc_tip'    => true,
+				'value'       => $end_value,
+			)
+		);
 
-        woocommerce_wp_text_input([
-            'id'          => '_auction_increment',
-            'label'       => __( 'Minimum Increment', 'wpam' ),
-            'description' => __( 'Lowest amount a new bid must increase by.', 'wpam' ),
-            'desc_tip'    => true,
-            'type'        => 'number',
-            'custom_attributes' => [ 'step' => '0.01', 'min' => '0' ],
-            'value'       => get_post_meta( $post_id, '_auction_increment', true ),
-        ]);
+		woocommerce_wp_text_input(
+			array(
+				'id'                => '_auction_reserve',
+				'label'             => __( 'Reserve Price', 'wpam' ),
+				'description'       => __( 'Minimum price required for a valid sale.', 'wpam' ),
+				'desc_tip'          => true,
+				'type'              => 'number',
+				'custom_attributes' => array(
+					'step' => '0.01',
+					'min'  => '0',
+				),
+				'value'             => get_post_meta( $post_id, '_auction_reserve', true ),
+			)
+		);
 
-        woocommerce_wp_text_input([
-            'id'          => '_auction_soft_close',
-            'label'       => __( 'Soft Close Minutes', 'wpam' ),
-            'description' => __( 'Number of minutes to extend if a bid is placed near the end.', 'wpam' ),
-            'desc_tip'    => true,
-            'type'        => 'number',
-            'custom_attributes' => [ 'step' => '1', 'min' => '0' ],
-            'value'       => get_post_meta( $post_id, '_auction_soft_close', true ),
-        ]);
+		woocommerce_wp_text_input(
+			array(
+				'id'                => '_auction_buy_now',
+				'label'             => __( 'Buy Now Price', 'wpam' ),
+				'description'       => __( 'Optional instant purchase amount.', 'wpam' ),
+				'desc_tip'          => true,
+				'type'              => 'number',
+				'custom_attributes' => array(
+					'step' => '0.01',
+					'min'  => '0',
+				),
+				'value'             => get_post_meta( $post_id, '_auction_buy_now', true ),
+			)
+		);
 
-        woocommerce_wp_checkbox([
-            'id'          => '_auction_auto_relist',
-            'label'       => __( 'Auto Relist', 'wpam' ),
-            'description' => __( 'Relist automatically when there is no winner.', 'wpam' ),
-            'desc_tip'    => true,
-            'value'       => get_post_meta( $post_id, '_auction_auto_relist', true ),
-        ]);
+		woocommerce_wp_text_input(
+			array(
+				'id'                => '_auction_increment',
+				'label'             => __( 'Minimum Increment', 'wpam' ),
+				'description'       => __( 'Lowest amount a new bid must increase by.', 'wpam' ),
+				'desc_tip'          => true,
+				'type'              => 'number',
+				'custom_attributes' => array(
+					'step' => '0.01',
+					'min'  => '0',
+				),
+				'value'             => get_post_meta( $post_id, '_auction_increment', true ),
+			)
+		);
 
-        woocommerce_wp_text_input([
-            'id'          => '_auction_max_bids',
-            'label'       => __( 'Max Bids Per User', 'wpam' ),
-            'description' => __( 'Limit how many bids each user may place.', 'wpam' ),
-            'desc_tip'    => true,
-            'type'        => 'number',
-            'custom_attributes' => [ 'step' => '1', 'min' => '0' ],
-            'value'       => get_post_meta( $post_id, '_auction_max_bids', true ),
-        ]);
+		woocommerce_wp_text_input(
+			array(
+				'id'                => '_auction_soft_close',
+				'label'             => __( 'Soft Close Minutes', 'wpam' ),
+				'description'       => __( 'Number of minutes to extend if a bid is placed near the end.', 'wpam' ),
+				'desc_tip'          => true,
+				'type'              => 'number',
+				'custom_attributes' => array(
+					'step' => '1',
+					'min'  => '0',
+				),
+				'value'             => get_post_meta( $post_id, '_auction_soft_close', true ),
+			)
+		);
 
-        woocommerce_wp_text_input([
-            'id'          => '_auction_fee',
-            'label'       => __( 'Auction Fee', 'wpam' ),
-            'description' => __( 'Extra fee added to the winning bid.', 'wpam' ),
-            'desc_tip'    => true,
-            'type'        => 'number',
-            'custom_attributes' => [ 'step' => '0.01', 'min' => '0' ],
-            'value'       => get_post_meta( $post_id, '_auction_fee', true ),
-        ]);
+		woocommerce_wp_checkbox(
+			array(
+				'id'          => '_auction_auto_relist',
+				'label'       => __( 'Auto Relist', 'wpam' ),
+				'description' => __( 'Relist automatically when there is no winner.', 'wpam' ),
+				'desc_tip'    => true,
+				'value'       => get_post_meta( $post_id, '_auction_auto_relist', true ),
+			)
+		);
 
-        woocommerce_wp_select([
-            'id'          => '_product_condition',
-            'label'       => __( 'Product Condition', 'wpam' ),
-            'options'     => [
-                'new'         => __( 'New', 'wpam' ),
-                'used'        => __( 'Used', 'wpam' ),
-                'refurbished' => __( 'Refurbished', 'wpam' ),
-                'other'       => __( 'Other', 'wpam' ),
-            ],
-            'value'       => get_post_meta( $post_id, '_product_condition', true ),
-        ]);
+		woocommerce_wp_text_input(
+			array(
+				'id'                => '_auction_max_bids',
+				'label'             => __( 'Max Bids Per User', 'wpam' ),
+				'description'       => __( 'Limit how many bids each user may place.', 'wpam' ),
+				'desc_tip'          => true,
+				'type'              => 'number',
+				'custom_attributes' => array(
+					'step' => '1',
+					'min'  => '0',
+				),
+				'value'             => get_post_meta( $post_id, '_auction_max_bids', true ),
+			)
+		);
 
-        woocommerce_wp_text_input([
-            'id'          => '_sku',
-            'label'       => __( 'SKU', 'wpam' ),
-            'desc_tip'    => true,
-            'description' => __( 'Stock keeping unit.', 'wpam' ),
-            'value'       => get_post_meta( $post_id, '_sku', true ),
-        ]);
+		woocommerce_wp_text_input(
+			array(
+				'id'                => '_auction_fee',
+				'label'             => __( 'Auction Fee', 'wpam' ),
+				'description'       => __( 'Extra fee added to the winning bid.', 'wpam' ),
+				'desc_tip'          => true,
+				'type'              => 'number',
+				'custom_attributes' => array(
+					'step' => '0.01',
+					'min'  => '0',
+				),
+				'value'             => get_post_meta( $post_id, '_auction_fee', true ),
+			)
+		);
 
-        if ( get_option( 'wpam_enable_proxy_bidding' ) ) {
-            woocommerce_wp_checkbox([
-                'id'    => '_auction_proxy_bidding',
-                'label' => __( 'Enable Proxy Bidding', 'wpam' ),
-                'value' => get_post_meta( $post_id, '_auction_proxy_bidding', true ),
-            ]);
-        }
+		woocommerce_wp_select(
+			array(
+				'id'      => '_product_condition',
+				'label'   => __( 'Product Condition', 'wpam' ),
+				'options' => array(
+					'new'         => __( 'New', 'wpam' ),
+					'used'        => __( 'Used', 'wpam' ),
+					'refurbished' => __( 'Refurbished', 'wpam' ),
+					'other'       => __( 'Other', 'wpam' ),
+				),
+				'value'   => get_post_meta( $post_id, '_product_condition', true ),
+			)
+		);
 
-        if ( get_option( 'wpam_enable_silent_bidding' ) ) {
-            woocommerce_wp_checkbox([
-                'id'    => '_auction_silent_bidding',
-                'label' => __( 'Enable Silent Bidding', 'wpam' ),
-                'value' => get_post_meta( $post_id, '_auction_silent_bidding', true ),
-            ]);
-        }
+		woocommerce_wp_text_input(
+			array(
+				'id'          => '_sku',
+				'label'       => __( 'SKU', 'wpam' ),
+				'desc_tip'    => true,
+				'description' => __( 'Stock keeping unit.', 'wpam' ),
+				'value'       => get_post_meta( $post_id, '_sku', true ),
+			)
+		);
 
-        woocommerce_wp_text_input([
-            'id'          => '_auction_opening_price',
-            'label'       => __( 'Opening Price', 'wpam' ),
-            'type'        => 'number',
-            'custom_attributes' => [ 'step' => '0.01', 'min' => '0' ],
-            'value'       => get_post_meta( $post_id, '_auction_opening_price', true ),
-        ]);
+		if ( get_option( 'wpam_enable_proxy_bidding' ) ) {
+			woocommerce_wp_checkbox(
+				array(
+					'id'    => '_auction_proxy_bidding',
+					'label' => __( 'Enable Proxy Bidding', 'wpam' ),
+					'value' => get_post_meta( $post_id, '_auction_proxy_bidding', true ),
+				)
+			);
+		}
 
-        woocommerce_wp_text_input([
-            'id'          => '_auction_lowest_price',
-            'label'       => __( 'Lowest Price', 'wpam' ),
-            'type'        => 'number',
-            'custom_attributes' => [ 'step' => '0.01', 'min' => '0' ],
-            'value'       => get_post_meta( $post_id, '_auction_lowest_price', true ),
-        ]);
+		if ( get_option( 'wpam_enable_silent_bidding' ) ) {
+			woocommerce_wp_checkbox(
+				array(
+					'id'    => '_auction_silent_bidding',
+					'label' => __( 'Enable Silent Bidding', 'wpam' ),
+					'value' => get_post_meta( $post_id, '_auction_silent_bidding', true ),
+				)
+			);
+		}
 
-        woocommerce_wp_checkbox([
-            'id'    => '_auction_variable_increment',
-            'label' => __( 'Use Variable Bid Increment', 'wpam' ),
-            'value' => get_post_meta( $post_id, '_auction_variable_increment', true ),
-        ]);
+		woocommerce_wp_text_input(
+			array(
+				'id'                => '_auction_opening_price',
+				'label'             => __( 'Opening Price', 'wpam' ),
+				'type'              => 'number',
+				'custom_attributes' => array(
+					'step' => '0.01',
+					'min'  => '0',
+				),
+				'value'             => get_post_meta( $post_id, '_auction_opening_price', true ),
+			)
+		);
 
-        echo '<div class="show_if_variable_increment">';
-        woocommerce_wp_textarea_input([
-            'id'          => '_auction_variable_increment_rules',
-            'label'       => __( 'Increment Rules', 'wpam' ),
-            'description' => __( 'One "max|increment" pair per line.', 'wpam' ),
-            'value'       => get_post_meta( $post_id, '_auction_variable_increment_rules', true ),
-        ]);
-        echo '</div>';
+		woocommerce_wp_text_input(
+			array(
+				'id'                => '_auction_lowest_price',
+				'label'             => __( 'Lowest Price', 'wpam' ),
+				'type'              => 'number',
+				'custom_attributes' => array(
+					'step' => '0.01',
+					'min'  => '0',
+				),
+				'value'             => get_post_meta( $post_id, '_auction_lowest_price', true ),
+			)
+		);
 
-        $timezone      = wp_timezone();
-        $timestamp     = time();
-        $offset_hours  = $timezone->getOffset( new \DateTimeImmutable( '@' . $timestamp ) ) / HOUR_IN_SECONDS;
-        echo '<div class="notice notice-info wpam-time-notice">';
-        echo '<p>' . sprintf(
-            esc_html__( 'Current time: %1$s (%2$s, UTC%3$s)', 'wpam' ),
-            esc_html( wp_date( 'Y-m-d H:i:s', $timestamp, $timezone ) ),
-            esc_html( $timezone->getName() ),
-            esc_html( sprintf( '%+d', $offset_hours ) )
-        ) . '</p>';
-        echo '</div>';
+		woocommerce_wp_checkbox(
+			array(
+				'id'    => '_auction_variable_increment',
+				'label' => __( 'Use Variable Bid Increment', 'wpam' ),
+				'value' => get_post_meta( $post_id, '_auction_variable_increment', true ),
+			)
+		);
 
-        echo '</div>';
-    }
+		echo '<div class="show_if_variable_increment">';
+		woocommerce_wp_textarea_input(
+			array(
+				'id'          => '_auction_variable_increment_rules',
+				'label'       => __( 'Increment Rules', 'wpam' ),
+				'description' => __( 'One "max|increment" pair per line.', 'wpam' ),
+				'value'       => get_post_meta( $post_id, '_auction_variable_increment_rules', true ),
+			)
+		);
+		echo '</div>';
 
-    public function save_product_data( $post_id ) {
-        $start = null;
-        $end   = null;
+		$timezone     = wp_timezone();
+		$timestamp    = time();
+		$offset_hours = $timezone->getOffset( new \DateTimeImmutable( '@' . $timestamp ) ) / HOUR_IN_SECONDS;
+		echo '<div class="notice notice-info wpam-time-notice">';
+		echo '<p>' . sprintf(
+			esc_html__( 'Current time: %1$s (%2$s, UTC%3$s)', 'wpam' ),
+			esc_html( wp_date( 'Y-m-d H:i:s', $timestamp, $timezone ) ),
+			esc_html( $timezone->getName() ),
+			esc_html( sprintf( '%+d', $offset_hours ) )
+		) . '</p>';
+		echo '</div>';
 
-        if ( isset( $_POST['_auction_start'] ) ) {
-            $start = wc_clean( wp_unslash( $_POST['_auction_start'] ) );
-            update_post_meta( $post_id, '_auction_start', $start );
-        } else {
-            $start = get_post_meta( $post_id, '_auction_start', true );
-        }
+		echo '</div>';
+	}
 
-        if ( isset( $_POST['_auction_end'] ) ) {
+	public function save_product_data( $post_id ) {
+		$start = null;
+		$end   = null;
 
-            $end = wc_clean( $_POST['_auction_end'] );
-            update_post_meta( $post_id, '_auction_end', $end );
+		if ( isset( $_POST['_auction_start'] ) ) {
+			$start = wc_clean( wp_unslash( $_POST['_auction_start'] ) );
+			update_post_meta( $post_id, '_auction_start', $start );
+		} else {
+			$start = get_post_meta( $post_id, '_auction_start', true );
+		}
 
-            $timestamp = strtotime( $end );
-            if ( $timestamp && $timestamp > time() ) {
-                wp_clear_scheduled_hook( 'wpam_handle_auction_end', [ $post_id ] );
-                wp_schedule_single_event( $timestamp, 'wpam_handle_auction_end', [ $post_id ] );
-            }
-        }
+		if ( isset( $_POST['_auction_end'] ) ) {
 
-        $meta_keys = [
-            '_auction_type',
-            '_auction_reserve',
-            '_auction_buy_now',
-            '_auction_increment',
-            '_auction_soft_close',
-            '_auction_auto_relist',
-            '_auction_max_bids',
-            '_auction_fee',
-            '_product_condition',
-            '_sku',
-            '_auction_proxy_bidding',
-            '_auction_silent_bidding',
-            '_auction_opening_price',
-            '_auction_lowest_price',
-            '_auction_variable_increment',
-            '_auction_variable_increment_rules',
-        ];
+			$end = wc_clean( $_POST['_auction_end'] );
+			update_post_meta( $post_id, '_auction_end', $end );
 
-        foreach ( $meta_keys as $key ) {
-            if ( isset( $_POST[ $key ] ) ) {
-                update_post_meta( $post_id, $key, wc_clean( wp_unslash( $_POST[ $key ] ) ) );
-            }
-        }
-    }
-    public function handle_auction_start( $auction_id ) {
-        do_action( 'wpam_before_auction_start', $auction_id );
-        update_post_meta( $auction_id, '_auction_status', 'active' );
-    }
+			$timestamp = strtotime( $end );
+			if ( $timestamp && $timestamp > time() ) {
+				wp_clear_scheduled_hook( 'wpam_handle_auction_end', array( $post_id ) );
+				wp_schedule_single_event( $timestamp, 'wpam_handle_auction_end', array( $post_id ) );
+			}
+		}
 
-    public function handle_auction_end( $auction_id ) {
-        global $wpdb;
+		$meta_keys = array(
+			'_auction_type',
+			'_auction_reserve',
+			'_auction_buy_now',
+			'_auction_increment',
+			'_auction_soft_close',
+			'_auction_auto_relist',
+			'_auction_max_bids',
+			'_auction_fee',
+			'_product_condition',
+			'_sku',
+			'_auction_proxy_bidding',
+			'_auction_silent_bidding',
+			'_auction_opening_price',
+			'_auction_lowest_price',
+			'_auction_variable_increment',
+			'_auction_variable_increment_rules',
+		);
 
-        $table   = $wpdb->prefix . 'wc_auction_bids';
-        $highest = $wpdb->get_row( $wpdb->prepare( "SELECT user_id, bid_amount FROM $table WHERE auction_id = %d ORDER BY bid_amount DESC LIMIT 1", $auction_id ), ARRAY_A );
+		foreach ( $meta_keys as $key ) {
+			if ( isset( $_POST[ $key ] ) ) {
+				update_post_meta( $post_id, $key, wc_clean( wp_unslash( $_POST[ $key ] ) ) );
+			}
+		}
 
-        if ( ! $highest ) {
-            if ( get_post_meta( $auction_id, '_auction_auto_relist', true ) ) {
-                $timezone = wp_timezone();
-                $duration = strtotime( get_post_meta( $auction_id, '_auction_end', true ) ) - strtotime( get_post_meta( $auction_id, '_auction_start', true ) );
-                $start = wp_date( 'Y-m-d H:i:s', null, $timezone );
-                $end   = wp_date( 'Y-m-d H:i:s', current_datetime()->getTimestamp() + $duration, $timezone );
-                update_post_meta( $auction_id, '_auction_start', $start );
-                update_post_meta( $auction_id, '_auction_end', $end );
-                delete_post_meta( $auction_id, '_auction_ended' );
-                wp_schedule_single_event( (int) get_gmt_from_date( $end, 'U' ), 'wpam_auction_end', [ $auction_id ] );
-            }
-            return;
-        }
+		$state = $this->determine_state( $post_id );
+		update_post_meta( $post_id, '_auction_state', $state );
+	}
+	public function handle_auction_start( $auction_id ) {
+		do_action( 'wpam_before_auction_start', $auction_id );
+		update_post_meta( $auction_id, '_auction_status', 'active' );
+		update_post_meta( $auction_id, '_auction_state', WPAM_Auction_State::LIVE );
+	}
 
-        $user_id = intval( $highest['user_id'] );
-        $amount  = floatval( $highest['bid_amount'] );
+	public function handle_auction_end( $auction_id ) {
+		global $wpdb;
 
-        $reserve = floatval( get_post_meta( $auction_id, '_auction_reserve', 0 ) );
-        if ( $reserve && $amount < $reserve ) {
-            if ( get_post_meta( $auction_id, '_auction_auto_relist', true ) ) {
-                $timezone = wp_timezone();
-                $duration = strtotime( get_post_meta( $auction_id, '_auction_end', true ) ) - strtotime( get_post_meta( $auction_id, '_auction_start', true ) );
-                $start = wp_date( 'Y-m-d H:i:s', null, $timezone );
-                $end   = wp_date( 'Y-m-d H:i:s', current_datetime()->getTimestamp() + $duration, $timezone );
-                update_post_meta( $auction_id, '_auction_start', $start );
-                update_post_meta( $auction_id, '_auction_end', $end );
-                delete_post_meta( $auction_id, '_auction_ended' );
-                wp_schedule_single_event( (int) get_gmt_from_date( $end, 'U' ), 'wpam_auction_end', [ $auction_id ] );
-            }
-            return;
-        }
+		$table   = $wpdb->prefix . 'wc_auction_bids';
+		$highest = $wpdb->get_row( $wpdb->prepare( "SELECT user_id, bid_amount FROM $table WHERE auction_id = %d ORDER BY bid_amount DESC LIMIT 1", $auction_id ), ARRAY_A );
 
-        $order = wc_create_order( [ 'customer_id' => $user_id ] );
-        $order->add_product( wc_get_product( $auction_id ), 1, [ 'subtotal' => $amount, 'total' => $amount ] );
+		$ending_reason = '';
 
-        $fee = floatval( get_post_meta( $auction_id, '_auction_fee', 0 ) );
-        $fee = apply_filters( 'wpam_auction_fee_calculated', $fee, $auction_id, $amount );
-        if ( $fee > 0 ) {
-            $item = new \WC_Order_Item_Fee();
-            $item->set_name( __( 'Auction Fee', 'wpam' ) );
-            $item->set_amount( $fee );
-            $item->set_total( $fee );
-            $order->add_item( $item );
-        }
+		if ( ! $highest ) {
+			$ending_reason = 'no_bids';
+			if ( get_post_meta( $auction_id, '_auction_auto_relist', true ) ) {
+				$timezone = wp_timezone();
+				$duration = strtotime( get_post_meta( $auction_id, '_auction_end', true ) ) - strtotime( get_post_meta( $auction_id, '_auction_start', true ) );
+				$start    = wp_date( 'Y-m-d H:i:s', null, $timezone );
+				$end      = wp_date( 'Y-m-d H:i:s', current_datetime()->getTimestamp() + $duration, $timezone );
+				update_post_meta( $auction_id, '_auction_start', $start );
+				update_post_meta( $auction_id, '_auction_end', $end );
+				delete_post_meta( $auction_id, '_auction_ended' );
+				wp_schedule_single_event( (int) get_gmt_from_date( $end, 'U' ), 'wpam_auction_end', array( $auction_id ) );
+				return;
+			}
+			update_post_meta( $auction_id, '_auction_state', WPAM_Auction_State::ENDED );
+			update_post_meta( $auction_id, '_auction_ending_reason', $ending_reason );
+			return;
+		}
 
-        $order->calculate_totals();
-        $order->save();
+		$user_id = intval( $highest['user_id'] );
+		$amount  = floatval( $highest['bid_amount'] );
 
-        update_post_meta( $auction_id, '_auction_winner', $user_id );
-        update_post_meta( $auction_id, '_auction_order_id', $order->get_id() );
-        update_post_meta( $auction_id, '_auction_sold', '1' );
-        update_post_meta( $auction_id, '_stock_status', 'outofstock' );
+		$reserve = floatval( get_post_meta( $auction_id, '_auction_reserve', 0 ) );
+		if ( $reserve && $amount < $reserve ) {
+			$ending_reason = 'reserve_not_met';
+			if ( get_post_meta( $auction_id, '_auction_auto_relist', true ) ) {
+				$timezone = wp_timezone();
+				$duration = strtotime( get_post_meta( $auction_id, '_auction_end', true ) ) - strtotime( get_post_meta( $auction_id, '_auction_start', true ) );
+				$start    = wp_date( 'Y-m-d H:i:s', null, $timezone );
+				$end      = wp_date( 'Y-m-d H:i:s', current_datetime()->getTimestamp() + $duration, $timezone );
+				update_post_meta( $auction_id, '_auction_start', $start );
+				update_post_meta( $auction_id, '_auction_end', $end );
+				delete_post_meta( $auction_id, '_auction_ended' );
+				wp_schedule_single_event( (int) get_gmt_from_date( $end, 'U' ), 'wpam_auction_end', array( $auction_id ) );
+				return;
+			}
+			update_post_meta( $auction_id, '_auction_state', WPAM_Auction_State::ENDED );
+			update_post_meta( $auction_id, '_auction_ending_reason', $ending_reason );
+			return;
+		}
 
-        $user    = get_user_by( 'id', $user_id );
-        $subject = sprintf( __( 'You won the auction: %s', 'wpam' ), get_the_title( $auction_id ) );
-        $message = sprintf( __( 'Congratulations! You won with a bid of %s. Order #%d has been created.', 'wpam' ), wc_price( $amount ), $order->get_id() );
-        wp_mail( $user->user_email, $subject, $message );
+		$ending_reason = 'sold';
 
-        $sid   = get_option( 'wpam_twilio_sid' );
-        $token = get_option( 'wpam_twilio_token' );
-        $from  = get_option( 'wpam_twilio_from' );
-        $phone = get_user_meta( $user_id, 'billing_phone', true );
+		$order = wc_create_order( array( 'customer_id' => $user_id ) );
+		$order->add_product(
+			wc_get_product( $auction_id ),
+			1,
+			array(
+				'subtotal' => $amount,
+				'total'    => $amount,
+			)
+		);
 
-        if ( $sid && $token && $from && $phone && class_exists( 'WPAM_Twilio_Provider' ) ) {
-            $twilio  = new WPAM_Twilio_Provider();
-            $sms_msg = sprintf( __( 'You won auction %s for %s', 'wpam' ), get_the_title( $auction_id ), wc_price( $amount ) );
-            $twilio->send( $phone, $sms_msg );
-        }
+		$fee = floatval( get_post_meta( $auction_id, '_auction_fee', 0 ) );
+		$fee = apply_filters( 'wpam_auction_fee_calculated', $fee, $auction_id, $amount );
+		if ( $fee > 0 ) {
+			$item = new \WC_Order_Item_Fee();
+			$item->set_name( __( 'Auction Fee', 'wpam' ) );
+			$item->set_amount( $fee );
+			$item->set_total( $fee );
+			$order->add_item( $item );
+		}
 
-        do_action( 'wpam_after_auction_end', $auction_id, $user_id, $amount );
-    }
+		$order->calculate_totals();
+		$order->save();
 
-    public function schedule_cron() {
-        if ( ! wp_next_scheduled( 'wpam_check_ended_auctions' ) ) {
-            wp_schedule_event( current_datetime()->getTimestamp(), 'hourly', 'wpam_check_ended_auctions' );
-        }
-    }
+		update_post_meta( $auction_id, '_auction_winner', $user_id );
+		update_post_meta( $auction_id, '_auction_order_id', $order->get_id() );
+		update_post_meta( $auction_id, '_auction_sold', '1' );
+		update_post_meta( $auction_id, '_stock_status', 'outofstock' );
 
-    public function check_ended_auctions() {
-        $args = [
-            'post_type'      => 'product',
-            'posts_per_page' => -1,
-            'post_status'    => 'publish',
-            'meta_query'     => [
-                [
-                    'key'     => '_auction_end',
-                    'value'   => wp_date( 'Y-m-d H:i:s', null, wp_timezone() ),
-                    'compare' => '<=',
-                    'type'    => 'DATETIME',
-                ],
-                [
-                    'key'     => '_auction_ended',
-                    'compare' => 'NOT EXISTS',
-                ],
-            ],
-        ];
+		$user    = get_user_by( 'id', $user_id );
+		$subject = sprintf( __( 'You won the auction: %s', 'wpam' ), get_the_title( $auction_id ) );
+		$message = sprintf( __( 'Congratulations! You won with a bid of %1$s. Order #%2$d has been created.', 'wpam' ), wc_price( $amount ), $order->get_id() );
+		wp_mail( $user->user_email, $subject, $message );
 
-        $query = new \WP_Query( $args );
-        foreach ( $query->posts as $post ) {
-            update_post_meta( $post->ID, '_auction_ended', 1 );
-            WPAM_Notifications::notify_auction_end( $post->ID );
-        }
-        wp_reset_postdata();
-    }
+		$sid   = get_option( 'wpam_twilio_sid' );
+		$token = get_option( 'wpam_twilio_token' );
+		$from  = get_option( 'wpam_twilio_from' );
+		$phone = get_user_meta( $user_id, 'billing_phone', true );
+
+		if ( $sid && $token && $from && $phone && class_exists( 'WPAM_Twilio_Provider' ) ) {
+			$twilio  = new WPAM_Twilio_Provider();
+			$sms_msg = sprintf( __( 'You won auction %1$s for %2$s', 'wpam' ), get_the_title( $auction_id ), wc_price( $amount ) );
+			$twilio->send( $phone, $sms_msg );
+		}
+
+		update_post_meta( $auction_id, '_auction_state', WPAM_Auction_State::ENDED );
+		update_post_meta( $auction_id, '_auction_ending_reason', $ending_reason );
+
+		do_action( 'wpam_after_auction_end', $auction_id, $user_id, $amount );
+	}
+
+	public function schedule_cron() {
+		if ( ! wp_next_scheduled( 'wpam_check_ended_auctions' ) ) {
+			wp_schedule_event( current_datetime()->getTimestamp(), 'hourly', 'wpam_check_ended_auctions' );
+		}
+		if ( ! wp_next_scheduled( 'wpam_update_auction_states' ) ) {
+			wp_schedule_event( current_datetime()->getTimestamp(), 'hourly', 'wpam_update_auction_states' );
+		}
+	}
+
+	public function check_ended_auctions() {
+		$args = array(
+			'post_type'      => 'product',
+			'posts_per_page' => -1,
+			'post_status'    => 'publish',
+			'meta_query'     => array(
+				array(
+					'key'     => '_auction_end',
+					'value'   => wp_date( 'Y-m-d H:i:s', null, wp_timezone() ),
+					'compare' => '<=',
+					'type'    => 'DATETIME',
+				),
+				array(
+					'key'     => '_auction_ended',
+					'compare' => 'NOT EXISTS',
+				),
+			),
+		);
+
+		$query = new \WP_Query( $args );
+		foreach ( $query->posts as $post ) {
+			update_post_meta( $post->ID, '_auction_ended', 1 );
+			update_post_meta( $post->ID, '_auction_state', WPAM_Auction_State::ENDED );
+			WPAM_Notifications::notify_auction_end( $post->ID );
+		}
+		wp_reset_postdata();
+	}
+
+	protected function determine_state( $auction_id ) {
+		$now      = current_datetime()->getTimestamp();
+		$start_ts = strtotime( get_post_meta( $auction_id, '_auction_start', true ) );
+		$end_ts   = strtotime( get_post_meta( $auction_id, '_auction_end', true ) );
+
+		if ( $now >= $end_ts ) {
+			return WPAM_Auction_State::ENDED;
+		}
+
+		if ( $start_ts - $now <= self::ABOUT_TO_START_THRESHOLD && $start_ts > $now ) {
+			return WPAM_Auction_State::ABOUT_TO_START;
+		}
+
+		if ( $start_ts <= $now && $now < $end_ts ) {
+			return WPAM_Auction_State::LIVE;
+		}
+
+		return WPAM_Auction_State::SCHEDULED;
+	}
+
+	public function update_auction_states() {
+		$args = array(
+			'post_type'      => 'product',
+			'posts_per_page' => -1,
+			'post_status'    => 'publish',
+			'meta_query'     => array(
+				array(
+					'key'     => '_auction_start',
+					'compare' => 'EXISTS',
+				),
+			),
+		);
+
+		$query = new \WP_Query( $args );
+		foreach ( $query->posts as $post ) {
+			$state = $this->determine_state( $post->ID );
+			update_post_meta( $post->ID, '_auction_state', $state );
+		}
+		wp_reset_postdata();
+	}
 }
-

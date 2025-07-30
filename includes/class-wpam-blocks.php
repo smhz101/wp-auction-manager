@@ -59,18 +59,10 @@ class WPAM_Blocks {
             return '';
         }
 
-        $end   = get_post_meta( $auction_id, '_auction_end', true );
+        $end    = get_post_meta( $auction_id, '_auction_end', true );
         $end_ts = $end ? strtotime( $end ) : 0;
-        $type  = get_post_meta( $auction_id, '_auction_type', true );
-        $status = 'ongoing';
-        $now   = current_time( 'timestamp' );
-        $start = get_post_meta( $auction_id, '_auction_start', true );
-        $start_ts = $start ? strtotime( $start ) : 0;
-        if ( $now < $start_ts ) {
-            $status = 'scheduled';
-        } elseif ( $now > $end_ts ) {
-            $status = 'ended';
-        }
+        $type   = get_post_meta( $auction_id, '_auction_type', true );
+        $status = get_post_meta( $auction_id, '_auction_state', true );
 
         global $wpdb;
         $highest = $wpdb->get_var( $wpdb->prepare( "SELECT MAX(bid_amount) FROM {$wpdb->prefix}wc_auction_bids WHERE auction_id = %d", $auction_id ) );
