@@ -579,24 +579,91 @@ class WPAM_Auction {
 		return WPAM_Auction_State::SCHEDULED;
 	}
 
-	public function update_auction_states() {
-		$args = array(
-			'post_type'      => 'product',
-			'posts_per_page' => -1,
-			'post_status'    => 'publish',
-			'meta_query'     => array(
-				array(
-					'key'     => '_auction_start',
-					'compare' => 'EXISTS',
-				),
-			),
-		);
+        public function update_auction_states() {
+                $args = array(
+                        'post_type'      => 'product',
+                        'posts_per_page' => -1,
+                        'post_status'    => 'publish',
+                        'meta_query'     => array(
+                                array(
+                                        'key'     => '_auction_start',
+                                        'compare' => 'EXISTS',
+                                ),
+                        ),
+                );
 
 		$query = new \WP_Query( $args );
-		foreach ( $query->posts as $post ) {
-			$state = $this->determine_state( $post->ID );
-			update_post_meta( $post->ID, '_auction_state', $state );
-		}
-		wp_reset_postdata();
-	}
+                foreach ( $query->posts as $post ) {
+                        $state = $this->determine_state( $post->ID );
+                        update_post_meta( $post->ID, '_auction_state', $state );
+                }
+                wp_reset_postdata();
+        }
+
+        /**
+         * Parse a variable increment rules string.
+         *
+         * @param string $rules Raw rules from post meta.
+         * @return array[] Array of [ 'max' => float, 'increment' => float ] pairs sorted by max.
+         */
+        public static function parse_increment_rules( $rules ) {
+                $parsed = array();
+                $lines  = preg_split( '/\r?\n/', (string) $rules );
+                foreach ( $lines as $line ) {
+                        $line = trim( $line );
+                        if ( '' === $line ) {
+                                continue;
+                        }
+
+                        list( $max, $inc ) = array_map( 'trim', explode( '|', $line ) + array( null, null ) );
+                        if ( is_numeric( $max ) && is_numeric( $inc ) ) {
+                                $parsed[] = array(
+                                        'max'       => (float) $max,
+                                        'increment' => (float) $inc,
+                                );
+                        }
+                }
+
+                usort(
+                        $parsed,
+                        function ( $a, $b ) {
+                                if ( $a['max'] === $b['max'] ) {
+                                        return 0;
+                                }
+                                return ( $a['max'] < $b['max'] ) ? -1 : 1;
+                        }
+                );
+
+                return $parsed;
+        }
+
+        /**
+         * Determine current bid increment for an auction.
+         *
+         * @param int   $auction_id Auction post ID.
+         * @param float $highest    Current highest bid amount.
+         * @return float Increment value.
+         */
+        public static function get_bid_increment( $auction_id, $highest ) {
+                if ( get_post_meta( $auction_id, '_auction_variable_increment', true ) ) {
+                        $rules_str = get_post_meta( $auction_id, '_auction_variable_increment_rules', true );
+                        $rules     = self::parse_increment_rules( $rules_str );
+                        if ( ! empty( $rules ) ) {
+                                $increment = end( $rules )['increment'];
+                                foreach ( $rules as $rule ) {
+                                        if ( $highest <= $rule['max'] ) {
+                                                $increment = $rule['increment'];
+                                                break;
+                                        }
+                                }
+                                return (float) $increment;
+                        }
+                }
+
+                $increment = get_post_meta( $auction_id, '_auction_increment', true );
+                if ( '' === $increment ) {
+                        $increment = get_option( 'wpam_default_increment', 1 );
+                }
+                return (float) $increment;
+        }
 }

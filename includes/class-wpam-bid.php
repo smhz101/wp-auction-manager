@@ -104,11 +104,7 @@ class WPAM_Bid {
             }
         }
 
-        $increment = get_post_meta( $auction_id, '_auction_increment', true );
-        if ( '' === $increment ) {
-            $increment = get_option( 'wpam_default_increment', 1 );
-        }
-        $increment = floatval( $increment );
+        $increment = WPAM_Auction::get_bid_increment( $auction_id, $highest );
 
         if ( ! $proxy_enabled ) {
             if ( $bid < $highest + $increment ) {
@@ -312,11 +308,7 @@ class WPAM_Bid {
             }
         }
 
-        $increment = get_post_meta( $auction_id, '_auction_increment', true );
-        if ( '' === $increment ) {
-            $increment = get_option( 'wpam_default_increment', 1 );
-        }
-        $increment = floatval( $increment );
+        $increment = WPAM_Auction::get_bid_increment( $auction_id, $highest );
 
         if ( ! $proxy_enabled ) {
             if ( $bid < $highest + $increment ) {
