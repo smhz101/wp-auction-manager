@@ -1,6 +1,8 @@
 <?php
 namespace WPAM\Public;
 
+use WPAM\Includes\WPAM_HTML;
+
 class WPAM_Public {
 	public function __construct() {
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
@@ -30,8 +32,6 @@ class WPAM_Public {
 			if ( $product && 'auction' === $product->get_type() ) {
 				$this->enqueue_scripts();
 				add_action( 'woocommerce_single_product_summary', array( $this, 'render_auction_meta' ), 6 );
-				add_action( 'woocommerce_single_product_summary', array( $this, 'render_bid_form' ), 25 );
-				add_action( 'woocommerce_single_product_summary', array( $this, 'render_watchlist_button' ), 26 );
 				add_action( 'woocommerce_single_product_summary', array( $this, 'render_messages' ), 30 );
 			}
 		}
@@ -129,46 +129,17 @@ class WPAM_Public {
 
 	public function render_auction_meta() {
 		global $product;
-		$auction_id = $product->get_id();
-               $end        = get_post_meta( $auction_id, '_auction_end', true );
-               $end_ts     = 0;
-               if ( $end ) {
-                       $date   = new \DateTimeImmutable( $end, wp_timezone() );
-                       $end_ts = $date->getTimestamp();
-               }
-		$type       = get_post_meta( $auction_id, '_auction_type', true );
-		$status     = get_post_meta( $auction_id, '_auction_state', true );
-               $now        = current_datetime()->getTimestamp();
 
-		global $wpdb;
-		$highest = $wpdb->get_var( $wpdb->prepare( "SELECT MAX(bid_amount) FROM {$wpdb->prefix}wc_auction_bids WHERE auction_id = %d", $auction_id ) );
-		$highest = $highest ? floatval( $highest ) : 0;
-
-		$silent          = get_option( 'wpam_enable_silent_bidding' ) && get_post_meta( $auction_id, '_auction_silent_bidding', true );
-		$display_highest = $highest;
-		if ( $silent && $now < $end_ts ) {
-			$display_highest = __( 'Hidden', 'wpam' );
+		if ( ! $product || $product->get_type() !== 'auction' ) {
+			return;
 		}
 
-		echo '<p class="wpam-status woocommerce-message">' . esc_html( ucfirst( $status ) ) . '</p>';
-		echo '<p class="wpam-type">' . esc_html( ucfirst( $type ) ) . '</p>';
-		echo '<p class="wpam-countdown" data-end="' . esc_attr( $end_ts ) . '"></p>';
-		echo '<p>' . esc_html__( 'Current Bid:', 'wpam' ) . ' <span class="wpam-current-bid" data-auction-id="' . esc_attr( $auction_id ) . '">' . esc_html( $display_highest ) . '</span></p>';
-	}
-
-	public function render_bid_form() {
-		global $product;
-		echo '<form class="wpam-bid-form">';
-		echo '<input type="number" step="0.01" class="wpam-bid-input" />';
-		wp_nonce_field( 'wpam_place_bid', 'wpam_bid_nonce', false );
-		echo '<button class="button wpam-bid-button" data-auction-id="' . esc_attr( $product->get_id() ) . '">' . esc_html__( 'Place Bid', 'wpam' ) . '</button>';
-		echo '</form>';
-	}
-
-	public function render_watchlist_button() {
-		global $product;
-		wp_nonce_field( 'wpam_toggle_watchlist', 'wpam_watchlist_nonce', false );
-		echo '<button class="button wpam-watchlist-button" data-auction-id="' . esc_attr( $product->get_id() ) . '">' . esc_html__( 'Toggle Watchlist', 'wpam' ) . '</button>';
+		echo WPAM_HTML::render_auction_meta( $product->get_id(), [
+				'showCountdown' => true,
+				'showBidForm'   => true,
+				'showStatus'    => true,
+				'showWatchlist' => true,
+		] );
 	}
 
 	public function render_messages() {

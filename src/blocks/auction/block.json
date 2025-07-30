@@ -26,6 +26,10 @@
     "showStatus": {
       "type": "boolean",
       "default": true
+    },
+    "showWatchlist": {
+      "type": "boolean",
+      "default": true
     }
   },
   "textdomain": "wpam",

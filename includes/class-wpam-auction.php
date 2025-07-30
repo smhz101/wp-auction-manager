@@ -52,11 +52,19 @@ class WPAM_Auction {
 
 	public function register_product_type() {
 		add_filter( 'product_type_selector', array( $this, 'add_product_type' ) );
+		add_filter( 'woocommerce_product_class', array( $this, 'register_auction_class' ), 10, 2 );
 	}
 
 	public function add_product_type( $types ) {
 		$types['auction'] = __( 'Auction product', 'wpam' );
 		return $types;
+	}
+
+	public function register_auction_class( $classname, $product_type ) {
+		if ( $product_type === 'auction' ) {
+				return WC_Product_Auction::class;
+		}
+		return $classname;
 	}
 
 	public function add_product_data_tab( $tabs ) {
@@ -351,6 +359,13 @@ class WPAM_Auction {
 	}
 
 	public function save_product_data( $post_id ) {
+
+		// Force product type to auction
+		if ( isset( $_POST['product-type'] ) && $_POST['product-type'] === 'auction' ) {
+			wp_set_object_terms( $post_id, 'auction', 'product_type', false );
+			update_post_meta( $post_id, '_product_type', 'auction' );
+		}
+
 		$start = null;
 		$end   = null;
 
