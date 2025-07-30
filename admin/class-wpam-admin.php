@@ -92,8 +92,9 @@ class WPAM_Admin {
 		register_setting( 'wpam_settings', 'wpam_pusher_secret' );
 		register_setting( 'wpam_settings', 'wpam_pusher_cluster' );
 		register_setting( 'wpam_settings', 'wpam_soft_close_threshold' );
-		register_setting( 'wpam_settings', 'wpam_soft_close_extend' );
-		register_setting( 'wpam_settings', 'wpam_realtime_provider' );
+                register_setting( 'wpam_settings', 'wpam_soft_close_extend' );
+                register_setting( 'wpam_settings', 'wpam_max_extensions' );
+                register_setting( 'wpam_settings', 'wpam_realtime_provider' );
 
 		register_setting( 'wpam_settings', 'wpam_default_auction_type' );
 		register_setting( 'wpam_settings', 'wpam_enable_proxy_bidding' );
@@ -119,13 +120,21 @@ class WPAM_Admin {
 			'wpam_general'
 		);
 
-		add_settings_field(
-			'wpam_soft_close_extend',
-			__( 'Extension Duration (seconds)', 'wpam' ),
-			array( $this, 'field_soft_close_extend' ),
-			'wpam_settings',
-			'wpam_general'
-		);
+                add_settings_field(
+                        'wpam_soft_close_extend',
+                        __( 'Extension Duration (seconds)', 'wpam' ),
+                        array( $this, 'field_soft_close_extend' ),
+                        'wpam_settings',
+                        'wpam_general'
+                );
+
+                add_settings_field(
+                        'wpam_max_extensions',
+                        __( 'Maximum Extensions', 'wpam' ),
+                        array( $this, 'field_max_extensions' ),
+                        'wpam_settings',
+                        'wpam_general'
+                );
 
 		add_settings_field(
 			'wpam_default_increment',
@@ -301,10 +310,15 @@ class WPAM_Admin {
 		echo '<input type="number" class="small-text" name="wpam_soft_close_threshold" value="' . $value . '" />';
 	}
 
-	public function field_soft_close_extend() {
-		$value = esc_attr( get_option( 'wpam_soft_close_extend', 30 ) );
-		echo '<input type="number" class="small-text" name="wpam_soft_close_extend" value="' . $value . '" />';
-	}
+        public function field_soft_close_extend() {
+                $value = esc_attr( get_option( 'wpam_soft_close_extend', 30 ) );
+                echo '<input type="number" class="small-text" name="wpam_soft_close_extend" value="' . $value . '" />';
+        }
+
+        public function field_max_extensions() {
+                $value = esc_attr( get_option( 'wpam_max_extensions', 0 ) );
+                echo '<input type="number" class="small-text" name="wpam_max_extensions" value="' . $value . '" />';
+        }
 
 	public function field_default_increment() {
 		$value = esc_attr( get_option( 'wpam_default_increment', 1 ) );
@@ -564,9 +578,10 @@ class WPAM_Admin {
 			'wpam_pusher_key',
 			'wpam_pusher_secret',
 			'wpam_pusher_cluster',
-			'wpam_soft_close_threshold',
-			'wpam_soft_close_extend',
-			'wpam_realtime_provider',
+                        'wpam_soft_close_threshold',
+                        'wpam_soft_close_extend',
+                        'wpam_max_extensions',
+                        'wpam_realtime_provider',
 			'wpam_require_kyc',
 			'wpam_default_auction_type',
 			'wpam_enable_proxy_bidding',
