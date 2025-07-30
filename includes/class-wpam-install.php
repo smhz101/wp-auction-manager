@@ -2,11 +2,11 @@
 namespace WPAM\Includes;
 
 class WPAM_Install {
-    public static function activate() {
-        global $wpdb;
-        $charset_collate = $wpdb->get_charset_collate();
-        $table_name = $wpdb->prefix . 'wc_auction_bids';
-        $sql = "CREATE TABLE IF NOT EXISTS $table_name (
+	public static function activate() {
+		global $wpdb;
+		$charset_collate = $wpdb->get_charset_collate();
+		$table_name      = $wpdb->prefix . 'wc_auction_bids';
+		$sql             = "CREATE TABLE IF NOT EXISTS $table_name (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
             auction_id bigint(20) unsigned NOT NULL,
             user_id bigint(20) unsigned NOT NULL,
@@ -16,12 +16,12 @@ class WPAM_Install {
             KEY auction_id (auction_id),
             KEY user_id (user_id)
         ) $charset_collate;";
-        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-        dbDelta( $sql );
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		dbDelta( $sql );
 
-        // Watchlist table
-        $watchlist_table = $wpdb->prefix . 'wc_auction_watchlists';
-        $watchlist_sql = "CREATE TABLE IF NOT EXISTS $watchlist_table (
+		// Watchlist table
+		$watchlist_table = $wpdb->prefix . 'wc_auction_watchlists';
+		$watchlist_sql   = "CREATE TABLE IF NOT EXISTS $watchlist_table (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
             auction_id bigint(20) unsigned NOT NULL,
             user_id bigint(20) unsigned NOT NULL,
@@ -29,11 +29,11 @@ class WPAM_Install {
             KEY auction_id (auction_id),
             KEY user_id (user_id)
         ) $charset_collate;";
-        dbDelta( $watchlist_sql );
+		dbDelta( $watchlist_sql );
 
-        // Messages table
-        $messages_table = $wpdb->prefix . 'wc_auction_messages';
-        $messages_sql   = "CREATE TABLE IF NOT EXISTS $messages_table (
+		// Messages table
+		$messages_table = $wpdb->prefix . 'wc_auction_messages';
+		$messages_sql   = "CREATE TABLE IF NOT EXISTS $messages_table (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
             auction_id bigint(20) unsigned NOT NULL,
             user_id bigint(20) unsigned NOT NULL,
@@ -45,11 +45,11 @@ class WPAM_Install {
             KEY auction_id (auction_id),
             KEY user_id (user_id)
         ) $charset_collate;";
-        dbDelta( $messages_sql );
+		dbDelta( $messages_sql );
 
-        // Audit table
-        $audit_table = $wpdb->prefix . 'wc_auction_audit';
-        $audit_sql   = "CREATE TABLE IF NOT EXISTS $audit_table (
+		// Audit table
+		$audit_table = $wpdb->prefix . 'wc_auction_audit';
+		$audit_sql   = "CREATE TABLE IF NOT EXISTS $audit_table (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
             bid_id bigint(20) unsigned NOT NULL,
             user_id bigint(20) unsigned NOT NULL,
@@ -60,41 +60,58 @@ class WPAM_Install {
             KEY bid_id (bid_id),
             KEY user_id (user_id)
         ) $charset_collate;";
-        dbDelta( $audit_sql );
+		dbDelta( $audit_sql );
 
-        add_rewrite_endpoint( 'watchlist', EP_ROOT | EP_PAGES );
-        add_rewrite_endpoint( 'my-bids', EP_ROOT | EP_PAGES );
-        add_rewrite_endpoint( 'auctions-won', EP_ROOT | EP_PAGES );
-        flush_rewrite_rules();
+		// Admin logs table
+		$logs_table = $wpdb->prefix . 'wc_auction_logs';
+		$logs_sql   = "CREATE TABLE IF NOT EXISTS $logs_table (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            auction_id bigint(20) unsigned NOT NULL,
+            admin_id bigint(20) unsigned NOT NULL,
+            action varchar(50) NOT NULL,
+            details text NULL,
+            logged_at datetime NOT NULL,
+            PRIMARY KEY  (id),
+            KEY auction_id (auction_id),
+            KEY admin_id (admin_id)
+        ) $charset_collate;";
+		dbDelta( $logs_sql );
 
-        // Schedule cron events for existing auctions
-        $auctions = get_posts(
-            [
-                'post_type'      => 'product',
-                'posts_per_page' => -1,
-                'meta_query'     => [
-                    [ 'key' => '_auction_start', 'compare' => 'EXISTS' ],
-                ],
-                'fields'         => 'ids',
-            ]
-        );
+		add_rewrite_endpoint( 'watchlist', EP_ROOT | EP_PAGES );
+		add_rewrite_endpoint( 'my-bids', EP_ROOT | EP_PAGES );
+		add_rewrite_endpoint( 'auctions-won', EP_ROOT | EP_PAGES );
+		flush_rewrite_rules();
 
-        foreach ( $auctions as $auction_id ) {
-            $start = get_post_meta( $auction_id, '_auction_start', true );
-            $end   = get_post_meta( $auction_id, '_auction_end', true );
+		// Schedule cron events for existing auctions
+		$auctions = get_posts(
+			array(
+				'post_type'      => 'product',
+				'posts_per_page' => -1,
+				'meta_query'     => array(
+					array(
+						'key'     => '_auction_start',
+						'compare' => 'EXISTS',
+					),
+				),
+				'fields'         => 'ids',
+			)
+		);
 
-            $start_ts = $start ? strtotime( $start ) : false;
-            $end_ts   = $end ? strtotime( $end ) : false;
-            $now      = current_time( 'timestamp' );
+		foreach ( $auctions as $auction_id ) {
+			$start = get_post_meta( $auction_id, '_auction_start', true );
+			$end   = get_post_meta( $auction_id, '_auction_end', true );
 
-            if ( $start_ts && $start_ts > $now ) {
-                wp_schedule_single_event( $start_ts, 'wpam_auction_start', [ $auction_id ] );
-            }
+			$start_ts = $start ? strtotime( $start ) : false;
+			$end_ts   = $end ? strtotime( $end ) : false;
+			$now      = current_time( 'timestamp' );
 
-            if ( $end_ts && $end_ts > $now ) {
-                wp_schedule_single_event( $end_ts, 'wpam_auction_end', [ $auction_id ] );
-            }
-        }
-    }
+			if ( $start_ts && $start_ts > $now ) {
+				wp_schedule_single_event( $start_ts, 'wpam_auction_start', array( $auction_id ) );
+			}
+
+			if ( $end_ts && $end_ts > $now ) {
+				wp_schedule_single_event( $end_ts, 'wpam_auction_end', array( $auction_id ) );
+			}
+		}
+	}
 }
-
