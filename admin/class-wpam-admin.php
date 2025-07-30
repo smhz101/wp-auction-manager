@@ -478,7 +478,7 @@ class WPAM_Admin {
 
     public function render_settings_page() {
         echo '<div class="wrap">';
-        echo '<h1>' . esc_html__( 'Integrations', 'wpam' ) . '</h1>';
+        echo '<h1>' . esc_html__( 'Settings', 'wpam' ) . '</h1>';
         echo '<div id="wpam-settings-root"></div>';
         echo '</div>';
     }
