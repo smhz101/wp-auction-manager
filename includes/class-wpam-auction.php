@@ -236,6 +236,18 @@ class WPAM_Auction {
         ]);
         echo '</div>';
 
+        $timezone      = wp_timezone();
+        $timestamp     = time();
+        $offset_hours  = $timezone->getOffset( new \DateTimeImmutable( '@' . $timestamp ) ) / HOUR_IN_SECONDS;
+        echo '<div class="notice notice-info wpam-time-notice">';
+        echo '<p>' . sprintf(
+            esc_html__( 'Current time: %1$s (%2$s, UTC%3$s)', 'wpam' ),
+            esc_html( wp_date( 'Y-m-d H:i:s', $timestamp, $timezone ) ),
+            esc_html( $timezone->getName() ),
+            esc_html( sprintf( '%+d', $offset_hours ) )
+        ) . '</p>';
+        echo '</div>';
+
         echo '</div>';
     }
 

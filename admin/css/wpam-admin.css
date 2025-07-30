@@ -1,4 +1,11 @@
 .wpam-auctions-filter {
-    display: inline-block;
-    margin-right: 10px;
+	display: inline-block;
+	margin-right: 10px;
+}
+
+.wpam-time-notice {
+	background: #f5fafe;
+	border-left: 4px solid #2271b1;
+	padding: 10px;
+	margin: 10px 0;
 }
