@@ -207,6 +207,8 @@ jQuery(function ($) {
   if (wpam_ajax.pusher_enabled) {
     const pusher = new Pusher(wpam_ajax.pusher_key, {
       cluster: wpam_ajax.pusher_cluster,
+      authEndpoint: wpam_ajax.ajax_url,
+      auth: { params: { action: 'wpam_pusher_auth', nonce: wpam_ajax.pusher_auth_nonce } },
     });
 
     // Subscribe to all unique auction IDs present on page
@@ -227,10 +229,44 @@ jQuery(function ($) {
         if (typeof data.participants !== 'undefined') {
           $('.wpam-participant-count[data-auction-id="' + data.auction_id + '"]').text(data.participants);
         }
+        if (typeof data.viewers !== 'undefined') {
+          $('.wpam-viewer-count[data-auction-id="' + data.auction_id + '"]').text(data.viewers);
+        }
 
         const lead = data.lead_user ? parseInt(data.lead_user, 10) : 0;
         checkBidStatus(data.auction_id, parseFloat(data.bid), lead);
         showToast(i18n.outbid || 'A new bid has been placed');
+      });
+      const presence = pusher.subscribe('presence-auction-' + auctionId);
+      const updateViewers = function () {
+        const count = presence.members.count || 0;
+        $('.wpam-viewer-count[data-auction-id="' + auctionId + '"]').text(count);
+      };
+      presence.bind('pusher:subscription_succeeded', updateViewers);
+      presence.bind('pusher:member_added', updateViewers);
+      presence.bind('pusher:member_removed', updateViewers);
+      channel.bind('viewer_update', function (data) {
+        if (data && typeof data.viewers !== 'undefined') {
+          $('.wpam-viewer-count[data-auction-id="' + auctionId + '"]').text(data.viewers);
+        }
+        if (data && typeof data.participants !== 'undefined') {
+          $('.wpam-participant-count[data-auction-id="' + auctionId + '"]').text(data.participants);
+        }
+      });
+    });
+
+    window.addEventListener('unload', function () {
+      auctionIds.forEach(function (auctionId) {
+        const payload = new URLSearchParams({
+          action: 'wpam_pusher_leave',
+          nonce: wpam_ajax.pusher_auth_nonce,
+          auction_id: auctionId,
+        });
+        if (navigator.sendBeacon) {
+          navigator.sendBeacon(wpam_ajax.ajax_url, payload);
+        } else {
+          $.post(wpam_ajax.ajax_url, payload);
+        }
       });
     });
   } else {

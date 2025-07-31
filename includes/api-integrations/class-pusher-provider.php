@@ -13,6 +13,28 @@ class WPAM_Pusher_Provider implements WPAM_Realtime_Provider {
     /** @var int|null */
     protected $auction_id = null;
 
+    /**
+     * Return underlying Pusher client instance.
+     *
+     * @return Pusher|null
+     */
+    public function get_client() {
+        return $this->pusher;
+    }
+
+    /**
+     * Return participant count (unique bidders + watchers).
+     *
+     * @param int $auction_id
+     * @return int
+     */
+    protected function get_participant_count( $auction_id ) {
+        global $wpdb;
+        $bidders  = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT user_id FROM {$wpdb->prefix}wc_auction_bids WHERE auction_id = %d", $auction_id ) );
+        $watchers = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT user_id FROM {$wpdb->prefix}wc_auction_watchlists WHERE auction_id = %d", $auction_id ) );
+        return count( array_unique( array_merge( $bidders, $watchers ) ) );
+    }
+
     public function __construct() {
         $provider = get_option( 'wpam_realtime_provider', 'none' );
         $app_id   = get_option( 'wpam_pusher_app_id' );
@@ -76,11 +98,8 @@ class WPAM_Pusher_Provider implements WPAM_Realtime_Provider {
         $channel = $this->get_channel_name();
 
         if ( $channel ) {
-            global $wpdb;
-            $lead_user = intval( get_post_meta( $auction_id, '_auction_lead_user', true ) );
-            $bidders  = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT user_id FROM {$wpdb->prefix}wc_auction_bids WHERE auction_id = %d", $auction_id ) );
-            $watchers = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT user_id FROM {$wpdb->prefix}wc_auction_watchlists WHERE auction_id = %d", $auction_id ) );
-            $participants = count( array_unique( array_merge( $bidders, $watchers ) ) );
+            $lead_user    = intval( get_post_meta( $auction_id, '_auction_lead_user', true ) );
+            $participants = $this->get_participant_count( $auction_id );
 
             $this->pusher->trigger(
                 $channel,
@@ -90,6 +109,43 @@ class WPAM_Pusher_Provider implements WPAM_Realtime_Provider {
                     'bid'         => $bid_amount,
                     'lead_user'   => $lead_user,
                     'participants' => $participants,
+                ]
+            );
+        }
+    }
+
+    /**
+     * Publish viewer join/leave events with current counts.
+     *
+     * @param int    $auction_id
+     * @param string $action     join|leave
+     */
+    public function send_viewer_event( $auction_id, $action = 'join' ) {
+        if ( ! $this->pusher ) {
+            return;
+        }
+
+        $this->set_auction_id( $auction_id );
+        $channel = $this->get_channel_name();
+
+        if ( $channel ) {
+            $key     = 'wpam_viewers_' . $auction_id;
+            $count   = intval( get_transient( $key ) );
+            if ( 'join' === $action ) {
+                $count++;
+            } else {
+                $count = max( 0, $count - 1 );
+            }
+            set_transient( $key, $count, 2 * HOUR_IN_SECONDS );
+
+            $this->pusher->trigger(
+                $channel,
+                'viewer_update',
+                [
+                    'auction_id'   => $auction_id,
+                    'viewers'      => $count,
+                    'participants' => $this->get_participant_count( $auction_id ),
+                    'action'       => $action,
                 ]
             );
         }
