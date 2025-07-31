@@ -89,7 +89,7 @@ class WPAM_Pusher_Provider implements WPAM_Realtime_Provider {
      * @param int $auction_id
      * @param float $bid_amount
      */
-    public function send_bid_update( $auction_id, $bid_amount ) {
+    public function send_bid_update( $auction_id, $bid_amount, $statuses = [] ) {
         if ( ! $this->pusher ) {
             return;
         }
@@ -101,16 +101,16 @@ class WPAM_Pusher_Provider implements WPAM_Realtime_Provider {
             $lead_user    = intval( get_post_meta( $auction_id, '_auction_lead_user', true ) );
             $participants = $this->get_participant_count( $auction_id );
 
-            $this->pusher->trigger(
-                $channel,
-                'bid_update',
-                [
-                    'auction_id'  => $auction_id,
-                    'bid'         => $bid_amount,
-                    'lead_user'   => $lead_user,
-                    'participants' => $participants,
-                ]
-            );
+            $data = [
+                'auction_id'  => $auction_id,
+                'bid'         => $bid_amount,
+                'lead_user'   => $lead_user,
+                'participants' => $participants,
+            ];
+            if ( ! empty( $statuses ) ) {
+                $data['statuses'] = $statuses;
+            }
+            $this->pusher->trigger( $channel, 'bid_update', $data );
         }
     }
 
@@ -154,7 +154,7 @@ class WPAM_Pusher_Provider implements WPAM_Realtime_Provider {
     /**
      * Trigger a bid_placed event on the auction channel.
      */
-    public function trigger_bid_placed( $auction_id, $user_id, $amount ) {
+    public function trigger_bid_placed( $auction_id, $user_id, $amount, $statuses = [] ) {
         if ( ! $this->pusher ) {
             return;
         }
@@ -163,17 +163,17 @@ class WPAM_Pusher_Provider implements WPAM_Realtime_Provider {
         if ( $channel ) {
             $lead_user    = intval( get_post_meta( $auction_id, '_auction_lead_user', true ) );
             $participants = $this->get_participant_count( $auction_id );
-            $this->pusher->trigger(
-                $channel,
-                'bid_placed',
-                [
-                    'auction_id'  => $auction_id,
-                    'user_id'     => $user_id,
-                    'amount'      => $amount,
-                    'lead_user'   => $lead_user,
-                    'participants' => $participants,
-                ]
-            );
+            $data = [
+                'auction_id'  => $auction_id,
+                'user_id'     => $user_id,
+                'amount'      => $amount,
+                'lead_user'   => $lead_user,
+                'participants' => $participants,
+            ];
+            if ( ! empty( $statuses ) ) {
+                $data['statuses'] = $statuses;
+            }
+            $this->pusher->trigger( $channel, 'bid_placed', $data );
         }
     }
 
@@ -233,8 +233,9 @@ class WPAM_Pusher_Provider implements WPAM_Realtime_Provider {
         switch ( $event ) {
             case 'bid_placed':
                 if ( isset( $payload['auction_id'], $payload['user_id'], $payload['amount'] ) ) {
-                    $this->trigger_bid_placed( $payload['auction_id'], $payload['user_id'], $payload['amount'] );
-                    $this->send_bid_update( $payload['auction_id'], $payload['amount'] );
+                    $statuses = isset( $payload['statuses'] ) ? $payload['statuses'] : [];
+                    $this->trigger_bid_placed( $payload['auction_id'], $payload['user_id'], $payload['amount'], $statuses );
+                    $this->send_bid_update( $payload['auction_id'], $payload['amount'], $statuses );
                 }
                 break;
             case 'auction_extended':
