@@ -126,7 +126,7 @@ class WPAM_Bid {
             $new_lead_user = $user_id;
         }
 
-        $max_bids = intval( get_post_meta( $auction_id, '_auction_max_bids', 0 ) );
+        $max_bids = intval( get_post_meta( $auction_id, '_auction_max_bids', true ) );
         if ( $max_bids > 0 ) {
             $count = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $table WHERE auction_id = %d AND user_id = %d", $auction_id, $user_id ) );
             if ( $count >= $max_bids ) {
@@ -420,7 +420,7 @@ class WPAM_Bid {
             $max_bid = $bid;
         }
 
-        $max_bids = intval( get_post_meta( $auction_id, '_auction_max_bids', 0 ) );
+        $max_bids = intval( get_post_meta( $auction_id, '_auction_max_bids', true ) );
         if ( $max_bids > 0 ) {
             $count = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $table WHERE auction_id = %d AND user_id = %d", $auction_id, $user_id ) );
             if ( $count >= $max_bids ) {
