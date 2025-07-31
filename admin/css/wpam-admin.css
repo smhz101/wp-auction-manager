@@ -1,11 +1,75 @@
+/*
+ * Auction Manager Admin Styles
+ * Provides consistent styling for all WPAM admin pages.
+ */
+
 .wpam-auctions-filter {
-	display: inline-block;
-	margin-right: 10px;
+    display: inline-block;
+    margin-right: 10px;
+    margin-bottom: 10px;
 }
 
 .wpam-time-notice {
-	background: #f5fafe;
-	border-left: 4px solid #2271b1;
-	padding: 10px;
-	margin: 10px 0;
+    background: #f5fafe;
+    border-left: 4px solid var(--wp-admin-theme-color, #2271b1);
+    padding: 10px;
+    margin: 10px 0;
+}
+
+/* Page headers */
+body[class*="wpam-"] .wrap h1 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.8em;
+}
+
+/* Tables */
+body[class*="wpam-"] .wp-list-table {
+    margin-top: 10px;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+body[class*="wpam-"] .wp-list-table th,
+body[class*="wpam-"] .wp-list-table td {
+    padding: 8px 12px;
+}
+
+body[class*="wpam-"] .wp-list-table th {
+    background: #f1f1f1;
+    color: #23282d;
+}
+
+body[class*="wpam-"] .wp-list-table tr:nth-child(even) td {
+    background: #fcfcfc;
+}
+
+/* Buttons */
+.wpam-button-primary {
+    background: var(--wp-admin-theme-color, #2271b1);
+    border-color: var(--wp-admin-theme-color, #2271b1);
+    color: #fff;
+    padding: 6px 14px;
+    line-height: 2;
+    border-radius: 3px;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.wpam-button-primary:hover {
+    background: var(--wp-admin-theme-color-darker-10, #135e96);
+    border-color: var(--wp-admin-theme-color-darker-10, #135e96);
+    color: #fff;
+}
+
+/* Responsive */
+@media (max-width: 782px) {
+    .wpam-auctions-filter {
+        display: block;
+        margin-right: 0;
+    }
+    body[class*="wpam-"] .wp-list-table {
+        display: block;
+        overflow-x: auto;
+    }
 }
