@@ -150,4 +150,43 @@ class WPAM_Pusher_Provider implements WPAM_Realtime_Provider {
             );
         }
     }
+
+    /**
+     * Handle events dispatched from WPAM_Event_Bus.
+     *
+     * @param string $event   Event name.
+     * @param array  $payload Event payload.
+     */
+    public function handle_event( $event, $payload ) {
+        if ( ! $this->pusher ) {
+            return;
+        }
+
+        switch ( $event ) {
+            case 'bid_placed':
+                if ( isset( $payload['auction_id'], $payload['amount'] ) ) {
+                    $this->send_bid_update( $payload['auction_id'], $payload['amount'] );
+                }
+                break;
+            case 'auction_extended':
+                if ( isset( $payload['auction_id'], $payload['new_end_ts'] ) ) {
+                    $this->set_auction_id( $payload['auction_id'] );
+                    $channel = $this->get_channel_name();
+                    if ( $channel ) {
+                        $this->pusher->trigger(
+                            $channel,
+                            'auction_extended',
+                            [
+                                'auction_id' => $payload['auction_id'],
+                                'new_end_ts' => $payload['new_end_ts'],
+                            ]
+                        );
+                    }
+                }
+                break;
+            case 'user_outbid':
+                // no realtime action for single user; handled via notifications.
+                break;
+        }
+    }
 }

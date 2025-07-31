@@ -265,38 +265,25 @@ class WPAM_Bid {
         }
 
 
-        // SMS notification via Twilio if enabled
-        if ( ! $silent_enabled && get_option( 'wpam_enable_twilio' ) && get_option( 'wpam_lead_sms_alerts' ) ) {
-            if ( class_exists( 'WPAM_Twilio_Provider' ) ) {
-                $provider = new WPAM_Twilio_Provider();
+        // Dispatch standardized events
+        WPAM_Event_Bus::dispatch( 'bid_placed', [
+            'auction_id'   => $auction_id,
+            'user_id'      => $user_id,
+            'amount'       => $bid,
+        ] );
 
-                if ( $new_lead_user === $user_id && $prev_lead_user !== $user_id ) {
-                    $phone = get_user_meta( $user_id, 'billing_phone', true );
-                    if ( $phone ) {
-                        $msg = sprintf(
-                            __( 'You are now the highest bidder on "%1$s" with %2$s', 'wpam' ),
-                            get_the_title( $auction_id ),
-                            function_exists( 'wc_price' ) ? wc_price( $new_highest ) : $new_highest
-                        );
-                        $provider->send( $phone, $msg );
-                    }
-                }
-
-                if ( $prev_lead_user && $prev_lead_user !== $new_lead_user ) {
-                    $prev_phone = get_user_meta( $prev_lead_user, 'billing_phone', true );
-                    if ( $prev_phone ) {
-                        $msg = sprintf( __( 'You have been outbid on "%s".', 'wpam' ), get_the_title( $auction_id ) );
-                        $provider->send( $prev_phone, $msg );
-                    }
-                }
-            }
+        if ( ! $silent_enabled && $prev_lead_user && $prev_lead_user !== $new_lead_user ) {
+            WPAM_Event_Bus::dispatch( 'user_outbid', [
+                'auction_id' => $auction_id,
+                'user_id'    => $prev_lead_user,
+            ] );
         }
 
-        // Always send internal notifications
-        WPAM_Notifications::notify_new_bid( $auction_id, $bid, $new_lead_user );
-
-        if ( ! $silent_enabled && $this->realtime_provider ) {
-            $this->realtime_provider->send_bid_update( $auction_id, $bid );
+        if ( $max_reached ) {
+            WPAM_Event_Bus::dispatch( 'max_exceeded', [
+                'auction_id' => $auction_id,
+                'user_id'    => $user_id,
+            ] );
         }
 
         $message  = $sealed ? __( 'Sealed bid submitted', 'wpam' ) : __( 'Bid received', 'wpam' );
@@ -308,6 +295,10 @@ class WPAM_Bid {
         if ( $extended ) {
             $response['new_end_ts'] = $new_end_ts;
             $response['extended']   = true;
+            WPAM_Event_Bus::dispatch( 'auction_extended', [
+                'auction_id' => $auction_id,
+                'new_end_ts' => $new_end_ts,
+            ] );
         }
         if ( $max_reached ) {
             $response['max_reached'] = true;
@@ -538,33 +529,25 @@ class WPAM_Bid {
             update_post_meta( $auction_id, '_auction_lead_user', $new_lead_user );
         }
 
-        if ( ! $silent_enabled && get_option( 'wpam_enable_twilio' ) && get_option( 'wpam_lead_sms_alerts' ) ) {
-            if ( class_exists( 'WPAM_Twilio_Provider' ) ) {
-                $provider = new WPAM_Twilio_Provider();
+        WPAM_Event_Bus::dispatch( 'bid_placed', [
+            'auction_id' => $auction_id,
+            'user_id'    => $user_id,
+            'amount'     => $bid,
+        ] );
 
-                if ( $new_lead_user === $user_id && $prev_lead_user !== $user_id ) {
-                    $phone = get_user_meta( $user_id, 'billing_phone', true );
-                    if ( $phone ) {
-                        $msg = sprintf(
-                            __( 'You are now the highest bidder on "%1$s" with %2$s', 'wpam' ),
-                            get_the_title( $auction_id ),
-                            function_exists( 'wc_price' ) ? wc_price( $new_highest ) : $new_highest
-                        );
-                        $provider->send( $phone, $msg );
-                    }
-                }
-
-                if ( $prev_lead_user && $prev_lead_user !== $new_lead_user ) {
-                    $prev_phone = get_user_meta( $prev_lead_user, 'billing_phone', true );
-                    if ( $prev_phone ) {
-                        $msg = sprintf( __( 'You have been outbid on "%s".', 'wpam' ), get_the_title( $auction_id ) );
-                        $provider->send( $prev_phone, $msg );
-                    }
-                }
-            }
+        if ( ! $silent_enabled && $prev_lead_user && $prev_lead_user !== $new_lead_user ) {
+            WPAM_Event_Bus::dispatch( 'user_outbid', [
+                'auction_id' => $auction_id,
+                'user_id'    => $prev_lead_user,
+            ] );
         }
 
-        WPAM_Notifications::notify_new_bid( $auction_id, $bid, $new_lead_user );
+        if ( $max_reached ) {
+            WPAM_Event_Bus::dispatch( 'max_exceeded', [
+                'auction_id' => $auction_id,
+                'user_id'    => $user_id,
+            ] );
+        }
 
         $message  = $sealed ? __( 'Sealed bid submitted', 'wpam' ) : __( 'Bid received', 'wpam' );
         if ( $max_reached ) {
@@ -575,6 +558,10 @@ class WPAM_Bid {
         if ( $extended ) {
             $response['new_end_ts'] = $new_end_ts;
             $response['extended']   = true;
+            WPAM_Event_Bus::dispatch( 'auction_extended', [
+                'auction_id' => $auction_id,
+                'new_end_ts' => $new_end_ts,
+            ] );
         }
         if ( $max_reached ) {
             $response['max_reached'] = true;
