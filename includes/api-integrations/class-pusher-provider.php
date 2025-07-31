@@ -8,7 +8,10 @@ class WPAM_Pusher_Provider implements WPAM_Realtime_Provider {
     protected $pusher = null;
 
     /** @var string */
-    protected $channel = 'wpam-auctions';
+    protected $channelPrefix = 'auction-';
+
+    /** @var int|null */
+    protected $auction_id = null;
 
     public function __construct() {
         $provider = get_option( 'wpam_realtime_provider', 'none' );
@@ -31,24 +34,56 @@ class WPAM_Pusher_Provider implements WPAM_Realtime_Provider {
     }
 
     /**
+     * Set the auction ID for this instance.
+     *
+     * @param int $auction_id
+     */
+    public function set_auction_id( $auction_id ) {
+        $this->auction_id = absint( $auction_id );
+    }
+
+    /**
+     * Get the computed channel name for the current auction.
+     *
+     * @return string|null
+     */
+    public function get_channel_name() {
+        if ( ! $this->auction_id ) {
+            return null;
+        }
+        return $this->channelPrefix . $this->auction_id;
+    }
+
+    /**
      * Check if the provider is properly configured.
      */
     public function is_active() {
         return (bool) $this->pusher;
     }
 
+    /**
+     * Send a bid update to the current auction's channel.
+     *
+     * @param int $auction_id
+     * @param float $bid_amount
+     */
     public function send_bid_update( $auction_id, $bid_amount ) {
         if ( ! $this->pusher ) {
             return;
         }
 
-        $this->pusher->trigger(
-            $this->channel,
-            'bid_update',
-            [
-                'auction_id' => $auction_id,
-                'bid'        => $bid_amount,
-            ]
-        );
+        $this->set_auction_id( $auction_id );
+        $channel = $this->get_channel_name();
+
+        if ( $channel ) {
+            $this->pusher->trigger(
+                $channel,
+                'bid_update',
+                [
+                    'auction_id' => $auction_id,
+                    'bid'        => $bid_amount,
+                ]
+            );
+        }
     }
 }

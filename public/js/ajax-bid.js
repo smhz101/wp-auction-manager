@@ -81,18 +81,18 @@ jQuery(function ($) {
   }
 
   function checkBidStatus(id, highest, leadUser) {
-    if (typeof userBids[id] === 'undefined') {
-      return;
-    }
-    let status = '';
     const currentUser = parseInt(wpam_ajax.current_user_id, 10);
+    const userBid = parseFloat(userBids[id]) || 0;
+
+    let status = '';
     if (leadUser && currentUser && leadUser === currentUser) {
       status = 'max';
-    } else if (highest > userBids[id]) {
+    } else if (highest > userBid) {
       status = 'outbid';
-    } else if (highest === userBids[id]) {
+    } else if (highest === userBid) {
       status = 'winning';
     }
+
     if (status && bidStatus[id] !== status) {
       bidStatus[id] = status;
       if (status === 'max') {
@@ -195,12 +195,28 @@ jQuery(function ($) {
   refreshBids();
 
   if (wpam_ajax.pusher_enabled) {
-    const pusher = new Pusher(wpam_ajax.pusher_key, { cluster: wpam_ajax.pusher_cluster });
-    const channel = pusher.subscribe(wpam_ajax.pusher_channel);
-    channel.bind('bid_update', function (data) {
-      const el = $('.wpam-current-bid[data-auction-id="' + data.auction_id + '"]');
-      el.text(data.bid);
-      checkBidStatus(data.auction_id, parseFloat(data.bid));
+    const pusher = new Pusher(wpam_ajax.pusher_key, {
+      cluster: wpam_ajax.pusher_cluster,
+    });
+
+    // Subscribe to all unique auction IDs present on page
+    const auctionIds = new Set();
+    $('.wpam-current-bid').each(function () {
+      const id = $(this).data('auction-id');
+      if (id) auctionIds.add(id);
+    });
+
+    auctionIds.forEach(function (auctionId) {
+      const channel = pusher.subscribe('auction-' + auctionId);
+      channel.bind('bid_update', function (data) {
+        if (!data || !data.auction_id || !data.bid) return;
+
+        const el = $('.wpam-current-bid[data-auction-id="' + data.auction_id + '"]');
+        el.text(data.bid);
+
+        checkBidStatus(data.auction_id, parseFloat(data.bid));
+        showToast(i18n.outbid || 'A new bid has been placed');
+      });
     });
   } else {
     setInterval(refreshBids, 5000);
