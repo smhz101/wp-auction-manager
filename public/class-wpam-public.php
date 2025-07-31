@@ -2,15 +2,29 @@
 namespace WPAM\Public;
 
 use WPAM\Includes\WPAM_HTML;
+use WPAM\Includes\WPAM_Pusher_Provider;
 
 class WPAM_Public {
-	public function __construct() {
-		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
-		add_shortcode( 'wpam_auction_app', array( $this, 'render_react_app' ) );
+        /** @var WPAM_Pusher_Provider|null */
+        protected $realtime_provider = null;
 
-		// Register template loader on init so custom templates can be swapped in.
-		add_action( 'init', array( $this, 'register_template_hook' ) );
-	}
+        public function __construct() {
+                add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
+                add_shortcode( 'wpam_auction_app', array( $this, 'render_react_app' ) );
+
+                // Register template loader on init so custom templates can be swapped in.
+                add_action( 'init', array( $this, 'register_template_hook' ) );
+
+                add_action( 'wp_ajax_wpam_pusher_auth', array( $this, 'pusher_auth' ) );
+                add_action( 'wp_ajax_nopriv_wpam_pusher_auth', array( $this, 'pusher_auth' ) );
+                add_action( 'wp_ajax_wpam_pusher_leave', array( $this, 'pusher_leave' ) );
+                add_action( 'wp_ajax_nopriv_wpam_pusher_leave', array( $this, 'pusher_leave' ) );
+
+                $provider = get_option( 'wpam_realtime_provider', 'none' );
+                if ( 'pusher' === $provider && class_exists( '\\WPAM\\Includes\\WPAM_Pusher_Provider' ) ) {
+                        $this->realtime_provider = new WPAM_Pusher_Provider();
+                }
+        }
 
 	/**
 	 * Hook the template loader filter.
@@ -75,6 +89,7 @@ class WPAM_Public {
                                 'pusher_key'          => get_option( 'wpam_pusher_key' ),
                                 'pusher_cluster'      => get_option( 'wpam_pusher_cluster' ),
                                 'pusher_channel'      => 'wpam-auctions',
+                                'pusher_auth_nonce'   => wp_create_nonce( 'wpam_pusher_auth' ),
                                 'current_user_id'     => get_current_user_id(),
                                 'show_notices'        => (bool) get_option( 'wpam_enable_toasts', 1 ),
                                 'i18n'                => array(
@@ -118,10 +133,11 @@ class WPAM_Public {
 				'highest_nonce'      => wp_create_nonce( 'wpam_get_highest_bid' ),
 				'pusher_enabled'     => $pusher_enabled,
 				'pusher_key'         => get_option( 'wpam_pusher_key' ),
-				'pusher_cluster'     => get_option( 'wpam_pusher_cluster' ),
-				'pusher_channel'     => 'wpam-auctions',
-			)
-		);
+                                'pusher_cluster'     => get_option( 'wpam_pusher_cluster' ),
+                                'pusher_channel'     => 'wpam-auctions',
+                                'pusher_auth_nonce'  => wp_create_nonce( 'wpam_pusher_auth' ),
+                        )
+                );
 	}
 
 	public function render_react_app( $atts = array() ) {
@@ -157,9 +173,9 @@ class WPAM_Public {
 		] );
 	}
 
-	public function render_messages() {
-		global $product;
-		echo '<div class="wpam-messages">';
+        public function render_messages() {
+                global $product;
+                echo '<div class="wpam-messages">';
 		echo '<h2>' . esc_html__( 'Questions & Answers', 'wpam' ) . '</h2>';
 		echo '<div class="wpam-messages-list"></div>';
 		if ( is_user_logged_in() ) {
@@ -169,6 +185,54 @@ class WPAM_Public {
 		} else {
 			echo '<p>' . esc_html__( 'Please login to ask a question.', 'wpam' ) . '</p>';
 		}
-		echo '</div>';
-	}
+                echo '</div>';
+        }
+
+        /**
+         * Authorize presence channel subscriptions for Pusher.
+         */
+        public function pusher_auth() {
+                check_ajax_referer( 'wpam_pusher_auth', 'nonce' );
+
+                if ( empty( $_POST['channel_name'] ) || empty( $_POST['socket_id'] ) ) {
+                        wp_send_json_error( [ 'message' => __( 'Invalid request', 'wpam' ) ] );
+                }
+
+                $channel   = sanitize_text_field( wp_unslash( $_POST['channel_name'] ) );
+                $socket_id  = sanitize_text_field( wp_unslash( $_POST['socket_id'] ) );
+                $user_id    = get_current_user_id();
+
+                if ( ! $this->realtime_provider || ! $this->realtime_provider->is_active() || ! function_exists( 'pusher_presence_auth' ) ) {
+                        wp_send_json_error( [ 'message' => __( 'Pusher not configured', 'wpam' ) ] );
+                }
+
+                $auth = pusher_presence_auth( $channel, $socket_id, (string) $user_id );
+                $data = json_decode( $auth, true );
+
+                if ( preg_match( '/presence-auction-(\d+)/', $channel, $m ) ) {
+                        $auction_id = absint( $m[1] );
+                        $this->realtime_provider->send_viewer_event( $auction_id, 'join' );
+                }
+
+                wp_send_json_success( $data );
+        }
+
+        /**
+         * Handle viewer leave events to update counts.
+         */
+        public function pusher_leave() {
+                check_ajax_referer( 'wpam_pusher_auth', 'nonce' );
+
+                if ( empty( $_POST['auction_id'] ) ) {
+                        wp_send_json_error( [ 'message' => __( 'Invalid request', 'wpam' ) ] );
+                }
+
+                $auction_id = absint( $_POST['auction_id'] );
+
+                if ( $this->realtime_provider && $this->realtime_provider->is_active() ) {
+                        $this->realtime_provider->send_viewer_event( $auction_id, 'leave' );
+                }
+
+                wp_send_json_success();
+        }
 }

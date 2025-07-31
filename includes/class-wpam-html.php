@@ -61,6 +61,8 @@ class WPAM_HTML {
          ' <span class="wpam-current-bid" data-auction-id="' . esc_attr( $auction_id ) . '">' .
          esc_html( $display_highest ) . '</span></p>';
     echo '<div class="wpam-bid-status" data-auction-id="' . esc_attr( $auction_id ) . '"></div>';
+    echo '<p>' . esc_html__( 'Viewers:', 'wpam' ) . ' <span class="wpam-viewer-count" data-auction-id="' . esc_attr( $auction_id ) . '">0</span></p>';
+    echo '<p>' . esc_html__( 'Participants:', 'wpam' ) . ' <span class="wpam-participant-count" data-auction-id="' . esc_attr( $auction_id ) . '">0</span></p>';
 
     if ( $atts['showBidForm'] ) {
       echo '<form class="wpam-bid-form">';

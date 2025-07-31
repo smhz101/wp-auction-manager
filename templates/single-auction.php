@@ -18,6 +18,8 @@ get_header();
         </button>
     </form>
     <div class="wpam-bid-status" data-auction-id="<?php the_ID(); ?>"></div>
+    <p><?php esc_html_e( 'Viewers:', 'wpam' ); ?> <span class="wpam-viewer-count" data-auction-id="<?php the_ID(); ?>">0</span></p>
+    <p><?php esc_html_e( 'Participants:', 'wpam' ); ?> <span class="wpam-participant-count" data-auction-id="<?php the_ID(); ?>">0</span></p>
     <?php wp_nonce_field( 'wpam_toggle_watchlist', 'wpam_watchlist_nonce', false ); ?>
     <button class="button wpam-watchlist-button" data-auction-id="<?php the_ID(); ?>">
         <?php _e( 'Toggle Watchlist', 'wpam' ); ?>
