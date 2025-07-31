@@ -60,6 +60,7 @@ class WPAM_HTML {
     echo '<p class="wpam-current-price">' . esc_html( $label ) .
          ' <span class="wpam-current-bid" data-auction-id="' . esc_attr( $auction_id ) . '">' .
          esc_html( $display_highest ) . '</span></p>';
+    echo '<div class="wpam-bid-status" data-auction-id="' . esc_attr( $auction_id ) . '"></div>';
 
     if ( $atts['showBidForm'] ) {
       echo '<form class="wpam-bid-form">';
