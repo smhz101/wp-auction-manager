@@ -2,6 +2,7 @@
 namespace WPAM\Includes;
 
 use WPAM\Includes\WPAM_Admin_Log;
+use WPAM\Includes\WPAM_Event_Bus;
 
 if ( class_exists( 'WC_Product' ) && ! class_exists( 'WC_Product_Auction' ) ) {
 	class WC_Product_Auction extends \WC_Product {
@@ -431,11 +432,15 @@ class WPAM_Auction {
 		$state = $this->determine_state( $post_id );
 		update_post_meta( $post_id, '_auction_state', $state );
 	}
-	public function handle_auction_start( $auction_id ) {
-		do_action( 'wpam_before_auction_start', $auction_id );
-		update_post_meta( $auction_id, '_auction_status', 'active' );
-		update_post_meta( $auction_id, '_auction_state', WPAM_Auction_State::LIVE );
-	}
+        public function handle_auction_start( $auction_id ) {
+                do_action( 'wpam_before_auction_start', $auction_id );
+                update_post_meta( $auction_id, '_auction_status', 'active' );
+                update_post_meta( $auction_id, '_auction_state', WPAM_Auction_State::LIVE );
+                WPAM_Event_Bus::dispatch( 'auction_status', [
+                        'auction_id' => $auction_id,
+                        'status'     => 'started',
+                ] );
+        }
 
 	public function handle_auction_end( $auction_id ) {
 		global $wpdb;
@@ -465,6 +470,11 @@ class WPAM_Auction {
                        update_post_meta( $auction_id, '_auction_state', WPAM_Auction_State::ENDED );
                        update_post_meta( $auction_id, '_auction_ending_reason', $ending_reason );
                        WPAM_Admin_Log::log_end( $auction_id, $ending_reason );
+                       WPAM_Event_Bus::dispatch( 'auction_status', [
+                               'auction_id' => $auction_id,
+                               'status'     => 'ended',
+                               'reason'     => $ending_reason,
+                       ] );
                        return;
                }
 
@@ -491,6 +501,11 @@ class WPAM_Auction {
                        update_post_meta( $auction_id, '_auction_ending_reason', $ending_reason );
                        WPAM_Admin_Log::log_reserve_not_met( $auction_id );
                        WPAM_Admin_Log::log_end( $auction_id, $ending_reason );
+                       WPAM_Event_Bus::dispatch( 'auction_status', [
+                               'auction_id' => $auction_id,
+                               'status'     => 'ended',
+                               'reason'     => $ending_reason,
+                       ] );
                        return;
                }
 
@@ -543,6 +558,11 @@ class WPAM_Auction {
                update_post_meta( $auction_id, '_auction_state', WPAM_Auction_State::ENDED );
                update_post_meta( $auction_id, '_auction_ending_reason', $ending_reason );
                WPAM_Admin_Log::log_end( $auction_id, $ending_reason );
+               WPAM_Event_Bus::dispatch( 'auction_status', [
+                       'auction_id' => $auction_id,
+                       'status'     => 'ended',
+                       'reason'     => $ending_reason,
+               ] );
 
                do_action( 'wpam_after_auction_end', $auction_id, $user_id, $amount );
        }

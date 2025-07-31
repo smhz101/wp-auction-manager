@@ -235,7 +235,30 @@ jQuery(function ($) {
 
         const lead = data.lead_user ? parseInt(data.lead_user, 10) : 0;
         checkBidStatus(data.auction_id, parseFloat(data.bid), lead);
+      });
+      channel.bind('bid_placed', function (data) {
+        if (!data || !data.auction_id || !data.amount) return;
+        const el = $('.wpam-current-bid[data-auction-id="' + data.auction_id + '"]');
+        el.text(data.amount);
+        if (typeof data.participants !== 'undefined') {
+          $('.wpam-participant-count[data-auction-id="' + data.auction_id + '"]').text(data.participants);
+        }
+        const lead = data.lead_user ? parseInt(data.lead_user, 10) : 0;
+        checkBidStatus(data.auction_id, parseFloat(data.amount), lead);
         showToast(i18n.outbid || 'A new bid has been placed');
+      });
+      channel.bind('user_outbid', function (data) {
+        if (!data || !data.auction_id || !data.user_id) return;
+        const currentUser = parseInt(wpam_ajax.current_user_id, 10);
+        if (currentUser && currentUser === parseInt(data.user_id, 10)) {
+          showToast(i18n.outbid || "You've been outbid", 'warning');
+        }
+      });
+      channel.bind('auction_status', function (data) {
+        if (!data || !data.status) return;
+        if (data.status === 'ended') {
+          showToast(i18n.auction_ended || 'Auction ended', 'info');
+        }
       });
       const presence = pusher.subscribe('presence-auction-' + auctionId);
       const updateViewers = function () {
