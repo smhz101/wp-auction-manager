@@ -498,14 +498,21 @@ class WPAM_Admin {
 				'4.6.13',
 				true
 			);
-			wp_enqueue_script(
-				'wpam-date-picker',
-				WPAM_PLUGIN_URL . 'admin/js/auction-date-picker.js',
-				array( 'jquery', 'flatpickr' ),
-				WPAM_PLUGIN_VERSION,
-				true
-			);
-		}
+                        wp_enqueue_script(
+                                'wpam-date-picker',
+                                WPAM_PLUGIN_URL . 'admin/js/auction-date-picker.js',
+                                array( 'jquery', 'flatpickr' ),
+                                WPAM_PLUGIN_VERSION,
+                                true
+                        );
+                       wp_enqueue_script(
+                               'wpam-auction-type-toggle',
+                               WPAM_PLUGIN_URL . 'admin/js/auction-type-toggle.js',
+                               array( 'jquery' ),
+                               WPAM_PLUGIN_VERSION,
+                               true
+                       );
+                }
 
 		$slug        = 'auctions';
 		$admin_pages = array(
