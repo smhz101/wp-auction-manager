@@ -51,6 +51,10 @@ The older `Soft Close Duration` option is still honored when the new values are 
 - **Firebase** – toggle Firebase push notifications and provide the server key.
 - **Pusher** – choose "Pusher" under Realtime Provider and enter your app credentials for WebSocket updates.
 
+### Admin logs
+
+View auction events under **Auctions → Logs**. Endings, reserve price failures and relists are recorded per auction.
+
 ## Folder structure
 
 ````

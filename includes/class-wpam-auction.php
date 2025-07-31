@@ -1,6 +1,8 @@
 <?php
 namespace WPAM\Includes;
 
+use WPAM\Includes\WPAM_Admin_Log;
+
 if ( class_exists( 'WC_Product' ) && ! class_exists( 'WC_Product_Auction' ) ) {
 	class WC_Product_Auction extends \WC_Product {
 		public function get_type() {
@@ -456,13 +458,15 @@ class WPAM_Auction {
                                 update_post_meta( $auction_id, '_auction_end', $end );
                                 delete_post_meta( $auction_id, '_auction_ended' );
                                 delete_post_meta( $auction_id, '_auction_reminder_sent' );
-                                wp_schedule_single_event( (int) get_gmt_from_date( $end, 'U' ), 'wpam_auction_end', array( $auction_id ) );
-                                return;
-                        }
-			update_post_meta( $auction_id, '_auction_state', WPAM_Auction_State::ENDED );
-			update_post_meta( $auction_id, '_auction_ending_reason', $ending_reason );
-			return;
-		}
+                               wp_schedule_single_event( (int) get_gmt_from_date( $end, 'U' ), 'wpam_auction_end', array( $auction_id ) );
+                               WPAM_Admin_Log::log_relist( $auction_id );
+                               return;
+                       }
+                       update_post_meta( $auction_id, '_auction_state', WPAM_Auction_State::ENDED );
+                       update_post_meta( $auction_id, '_auction_ending_reason', $ending_reason );
+                       WPAM_Admin_Log::log_end( $auction_id, $ending_reason );
+                       return;
+               }
 
 		$user_id = intval( $highest['user_id'] );
 		$amount  = floatval( $highest['bid_amount'] );
@@ -479,13 +483,16 @@ class WPAM_Auction {
                                 update_post_meta( $auction_id, '_auction_end', $end );
                                 delete_post_meta( $auction_id, '_auction_ended' );
                                 delete_post_meta( $auction_id, '_auction_reminder_sent' );
-                                wp_schedule_single_event( (int) get_gmt_from_date( $end, 'U' ), 'wpam_auction_end', array( $auction_id ) );
-                                return;
-                        }
-			update_post_meta( $auction_id, '_auction_state', WPAM_Auction_State::ENDED );
-			update_post_meta( $auction_id, '_auction_ending_reason', $ending_reason );
-			return;
-		}
+                               wp_schedule_single_event( (int) get_gmt_from_date( $end, 'U' ), 'wpam_auction_end', array( $auction_id ) );
+                               WPAM_Admin_Log::log_relist( $auction_id );
+                               return;
+                       }
+                       update_post_meta( $auction_id, '_auction_state', WPAM_Auction_State::ENDED );
+                       update_post_meta( $auction_id, '_auction_ending_reason', $ending_reason );
+                       WPAM_Admin_Log::log_reserve_not_met( $auction_id );
+                       WPAM_Admin_Log::log_end( $auction_id, $ending_reason );
+                       return;
+               }
 
 		$ending_reason = 'sold';
 
@@ -533,11 +540,12 @@ class WPAM_Auction {
 			$twilio->send( $phone, $sms_msg );
 		}
 
-		update_post_meta( $auction_id, '_auction_state', WPAM_Auction_State::ENDED );
-		update_post_meta( $auction_id, '_auction_ending_reason', $ending_reason );
+               update_post_meta( $auction_id, '_auction_state', WPAM_Auction_State::ENDED );
+               update_post_meta( $auction_id, '_auction_ending_reason', $ending_reason );
+               WPAM_Admin_Log::log_end( $auction_id, $ending_reason );
 
-		do_action( 'wpam_after_auction_end', $auction_id, $user_id, $amount );
-	}
+               do_action( 'wpam_after_auction_end', $auction_id, $user_id, $amount );
+       }
 
         public function schedule_cron() {
                 if ( ! wp_next_scheduled( 'wpam_check_ended_auctions' ) ) {
