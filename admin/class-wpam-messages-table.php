@@ -16,7 +16,7 @@ class WPAM_Messages_Table extends \WP_List_Table {
             $this->items = [];
             $this->set_pagination_args( [ 'total_items' => 0, 'per_page' => 50, 'total_pages' => 0 ] );
             add_action( 'admin_notices', function() {
-                echo '<div class="error"><p>' . esc_html__( 'Auction messages table missing. Please deactivate and reactivate the plugin.', 'wpam' ) . '</p></div>';
+                echo '<div class="notice notice-error"><p>' . esc_html__( 'Auction messages table is missing. Please reinstall the plugin to create the required database tables.', 'wpam' ) . '</p></div>';
             } );
             return;
         }
@@ -74,5 +74,12 @@ class WPAM_Messages_Table extends \WP_List_Table {
 
     protected function column_default( $item, $column_name ) {
         return isset( $item[ $column_name ] ) ? esc_html( $item[ $column_name ] ) : '';
+    }
+
+    public function no_items() {
+        printf(
+            __( 'No messages found. <a href="%s">Create a new auction</a> to get started.', 'wpam' ),
+            esc_url( admin_url( 'post-new.php?post_type=product' ) )
+        );
     }
 }

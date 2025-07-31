@@ -15,7 +15,17 @@ class WPAM_Bids_Table extends \WP_List_Table {
 
     public function prepare_items() {
         global $wpdb;
-        $table   = $wpdb->prefix . 'wc_auction_bids';
+        $table = $wpdb->prefix . 'wc_auction_bids';
+
+        if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) !== $table ) {
+            $this->items = [];
+            $this->set_pagination_args( [ 'total_items' => 0, 'per_page' => 50, 'total_pages' => 0 ] );
+            add_action( 'admin_notices', function() {
+                echo '<div class="notice notice-error"><p>' . esc_html__( 'Auction bids table is missing. Please reinstall the plugin to create the required database tables.', 'wpam' ) . '</p></div>';
+            } );
+            return;
+        }
+
         $results = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $table WHERE auction_id = %d ORDER BY bid_time DESC", $this->auction_id ), ARRAY_A );
         $this->items = $results;
         $this->set_pagination_args( [
@@ -50,6 +60,9 @@ class WPAM_Bids_Table extends \WP_List_Table {
     }
 
     public function no_items() {
-        _e( 'No bids found.', 'wpam' );
+        printf(
+            __( 'No bids found. <a href="%s">Create a new auction</a> to collect bids.', 'wpam' ),
+            esc_url( admin_url( 'post-new.php?post_type=product' ) )
+        );
     }
 }
