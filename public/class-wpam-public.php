@@ -77,6 +77,14 @@ class WPAM_Public {
                                 'pusher_channel'      => 'wpam-auctions',
                                 'current_user_id'     => get_current_user_id(),
                                 'show_notices'        => (bool) get_option( 'wpam_enable_toasts', 1 ),
+                                'i18n'                => array(
+                                        'max_bidder'       => __( "You're the max bidder", 'wpam' ),
+                                        'winning'          => __( "You're winning", 'wpam' ),
+                                        'outbid'           => __( "You've been outbid", 'wpam' ),
+                                        'auction_extended' => __( 'Auction extended due to soft close', 'wpam' ),
+                                        'max_reached'      => __( 'Max bid reached', 'wpam' ),
+                                        'reserve_not_met'  => __( 'Reserve price not met', 'wpam' ),
+                                ),
                         )
                 );
 

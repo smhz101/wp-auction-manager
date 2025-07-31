@@ -41,3 +41,22 @@ msgstr ""
 #: admin/class-wpam-admin.php
 msgid "Firebase Server Key"
 msgstr ""
+#: includes/class-wpam-bid.php
+msgid "Only one bid allowed for sealed auctions"
+msgstr ""
+
+#: includes/class-wpam-bid.php
+msgid "Sealed bid submitted"
+msgstr ""
+
+#: includes/class-wpam-bid.php
+msgid "Max bid reached"
+msgstr ""
+
+#: includes/class-wpam-bid.php
+msgid "Auction extended due to soft close"
+msgstr ""
+
+#: includes/class-wpam-auction.php
+msgid "Reserve price not met"
+msgstr ""

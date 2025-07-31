@@ -1,4 +1,5 @@
 jQuery(function ($) {
+  const i18n = wpam_ajax.i18n || {};
   toastr.options.positionClass = 'toast-top-right';
   toastr.options.timeOut = 3000;
   function updateCountdown() {
@@ -47,9 +48,9 @@ jQuery(function ($) {
     if (status && bidStatus[id] !== status) {
       bidStatus[id] = status;
       if (status === 'max') {
-        showToast("You're the max bidder");
+        showToast(i18n.max_bidder || "You're the max bidder");
       } else {
-        showToast(status === 'winning' ? "You're winning" : "You've been outbid");
+        showToast(status === 'winning' ? (i18n.winning || "You're winning") : (i18n.outbid || "You've been outbid"));
       }
     }
   }
@@ -69,14 +70,18 @@ jQuery(function ($) {
       function (res) {
         if (res.success) {
           toastr.success(res.data.message);
+          if (res.data.max_reached) {
+            showToast(i18n.max_reached || 'Max bid reached', 'warning');
+          }
           userBids[auctionId] = parseFloat(bidInput.val());
           bidStatus[auctionId] = 'winning';
-          showToast("You're winning");
+          showToast(i18n.winning || "You're winning");
           if (res.data.new_end_ts) {
             $('.wpam-countdown')
               .data('end', res.data.new_end_ts)
               .attr('data-end', res.data.new_end_ts);
             updateCountdown();
+            showToast(i18n.auction_extended || 'Auction extended due to soft close');
           }
         } else {
           toastr.error(res.data.message);
@@ -122,6 +127,10 @@ jQuery(function ($) {
             const lead = res.data.lead_user ? parseInt(res.data.lead_user, 10) : 0;
             bidEl.text(res.data.highest_bid);
             checkBidStatus(auctionId, highest, lead);
+            if (res.data.ending_reason === 'reserve_not_met' && !bidStatus[auctionId + '_reserve']) {
+              showToast(i18n.reserve_not_met || 'Reserve price not met', 'warning');
+              bidStatus[auctionId + '_reserve'] = true;
+            }
           }
         }
       );
