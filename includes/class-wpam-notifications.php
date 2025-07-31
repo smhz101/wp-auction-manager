@@ -105,26 +105,20 @@ class WPAM_Notifications {
                     self::notify_new_bid( $payload['auction_id'], $payload['amount'], $payload['user_id'] );
                 }
                 break;
-            case 'user_outbid':
-                if ( isset( $payload['user_id'], $payload['auction_id'] ) ) {
-                    $phone = get_user_meta( $payload['user_id'], 'billing_phone', true );
-                    if ( $phone && get_option( 'wpam_enable_twilio' ) && get_option( 'wpam_lead_sms_alerts' ) ) {
-                        $provider = new WPAM_Twilio_Provider();
-                        $msg = sprintf( __( 'You have been outbid on "%s".', 'wpam' ), get_the_title( $payload['auction_id'] ) );
-                        $provider->send( $phone, $msg );
+                case 'user_outbid':
+                    if ( isset( $payload['user_id'], $payload['auction_id'] ) && get_option( 'wpam_lead_sms_alerts' ) ) {
+                        $subject = sprintf( __( 'Outbid on %s', 'wpam' ), get_the_title( $payload['auction_id'] ) );
+                        $msg     = sprintf( __( 'You have been outbid on "%s".', 'wpam' ), get_the_title( $payload['auction_id'] ) );
+                        self::send_to_user( $payload['user_id'], $subject, $msg );
                     }
-                }
-                break;
-            case 'max_exceeded':
-                if ( isset( $payload['user_id'], $payload['auction_id'] ) ) {
-                    $phone = get_user_meta( $payload['user_id'], 'billing_phone', true );
-                    if ( $phone && get_option( 'wpam_enable_twilio' ) && get_option( 'wpam_lead_sms_alerts' ) ) {
-                        $provider = new WPAM_Twilio_Provider();
-                        $msg = sprintf( __( 'Your maximum bid for "%s" has been exceeded.', 'wpam' ), get_the_title( $payload['auction_id'] ) );
-                        $provider->send( $phone, $msg );
+                    break;
+                case 'max_exceeded':
+                    if ( isset( $payload['user_id'], $payload['auction_id'] ) && get_option( 'wpam_lead_sms_alerts' ) ) {
+                        $subject = sprintf( __( 'Max bid exceeded for %s', 'wpam' ), get_the_title( $payload['auction_id'] ) );
+                        $msg     = sprintf( __( 'Your maximum bid for "%s" has been exceeded.', 'wpam' ), get_the_title( $payload['auction_id'] ) );
+                        self::send_to_user( $payload['user_id'], $subject, $msg );
                     }
-                }
-                break;
+                    break;
             case 'auction_extended':
                 // Currently no notification via SMS/email for extensions.
                 break;
