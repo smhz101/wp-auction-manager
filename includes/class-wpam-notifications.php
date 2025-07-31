@@ -77,4 +77,18 @@ class WPAM_Notifications {
             self::send_to_user( $user_id, $subject, $message );
         }
     }
+
+    public static function notify_auction_reminder( $auction_id ) {
+        global $wpdb;
+        $watchers = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT user_id FROM {$wpdb->prefix}wc_auction_watchlists WHERE auction_id = %d", $auction_id ) );
+        if ( empty( $watchers ) ) {
+            return;
+        }
+        $title   = get_the_title( $auction_id );
+        $subject = sprintf( __( 'Auction ending soon: %s', 'wpam' ), $title );
+        $message = sprintf( __( 'The auction "%s" ends in less than 30 minutes. Place your bid now!', 'wpam' ), $title );
+        foreach ( $watchers as $user_id ) {
+            self::send_to_user( $user_id, $subject, $message );
+        }
+    }
 }
