@@ -510,7 +510,7 @@ class WPAM_Admin {
                 }
 
                 if ( in_array( $hook, array( 'toplevel_page_wpam-' . $slug, $slug . '_page_wpam-auctions', $slug . '_page_wpam-bids', $slug . '_page_wpam-messages', $slug . '_page_wpam-logs', $slug . '_page_wpam-flagged' ), true ) ) {
-                        wp_enqueue_script( 'wpam-admin-tables', WPAM_PLUGIN_URL . 'admin/js/admin-tables.js', array( 'wp-element', 'wp-components', 'wp-api-fetch' ), WPAM_PLUGIN_VERSION, true );
+                        wp_enqueue_script( 'wpam-admin-tables', WPAM_PLUGIN_URL . 'admin/js/admin-tables.js', array( 'wp-element', 'wp-components', 'wp-api-fetch', 'wp-edit-site' ), WPAM_PLUGIN_VERSION, true );
                         wp_localize_script( 'wpam-admin-tables', 'wpamTables', array(
                                 'nonce'             => wp_create_nonce( 'wp_rest' ),
                                 'auctions_endpoint' => rest_url( 'wpam/v1/auctions' ),
