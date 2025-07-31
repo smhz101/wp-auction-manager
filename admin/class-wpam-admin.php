@@ -334,38 +334,285 @@ class WPAM_Admin
             wp_localize_script("wpam-admin-tables", "wpamTables", ["nonce" => wp_create_nonce("wp_rest") , "auctions_endpoint" => "wpam/v1/auctions", "bids_endpoint" => rest_url("wpam/v1/bids") , "messages_endpoint" => rest_url("wpam/v1/messages") , "logs_endpoint" => rest_url("wpam/v1/logs") , "flagged_endpoint" => rest_url("wpam/v1/flagged") , "auction_id" => isset($_GET["auction_id"]) ? absint($_GET["auction_id"]) : 0, "i18n" => ["auction" => __("Auction", "wpam") , "start" => __("Start", "wpam") , "end" => __("End", "wpam") , "state" => __("State", "wpam") , "reason" => __("Ending Reason", "wpam") , "user" => __("User", "wpam") , "amount" => __("Amount", "wpam") , "bid_time" => __("Bid Time", "wpam") , "message" => __("Message", "wpam") , "status" => __("Status", "wpam") , "date" => __("Date", "wpam") , "admin" => __("Admin", "wpam") , "action" => __("Action", "wpam") , "details" => __("Details", "wpam") , "reason_user" => __("Reason", "wpam") , ], ]);
         }
 
-        if ($slug . "_page_wpam-settings" !== $hook)
-        {
-            return;
+	public function field_enable_firebase() {
+		$value = get_option( 'wpam_enable_firebase', false );
+		echo '<input type="checkbox" name="wpam_enable_firebase" value="1"' . checked( 1, $value, false ) . ' />';
+	}
+
+	public function field_firebase_server_key() {
+		$value = esc_attr( get_option( 'wpam_firebase_server_key', '' ) );
+		echo '<input type="text" class="regular-text" name="wpam_firebase_server_key" value="' . $value . '" />';
+	}
+
+	public function field_sendgrid_key() {
+		$value = esc_attr( get_option( 'wpam_sendgrid_key', '' ) );
+		echo '<input type="text" class="regular-text" name="wpam_sendgrid_key" value="' . $value . '" />';
+	}
+
+	public function field_require_kyc() {
+		$value = get_option( 'wpam_require_kyc', false );
+		echo '<input type="checkbox" name="wpam_require_kyc" value="1"' . checked( 1, $value, false ) . ' />';
+	}
+
+	public function field_realtime_provider() {
+		$value = esc_attr( get_option( 'wpam_realtime_provider', 'none' ) );
+		echo '<select name="wpam_realtime_provider">';
+		echo '<option value="none"' . selected( $value, 'none', false ) . '>' . esc_html__( 'None', 'wpam' ) . '</option>';
+		echo '<option value="pusher"' . selected( $value, 'pusher', false ) . '>' . esc_html__( 'Pusher', 'wpam' ) . '</option>';
+		echo '</select>';
+	}
+
+	public function render_auctions_page() {
+               echo '<div class="wrap">';
+               echo '<h1>' . esc_html__( 'Auctions', 'wpam' ) . '</h1>';
+               echo '<div id="wpam-auctions-root"></div>';
+               echo '</div>';
+	}
+
+	public function render_bids_page() {
+		$auction_id = isset( $_GET['auction_id'] ) ? absint( $_GET['auction_id'] ) : 0;
+		echo '<div class="wrap">';
+		if ( ! $auction_id ) {
+			echo '<h1>' . esc_html__( 'Bids', 'wpam' ) . '</h1>';
+			echo '<p>' . esc_html__( 'No auction selected.', 'wpam' ) . '</p>';
+			echo '</div>';
+			return;
+		}
+               echo '<h1>' . sprintf( esc_html__( 'Bids for Auction #%d', 'wpam' ), $auction_id ) . '</h1>';
+               echo '<div id="wpam-bids-root"></div>';
+               echo '</div>';
         }
 
-        wp_enqueue_script("wpam-settings-app", WPAM_PLUGIN_URL . "admin/js/settings-app.js", ["wp-element", "wp-components", "wp-api-fetch"], WPAM_PLUGIN_VERSION, true);
+	public function render_messages_page() {
 
-        wp_localize_script("wpam-settings-app", "wpamSettings", ["nonce" => wp_create_nonce("wp_rest") , "rest_endpoint" => "wpam/v1/settings", ]);
-    }
+		if ( isset( $_GET['action'], $_GET['message'] ) && in_array( $_GET['action'], array( 'approve', 'unapprove' ), true ) ) {
+			$message_id = absint( $_GET['message'] );
+			check_admin_referer( 'wpam_toggle_message_' . $message_id );
+			global $wpdb;
+			$table    = $wpdb->prefix . 'wc_auction_messages';
+			$approved = 'approve' === $_GET['action'] ? 1 : 0;
+			$wpdb->update( $table, array( 'approved' => $approved ), array( 'id' => $message_id ), array( '%d' ), array( '%d' ) );
+			echo '<div class="updated"><p>' . esc_html__( 'Message updated.', 'wpam' ) . '</p></div>';
+		}
 
-    public function register_rest_routes()
-    {
-			register_rest_route("wpam/v1", "/settings", [
-				"methods" => \WP_REST_Server::READABLE, 
-				"callback" => [$this, "rest_get_settings"], 
-				"permission_callback" => function () {
-					return current_user_can("manage_options");
-				}, 
-			]);
+                echo '<div class="wrap">';
+                echo '<h1>' . esc_html__( 'Auction Messages', 'wpam' ) . '</h1>';
+                echo '<div id="wpam-messages-root"></div>';
+                echo '</div>';
+        }
 
-			register_rest_route("wpam/v1", "/settings", [
-				"methods" => \WP_REST_Server::EDITABLE, 
-				"callback" => [$this, "rest_update_settings"], 
-				"permission_callback" => function () {
-					return current_user_can("manage_options");
-				}, 
-			]);
+        public function render_logs_page() {
+                echo '<div class="wrap">';
+                echo '<h1>' . esc_html__( 'Admin Logs', 'wpam' ) . '</h1>';
+                echo '<div id="wpam-logs-root"></div>';
+                echo '</div>';
+        }
 
-			register_rest_route("wpam/v1", "/bid", [
-				"methods" => \WP_REST_Server::CREATABLE, 
-				"callback" => ["\\WPAM\\Includes\\WPAM_Bid", "rest_place_bid"], 
-				"permission_callback" => function () {
+        public function render_flagged_page() {
+                echo '<div class="wrap">';
+                echo '<h1>' . esc_html__( 'Flagged Users', 'wpam' ) . '</h1>';
+                echo '<div id="wpam-flagged-root"></div>';
+                echo '</div>';
+        }
+
+	public function enqueue_scripts( $hook ) {
+		$screen = get_current_screen();
+
+		if ( 'post-new.php' === $hook && 'product' === $screen->post_type && 'add' === $screen->action ) {
+			wp_enqueue_script(
+				'wpam-select-auction-type',
+				WPAM_PLUGIN_URL . 'admin/js/select-auction-product-type.js',
+				array( 'jquery' ),
+				WPAM_PLUGIN_VERSION,
+				true
+			);
+		}
+
+		if ( in_array( $hook, array( 'post-new.php', 'post.php' ), true ) && 'product' === $screen->post_type ) {
+			wp_enqueue_style(
+				'flatpickr',
+				'https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css',
+				array(),
+				'4.6.13'
+			);
+			wp_enqueue_script(
+				'flatpickr',
+				'https://cdn.jsdelivr.net/npm/flatpickr',
+				array(),
+				'4.6.13',
+				true
+			);
+                        wp_enqueue_script(
+                                'wpam-date-picker',
+                                WPAM_PLUGIN_URL . 'admin/js/auction-date-picker.js',
+                                array( 'jquery', 'flatpickr' ),
+                                WPAM_PLUGIN_VERSION,
+                                true
+                        );
+                       wp_enqueue_script(
+                               'wpam-auction-type-toggle',
+                               WPAM_PLUGIN_URL . 'admin/js/auction-type-toggle.js',
+                               array( 'jquery' ),
+                               WPAM_PLUGIN_VERSION,
+                               true
+                       );
+                }
+
+		$slug        = 'auctions';
+		$admin_pages = array(
+						'toplevel_page_wpam-' . $slug,
+						$slug . '_page_wpam-auctions',
+						$slug . '_page_wpam-bids',
+						$slug . '_page_wpam-messages',
+						$slug . '_page_wpam-logs',
+						$slug . '_page_wpam-settings',
+		);
+
+                if ( in_array( $hook, $admin_pages, true ) ) {
+                        wp_enqueue_style(
+                                'wpam-admin',
+                                WPAM_PLUGIN_URL . 'admin/css/wpam-admin.css',
+                                array( 'wp-components' ),
+                                WPAM_PLUGIN_VERSION
+                        );
+                }
+
+                if ( in_array( $hook, array( 'toplevel_page_wpam-' . $slug, $slug . '_page_wpam-auctions', $slug . '_page_wpam-bids', $slug . '_page_wpam-messages', $slug . '_page_wpam-logs', $slug . '_page_wpam-flagged' ), true ) ) {
+                        wp_enqueue_script( 'wpam-admin-tables', WPAM_PLUGIN_URL . 'admin/js/admin-tables.js', array( 'wp-element', 'wp-components', 'wp-api-fetch', 'wp-edit-site' ), WPAM_PLUGIN_VERSION, true );
+                        wp_localize_script( 'wpam-admin-tables', 'wpamTables', array(
+                                'nonce'             => wp_create_nonce( 'wp_rest' ),
+                                'auctions_endpoint' => rest_url( 'wpam/v1/auctions' ),
+                                'bids_endpoint'     => rest_url( 'wpam/v1/bids' ),
+                                'messages_endpoint' => rest_url( 'wpam/v1/messages' ),
+                                'logs_endpoint'     => rest_url( 'wpam/v1/logs' ),
+                                'flagged_endpoint'  => rest_url( 'wpam/v1/flagged' ),
+                                'auction_id'        => isset( $_GET['auction_id'] ) ? absint( $_GET['auction_id'] ) : 0,
+                                'i18n'              => array(
+                                        'auction'     => __( 'Auction', 'wpam' ),
+                                        'start'       => __( 'Start', 'wpam' ),
+                                        'end'         => __( 'End', 'wpam' ),
+                                        'state'       => __( 'State', 'wpam' ),
+                                        'reason'      => __( 'Ending Reason', 'wpam' ),
+                                        'user'        => __( 'User', 'wpam' ),
+                                        'amount'      => __( 'Amount', 'wpam' ),
+                                        'bid_time'    => __( 'Bid Time', 'wpam' ),
+                                        'message'     => __( 'Message', 'wpam' ),
+                                        'status'      => __( 'Status', 'wpam' ),
+                                        'date'        => __( 'Date', 'wpam' ),
+                                        'admin'       => __( 'Admin', 'wpam' ),
+                                        'action'      => __( 'Action', 'wpam' ),
+                                        'details'     => __( 'Details', 'wpam' ),
+                                        'reason_user' => __( 'Reason', 'wpam' ),
+                                ),
+                        ) );
+                }
+
+                if ( $slug . '_page_wpam-settings' !== $hook ) {
+                                                return;
+                }
+
+		wp_enqueue_script(
+			'wpam-settings-app',
+			WPAM_PLUGIN_URL . 'admin/js/settings-app.js',
+			array( 'wp-element', 'wp-components', 'wp-api-fetch' ),
+			WPAM_PLUGIN_VERSION,
+			true
+		);
+
+		wp_localize_script(
+			'wpam-settings-app',
+			'wpamSettings',
+			array(
+				'nonce'         => wp_create_nonce( 'wp_rest' ),
+				'rest_endpoint' => 'wpam/v1/settings',
+			)
+		);
+	}
+
+	public function register_rest_routes() {
+		register_rest_route(
+			'wpam/v1',
+			'/settings',
+			array(
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'rest_get_settings' ),
+				'permission_callback' => function () {
+					return current_user_can( 'manage_options' );
+				},
+			)
+		);
+
+		register_rest_route(
+			'wpam/v1',
+			'/settings',
+			array(
+				'methods'             => \WP_REST_Server::EDITABLE,
+				'callback'            => array( $this, 'rest_update_settings' ),
+				'permission_callback' => function () {
+					return current_user_can( 'manage_options' );
+				},
+			)
+		);
+	}
+
+	public function rest_get_settings( \WP_REST_Request $request ) {
+		$options = array();
+		foreach ( $this->get_option_keys() as $key ) {
+			$options[ $key ] = get_option( $key );
+		}
+
+		return rest_ensure_response( $options );
+	}
+
+	public function rest_update_settings( \WP_REST_Request $request ) {
+		$params = $request->get_json_params();
+		foreach ( $this->get_option_keys() as $key ) {
+			if ( isset( $params[ $key ] ) ) {
+				update_option( $key, $params[ $key ] );
+			}
+		}
+
+		return $this->rest_get_settings( $request );
+	}
+
+	private function get_option_keys() {
+		return array(
+			'wpam_default_increment',
+			'wpam_soft_close',
+                        'wpam_enable_twilio',
+                        'wpam_lead_sms_alerts',
+                        'wpam_enable_firebase',
+                        'wpam_enable_email',
+                        'wpam_firebase_server_key',
+			'wpam_sendgrid_key',
+			'wpam_twilio_sid',
+			'wpam_twilio_token',
+			'wpam_twilio_from',
+			'wpam_pusher_app_id',
+			'wpam_pusher_key',
+			'wpam_pusher_secret',
+			'wpam_pusher_cluster',
+                        'wpam_soft_close_threshold',
+                        'wpam_soft_close_extend',
+                        'wpam_max_extensions',
+                        'wpam_realtime_provider',
+			'wpam_require_kyc',
+			'wpam_default_auction_type',
+			'wpam_enable_proxy_bidding',
+			'wpam_enable_silent_bidding',
+			'wpam_buyer_premium',
+                        'wpam_seller_fee',
+                        'wpam_webhook_url',
+                        'wpam_enable_toasts',
+                );
+
+		register_rest_route(
+			'wpam/v1',
+			'/bid',
+			array(
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => array( '\\WPAM\\Includes\\WPAM_Bid', 'rest_place_bid' ),
+				'permission_callback' => function () {
 					return is_user_logged_in();
 				},
 			]);
@@ -390,31 +637,81 @@ class WPAM_Admin
 				"permission_callback" => function () {
 					return is_user_logged_in();
 				},
-			]);
+			)
+		);
 
-			register_rest_route("wpam/v1", "/auctions", [
-				"methods" => \WP_REST_Server::READABLE, 
-				"callback" => ["\\WPAM\\Includes\\WPAM_Admin_Rest", "get_auctions"], 
-				"permission_callback" => function () {
-					return current_user_can("manage_options");
-				}, 
-			]);
+    register_rest_route(
+        'wpam/v1',
+        '/watchlist',
+        array(
+          'methods'             => \WP_REST_Server::READABLE,
+          'callback'            => array( '\\WPAM\\Includes\\WPAM_Watchlist', 'rest_get_watchlist' ),
+          'permission_callback' => function () {
+                  return is_user_logged_in();
+          },
+        )
+    );
 
-			register_rest_route("wpam/v1", "/bids", [
-				"methods" => \WP_REST_Server::READABLE, 
-				"callback" => ["\\WPAM\\Includes\\WPAM_Admin_Rest", "get_bids"], 
-				"permission_callback" => function () {
-					return current_user_can("manage_options");
-				}, 
-			]);
+                register_rest_route(
+                        'wpam/v1',
+                        '/auctions',
+                        array(
+                                'methods'             => \WP_REST_Server::READABLE,
+                                'callback'            => array( '\\WPAM\\Includes\\WPAM_Admin_Rest', 'get_auctions' ),
+                                'permission_callback' => function () {
+                                        return current_user_can( 'manage_options' );
+                                },
+                        )
+                );
 
-			register_rest_route("wpam/v1", "/messages", [
-				"methods" => \WP_REST_Server::READABLE, 
-				"callback" => ["\\WPAM\\Includes\\WPAM_Admin_Rest", "get_messages"], 
-				"permission_callback" => function () {
-					return current_user_can("manage_options");
-				},
-			]);
+                register_rest_route(
+                        'wpam/v1',
+                        '/bids',
+                        array(
+                                'methods'             => \WP_REST_Server::READABLE,
+                                'callback'            => array( '\\WPAM\\Includes\\WPAM_Admin_Rest', 'get_bids' ),
+                                'permission_callback' => function () {
+                                        return current_user_can( 'manage_options' );
+                                },
+                        )
+                );
+
+                register_rest_route(
+                        'wpam/v1',
+                        '/messages',
+                        array(
+                                'methods'             => \WP_REST_Server::READABLE,
+                                'callback'            => array( '\\WPAM\\Includes\\WPAM_Admin_Rest', 'get_messages' ),
+                                'permission_callback' => function () {
+                                        return current_user_can( 'manage_options' );
+                                },
+                        )
+                );
+
+                register_rest_route(
+                        'wpam/v1',
+                        '/logs',
+                        array(
+                                'methods'             => \WP_REST_Server::READABLE,
+                                'callback'            => array( '\\WPAM\\Includes\\WPAM_Admin_Rest', 'get_logs' ),
+                                'permission_callback' => function () {
+                                        return current_user_can( 'manage_options' );
+                                },
+                        )
+                );
+
+                register_rest_route(
+                        'wpam/v1',
+                        '/flagged',
+                        array(
+                                'methods'             => \WP_REST_Server::READABLE,
+                                'callback'            => array( '\\WPAM\\Includes\\WPAM_Admin_Rest', 'get_flagged' ),
+                                'permission_callback' => function () {
+                                        return current_user_can( 'manage_options' );
+                                },
+                        )
+                );
+        }
 
 			register_rest_route("wpam/v1", "/logs", [
 				"methods" => \WP_REST_Server::READABLE, 

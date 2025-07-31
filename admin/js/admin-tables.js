@@ -1,94 +1,95 @@
-(function( wp ) {
-    const { createElement, useEffect, useState } = wp.element;
-    const { Table, Spinner } = wp.components;
+/**
+ * Admin tables rendered with Gutenberg DataViews.
+ */
+( function ( wp ) {
+    const { createElement, useEffect, useState, useMemo } = wp.element;
+    const { Spinner } = wp.components;
+    const { DataViews, DEFAULT_VIEW, filterSortAndPaginate } =
+        wp.dataviews || {};
     const { render } = wp.element;
     const apiFetch = wp.apiFetch;
 
-    function DataTableApp( { endpoint, columns } ) {
-        const [ rows, setRows ] = useState( [] );
+    function DataViewApp( { endpoint, fields } ) {
+        const [ data, setData ] = useState( [] );
         const [ loading, setLoading ] = useState( true );
+        const [ view, setView ] = useState( {
+            ...DEFAULT_VIEW,
+            fields: fields.map( ( f ) => f.id ),
+        } );
 
         useEffect( () => {
-            apiFetch( { path: endpoint, headers: { 'X-WP-Nonce': wpamTables.nonce } } ).then( ( res ) => {
-                setRows( res.data || [] );
+            apiFetch( {
+                path: endpoint,
+                headers: { 'X-WP-Nonce': wpamTables.nonce },
+            } ).then( ( res ) => {
+                setData( res.data || [] );
                 setLoading( false );
             } );
         }, [ endpoint ] );
 
-        if ( loading ) {
+        const { data: shownData, paginationInfo } = useMemo( () => {
+            return filterSortAndPaginate( data, view, fields );
+        }, [ data, view ] );
+
+        if ( loading || ! DataViews ) {
             return createElement( Spinner, null );
         }
 
-        return createElement(
-            Table,
-            { className: 'wpam-table' },
-            createElement(
-                'thead',
-                null,
-                createElement(
-                    'tr',
-                    null,
-                    columns.map( ( col ) => createElement( 'th', { key: col.key }, col.label ) )
-                )
-            ),
-            createElement(
-                'tbody',
-                null,
-                rows.map( ( row, index ) =>
-                    createElement(
-                        'tr',
-                        { key: index },
-                        columns.map( ( col ) => createElement( 'td', { key: col.key }, row[ col.key ] ) )
-                    )
-                )
-            )
-        );
+        return createElement( DataViews, {
+            getItemId: ( item ) => item.id?.toString() || '',
+            paginationInfo,
+            data: shownData,
+            view,
+            fields,
+            onChangeView: setView,
+            isItemClickable: () => false,
+        } );
     }
 
-    function mount( id, endpoint, columns ) {
+    function mount( id, endpoint, fields ) {
         const root = document.getElementById( id );
         if ( root ) {
-            render( createElement( DataTableApp, { endpoint, columns } ), root );
+            render( createElement( DataViewApp, { endpoint, fields } ), root );
         }
     }
 
     document.addEventListener( 'DOMContentLoaded', function () {
         mount( 'wpam-auctions-root', wpamTables.auctions_endpoint, [
-            { key: 'title', label: wpamTables.i18n.auction },
-            { key: 'start', label: wpamTables.i18n.start },
-            { key: 'end', label: wpamTables.i18n.end },
-            { key: 'state', label: wpamTables.i18n.state },
-            { key: 'reason', label: wpamTables.i18n.reason },
+            { id: 'title', label: wpamTables.i18n.auction, getValue: ( { item } ) => item.title },
+            { id: 'start', label: wpamTables.i18n.start, getValue: ( { item } ) => item.start },
+            { id: 'end', label: wpamTables.i18n.end, getValue: ( { item } ) => item.end },
+            { id: 'state', label: wpamTables.i18n.state, getValue: ( { item } ) => item.state },
+            { id: 'reason', label: wpamTables.i18n.reason, getValue: ( { item } ) => item.reason },
         ] );
 
         if ( wpamTables.auction_id ) {
             mount( 'wpam-bids-root', wpamTables.bids_endpoint + '?auction_id=' + wpamTables.auction_id, [
-                { key: 'user', label: wpamTables.i18n.user },
-                { key: 'amount', label: wpamTables.i18n.amount },
-                { key: 'bid_time', label: wpamTables.i18n.bid_time },
+                { id: 'user', label: wpamTables.i18n.user, getValue: ( { item } ) => item.user },
+                { id: 'amount', label: wpamTables.i18n.amount, getValue: ( { item } ) => item.amount },
+                { id: 'bid_time', label: wpamTables.i18n.bid_time, getValue: ( { item } ) => item.bid_time },
             ] );
         }
 
         mount( 'wpam-messages-root', wpamTables.messages_endpoint, [
-            { key: 'auction', label: wpamTables.i18n.auction },
-            { key: 'user', label: wpamTables.i18n.user },
-            { key: 'message', label: wpamTables.i18n.message },
-            { key: 'status', label: wpamTables.i18n.status },
-            { key: 'date', label: wpamTables.i18n.date },
+            { id: 'auction', label: wpamTables.i18n.auction, getValue: ( { item } ) => item.auction },
+            { id: 'user', label: wpamTables.i18n.user, getValue: ( { item } ) => item.user },
+            { id: 'message', label: wpamTables.i18n.message, getValue: ( { item } ) => item.message },
+            { id: 'status', label: wpamTables.i18n.status, getValue: ( { item } ) => item.status },
+            { id: 'date', label: wpamTables.i18n.date, getValue: ( { item } ) => item.date },
         ] );
 
         mount( 'wpam-logs-root', wpamTables.logs_endpoint, [
-            { key: 'auction', label: wpamTables.i18n.auction },
-            { key: 'admin', label: wpamTables.i18n.admin },
-            { key: 'action', label: wpamTables.i18n.action },
-            { key: 'details', label: wpamTables.i18n.details },
-            { key: 'date', label: wpamTables.i18n.date },
+            { id: 'auction', label: wpamTables.i18n.auction, getValue: ( { item } ) => item.auction },
+            { id: 'admin', label: wpamTables.i18n.admin, getValue: ( { item } ) => item.admin },
+            { id: 'action', label: wpamTables.i18n.action, getValue: ( { item } ) => item.action },
+            { id: 'details', label: wpamTables.i18n.details, getValue: ( { item } ) => item.details },
+            { id: 'date', label: wpamTables.i18n.date, getValue: ( { item } ) => item.date },
         ] );
 
         mount( 'wpam-flagged-root', wpamTables.flagged_endpoint, [
-            { key: 'user', label: wpamTables.i18n.user },
-            { key: 'reason', label: wpamTables.i18n.reason_user },
-            { key: 'flagged_at', label: wpamTables.i18n.date },
+            { id: 'user', label: wpamTables.i18n.user, getValue: ( { item } ) => item.user },
+            { id: 'reason', label: wpamTables.i18n.reason_user, getValue: ( { item } ) => item.reason },
+            { id: 'flagged_at', label: wpamTables.i18n.date, getValue: ( { item } ) => item.flagged_at },
         ] );
     } );
 })( window.wp );
