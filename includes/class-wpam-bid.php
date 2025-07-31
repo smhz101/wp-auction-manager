@@ -312,11 +312,6 @@ class WPAM_Bid {
             $max_reached = true;
         }
 
-        $max_reached = false;
-        if ( $proxy_enabled && $max_bid <= $new_highest && $new_highest_user !== $user_id ) {
-            $max_reached = true;
-        }
-
 
         // Dispatch standardized events
         WPAM_Event_Bus::dispatch( 'bid_placed', [
