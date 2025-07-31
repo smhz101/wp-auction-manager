@@ -1,39 +1,127 @@
-.wpam-status {
-    display: inline-block;
-    margin-bottom: 10px;
-    padding: 4px 8px;
-    background: #f0f0f0;
-    border-radius: 3px;
-    font-weight: 600;
+/* ---------------------------
+   Base Auction Block Styling
+---------------------------- */
+.wpam-auction-block {
+	border-radius: 3px;
+	padding: 20px;
+	transition: all 0.3s ease;
+	box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+	max-width: 400px;
+	color: #fff;
+	position: relative;
+}
+
+.wpam-auction-block p {
+	margin: 10px 0;
+}
+
+.wpam-auction-block .wpam-status,
+.wpam-auction-block .wpam-type {
+	font-weight: bold;
+	font-size: 14px;
+	display: inline-block;
+	padding: 6px 10px;
+	border-radius: 5px;
+}
+
+.wpam-auction-block .wpam-status {
+	background: rgba(255, 255, 255, 0.2);
+}
+
+.wpam-auction-block .wpam-countdown-wrapper {
+	margin-top: 15px;
+	display: flex;
+	justify-content: space-between;
+	gap: 10px;
+}
+
+.wpam-countdown-wrapper div {
+	background: rgba(255, 255, 255, 0.1);
+	padding: 10px;
+	border-radius: 6px;
+	flex: 1;
+	text-align: center;
+}
+
+.wpam-countdown-wrapper strong {
+	font-size: 20px;
+	display: block;
 }
 
 .wpam-bid-form {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    margin-bottom: 10px;
+	display: flex;
+	gap: 10px;
+	margin-top: 10px;
 }
 
-.wpam-bid-form input {
-    max-width: 120px;
+.wpam-bid-input {
+	flex: 1;
+	padding: 8px;
+	border: none;
+	border-radius: 5px;
 }
 
 .wpam-bid-button,
 .wpam-watchlist-button {
-    background: #96588a;
-    color: #fff;
-    border: none;
-    padding: 6px 12px;
-    cursor: pointer;
-    border-radius: 3px;
+	background: rgba(255, 255, 255, 0.2);
+	border: none;
+	padding: 8px 12px;
+	border-radius: 5px;
+	color: inherit;
+	font-weight: bold;
+	cursor: pointer;
+	transition: background 0.3s ease;
 }
 
 .wpam-bid-button:hover,
 .wpam-watchlist-button:hover {
-    opacity: 0.9;
+	background: rgba(255, 255, 255, 0.3);
 }
 
-.wpam-watchlist-button {
-    margin-top: 5px;
+/* ---------------------------
+   Theme Variants
+---------------------------- */
+.wpam-auction-block.theme-1 {
+	background: linear-gradient(135deg, #1e3c72, #2a5298);
+}
+.wpam-auction-block.theme-2 {
+	background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+}
+.wpam-auction-block.theme-3 {
+	background: linear-gradient(135deg, #f7971e, #ffd200);
+	color: #222;
+}
+.wpam-auction-block.theme-4 {
+	background: linear-gradient(135deg, #ad5389, #3c1053);
+}
+.wpam-auction-block.theme-5 {
+	background: linear-gradient(135deg, #00c9ff, #92fe9d);
+	color: #000;
+}
+.wpam-auction-block.theme-6 {
+	background: linear-gradient(135deg, #ff6a00, #ee0979);
+}
+.wpam-auction-block.theme-7 {
+	background: linear-gradient(135deg, #43cea2, #185a9d);
+}
+.wpam-auction-block.theme-8 {
+	background: linear-gradient(135deg, #654ea3, #eaafc8);
 }
 
+.wpam-auction-block.theme-3 .wpam-status,
+.wpam-auction-block.theme-3 .wpam-type,
+.wpam-auction-block.theme-5 .wpam-status,
+.wpam-auction-block.theme-5 .wpam-type {
+	background: rgba(0, 0, 0, 0.1);
+	color: #000;
+}
+
+/* Optional: Responsive adjustments */
+@media (max-width: 480px) {
+	.wpam-auction-block {
+		padding: 15px;
+	}
+	.wpam-auction-block .wpam-countdown-wrapper {
+		flex-wrap: wrap;
+	}
+}

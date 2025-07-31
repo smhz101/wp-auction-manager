@@ -2,23 +2,71 @@ jQuery(function ($) {
   const i18n = wpam_ajax.i18n || {};
   toastr.options.positionClass = 'toast-top-right';
   toastr.options.timeOut = 3000;
+  // function updateCountdown() {
+  //   $('.wpam-countdown').each(function () {
+  //     const $el = $(this);
+  //     const start = parseInt($el.data('start'), 10) * 1000;
+  //     const end = parseInt($el.data('end'), 10) * 1000;
+  //     const now = Date.now();
+  //     if (now >= end) {
+  //       $el.text('0:00');
+  //       return;
+  //     }
+  //     const target = now < start ? start : end;
+  //     const diff = countdown(now, new Date(target)).value / 1000;
+  //     const mins = Math.floor(diff / 60);
+  //     const secs = Math.floor(diff % 60);
+  //     $el.text(mins + ':' + ('0' + secs).slice(-2));
+  //   });
+  // }
+
   function updateCountdown() {
     $('.wpam-countdown').each(function () {
       const $el = $(this);
       const start = parseInt($el.data('start'), 10) * 1000;
       const end = parseInt($el.data('end'), 10) * 1000;
       const now = Date.now();
+
       if (now >= end) {
-        $el.text('0:00');
+        $el.html('<strong>Ended</strong>');
         return;
       }
-      const target = now < start ? start : end;
-      const diff = countdown(now, new Date(target)).value / 1000;
-      const mins = Math.floor(diff / 60);
-      const secs = Math.floor(diff % 60);
-      $el.text(mins + ':' + ('0' + secs).slice(-2));
+
+      const from = now < start ? start : now;
+      const to = end;
+
+      const duration = countdown(new Date(from), new Date(to), countdown.ALL);
+
+      const units = [
+        { label: 'Years', value: duration.years },
+        { label: 'Months', value: duration.months },
+        { label: 'Days', value: duration.days },
+        { label: 'Hours', value: duration.hours },
+        { label: 'Mins', value: duration.minutes },
+        { label: 'Secs', value: duration.seconds },
+      ];
+
+      let content = '';
+
+      units.forEach((unit) => {
+        if (unit.value > 0) {
+          content += `
+          <div style="text-align:center;">
+            <strong>${unit.value}</strong>
+            <div>${unit.label}</div>
+          </div>
+        `;
+        }
+      });
+
+      $el.html(`
+      <div class="wpam-countdown-wrapper" style="display:flex; gap:10px; font-family:sans-serif;">
+        ${content}
+      </div>
+    `);
     });
   }
+
   setInterval(updateCountdown, 1000);
   updateCountdown();
 
@@ -50,7 +98,11 @@ jQuery(function ($) {
       if (status === 'max') {
         showToast(i18n.max_bidder || "You're the max bidder");
       } else {
-        showToast(status === 'winning' ? (i18n.winning || "You're winning") : (i18n.outbid || "You've been outbid"));
+        showToast(
+          status === 'winning'
+            ? i18n.winning || "You're winning"
+            : i18n.outbid || "You've been outbid"
+        );
       }
     }
   }
@@ -127,7 +179,10 @@ jQuery(function ($) {
             const lead = res.data.lead_user ? parseInt(res.data.lead_user, 10) : 0;
             bidEl.text(res.data.highest_bid);
             checkBidStatus(auctionId, highest, lead);
-            if (res.data.ending_reason === 'reserve_not_met' && !bidStatus[auctionId + '_reserve']) {
+            if (
+              res.data.ending_reason === 'reserve_not_met' &&
+              !bidStatus[auctionId + '_reserve']
+            ) {
               showToast(i18n.reserve_not_met || 'Reserve price not met', 'warning');
               bidStatus[auctionId + '_reserve'] = true;
             }

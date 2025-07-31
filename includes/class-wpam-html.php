@@ -45,10 +45,10 @@ class WPAM_HTML {
     $display_highest = ( $silent && $now < $end_ts ) ? __( 'Hidden', 'wpam' ) : wc_price( $highest );
 
     ob_start();
-    echo '<div class="wpam-auction-block">';
+    echo '<div class="wpam-auction-block theme-1">';
 
     if ( $atts['showStatus'] ) {
-      echo '<p class="wpam-status woocommerce-message">' . esc_html( ucfirst( $status ) ) . '</p>';
+      echo '<p class="wpam-status auction-status">' . esc_html( ucfirst( $status ) ) . '</p>';
       echo '<p class="wpam-type">' . esc_html( ucfirst( $type ) ) . '</p>';
     }
 
@@ -57,7 +57,7 @@ class WPAM_HTML {
     }
 
     $label = ( 'reverse' === $type ) ? __( 'Lowest Bid:', 'wpam' ) : __( 'Current Bid:', 'wpam' );
-    echo '<p>' . esc_html( $label ) .
+    echo '<p class="wpam-current-price">' . esc_html( $label ) .
          ' <span class="wpam-current-bid" data-auction-id="' . esc_attr( $auction_id ) . '">' .
          esc_html( $display_highest ) . '</span></p>';
 
