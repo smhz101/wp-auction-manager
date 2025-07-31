@@ -87,31 +87,18 @@ jQuery(function ($) {
     toastr[type](msg);
   }
 
-  function checkBidStatus(id, highest, leadUser) {
-    const currentUser = parseInt(wpam_ajax.current_user_id, 10);
-    const userBid = parseFloat(userBids[id]) || 0;
-
-    let status = '';
-    if (leadUser && currentUser && leadUser === currentUser) {
-      status = 'max';
-    } else if (highest > userBid) {
-      status = 'outbid';
-    } else if (highest === userBid) {
-      status = 'winning';
-    }
-    if (status) {
-      const msg =
-        status === 'max'
-          ? i18n.max_bidder || "Max bid reached"
-          : status === 'winning'
-          ? i18n.winning || "You're winning"
-          : i18n.outbid || "You're losing";
-      setStatusText(id, msg);
-
-      if (bidStatus[id] !== status) {
-        bidStatus[id] = status;
-        showToast(msg, status === 'outbid' ? 'warning' : 'info');
-      }
+  function applyStatus(id, status) {
+    if (!status) return;
+    const msg =
+      status === 'max'
+        ? i18n.max_bidder || "Max bid reached"
+        : status === 'winning'
+        ? i18n.winning || "You're winning"
+        : i18n.outbid || "You're losing";
+    setStatusText(id, msg);
+    if (bidStatus[id] !== status) {
+      bidStatus[id] = status;
+      showToast(msg, status === 'outbid' ? 'warning' : 'info');
     }
   }
 
@@ -134,10 +121,9 @@ jQuery(function ($) {
             showToast(i18n.max_reached || 'Max bid reached', 'warning');
           }
           userBids[auctionId] = parseFloat(bidInput.val());
-          bidStatus[auctionId] = 'winning';
-          const winMsg = i18n.winning || "You're winning";
-          showToast(winMsg);
-          setStatusText(auctionId, winMsg);
+          if (res.data.status) {
+            applyStatus(auctionId, res.data.status);
+          }
           if (res.data.new_end_ts) {
             $('.wpam-countdown')
               .data('end', res.data.new_end_ts)
@@ -185,10 +171,11 @@ jQuery(function ($) {
         },
         function (res) {
           if (res.success) {
-            const highest = parseFloat(res.data.highest_bid);
-            const lead = res.data.lead_user ? parseInt(res.data.lead_user, 10) : 0;
             bidEl.text(res.data.highest_bid);
-            checkBidStatus(auctionId, highest, lead);
+            if (res.data.statuses) {
+              const current = parseInt(wpam_ajax.current_user_id, 10);
+              applyStatus(auctionId, res.data.statuses[current]);
+            }
             if (
               res.data.ending_reason === 'reserve_not_met' &&
               !bidStatus[auctionId + '_reserve']
@@ -233,8 +220,10 @@ jQuery(function ($) {
           $('.wpam-viewer-count[data-auction-id="' + data.auction_id + '"]').text(data.viewers);
         }
 
-        const lead = data.lead_user ? parseInt(data.lead_user, 10) : 0;
-        checkBidStatus(data.auction_id, parseFloat(data.bid), lead);
+        if (data.statuses) {
+          const current = parseInt(wpam_ajax.current_user_id, 10);
+          applyStatus(data.auction_id, data.statuses[current]);
+        }
       });
       channel.bind('bid_placed', function (data) {
         if (!data || !data.auction_id || !data.amount) return;
@@ -243,8 +232,10 @@ jQuery(function ($) {
         if (typeof data.participants !== 'undefined') {
           $('.wpam-participant-count[data-auction-id="' + data.auction_id + '"]').text(data.participants);
         }
-        const lead = data.lead_user ? parseInt(data.lead_user, 10) : 0;
-        checkBidStatus(data.auction_id, parseFloat(data.amount), lead);
+        if (data.statuses) {
+          const current = parseInt(wpam_ajax.current_user_id, 10);
+          applyStatus(data.auction_id, data.statuses[current]);
+        }
         showToast(i18n.outbid || 'A new bid has been placed');
       });
       channel.bind('user_outbid', function (data) {

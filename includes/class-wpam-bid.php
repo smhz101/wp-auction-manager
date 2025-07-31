@@ -61,6 +61,56 @@ class WPAM_Bid {
         }
     }
 
+    /**
+     * Determine the bidding status for all users after a bid is placed.
+     *
+     * @param int   $auction_id Auction ID.
+     * @param float $highest    Current highest bid.
+     * @param int   $lead_user  Current lead user ID.
+     * @param bool  $reverse    Whether this is a reverse auction.
+     * @return array            Map of user_id => status.
+     */
+    private static function calculate_statuses( $auction_id, $highest, $lead_user, $reverse ) {
+        global $wpdb;
+
+        if ( self::is_sealed( $auction_id ) || self::silent_enabled( $auction_id ) ) {
+            $end   = get_post_meta( $auction_id, '_auction_end', true );
+            $end_ts = $end ? ( new \DateTimeImmutable( $end, wp_timezone() ) )->getTimestamp() : 0;
+            if ( ( new \DateTimeImmutable( 'now', wp_timezone() ) )->getTimestamp() < $end_ts ) {
+                return [];
+            }
+        }
+
+        $table = $wpdb->prefix . 'wc_auction_bids';
+        $order = $reverse ? 'ASC' : 'DESC';
+        $rows  = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT user_id, bid_amount FROM $table WHERE auction_id = %d ORDER BY bid_amount {$order}, id DESC",
+                $auction_id
+            )
+        );
+
+        $statuses = [];
+        $seen     = [];
+        foreach ( $rows as $row ) {
+            $uid = intval( $row->user_id );
+            if ( isset( $seen[ $uid ] ) ) {
+                continue;
+            }
+            $bid = floatval( $row->bid_amount );
+            if ( $uid === $lead_user ) {
+                $statuses[ $uid ] = 'max';
+            } elseif ( ( ! $reverse && $bid === $highest ) || ( $reverse && $bid === $highest ) ) {
+                $statuses[ $uid ] = 'winning';
+            } else {
+                $statuses[ $uid ] = 'outbid';
+            }
+            $seen[ $uid ] = true;
+        }
+
+        return $statuses;
+    }
+
     public function place_bid() {
         check_ajax_referer( 'wpam_place_bid', 'nonce' );
 
@@ -254,6 +304,9 @@ class WPAM_Bid {
             update_post_meta( $auction_id, '_auction_lead_user', $new_lead_user );
         }
 
+        $statuses = self::calculate_statuses( $auction_id, $new_highest, $new_highest_user, $reverse );
+
+
         $max_reached = false;
         if ( $proxy_enabled && $max_bid <= $new_highest && $new_highest_user !== $user_id ) {
             $max_reached = true;
@@ -267,9 +320,10 @@ class WPAM_Bid {
 
         // Dispatch standardized events
         WPAM_Event_Bus::dispatch( 'bid_placed', [
-            'auction_id'   => $auction_id,
-            'user_id'      => $user_id,
-            'amount'       => $bid,
+            'auction_id' => $auction_id,
+            'user_id'    => $user_id,
+            'amount'     => $bid,
+            'statuses'   => $statuses,
         ] );
 
         if ( ! $silent_enabled && $prev_lead_user && $prev_lead_user !== $new_lead_user ) {
@@ -291,7 +345,11 @@ class WPAM_Bid {
             $message = __( 'Max bid reached', 'wpam' );
         }
 
-        $response = [ 'message' => $message ];
+        $response = [
+            'message' => $message,
+            'status'  => isset( $statuses[ $user_id ] ) ? $statuses[ $user_id ] : '',
+            'statuses' => $statuses,
+        ];
         if ( $extended ) {
             $response['new_end_ts'] = $new_end_ts;
             $response['extended']   = true;
@@ -529,10 +587,13 @@ class WPAM_Bid {
             update_post_meta( $auction_id, '_auction_lead_user', $new_lead_user );
         }
 
+        $statuses = self::calculate_statuses( $auction_id, $new_highest, $new_highest_user, $reverse );
+
         WPAM_Event_Bus::dispatch( 'bid_placed', [
             'auction_id' => $auction_id,
             'user_id'    => $user_id,
             'amount'     => $bid,
+            'statuses'   => $statuses,
         ] );
 
         if ( ! $silent_enabled && $prev_lead_user && $prev_lead_user !== $new_lead_user ) {
@@ -554,7 +615,11 @@ class WPAM_Bid {
             $message = __( 'Max bid reached', 'wpam' );
         }
 
-        $response = [ 'message' => $message ];
+        $response = [
+            'message'  => $message,
+            'status'   => isset( $statuses[ $user_id ] ) ? $statuses[ $user_id ] : '',
+            'statuses' => $statuses,
+        ];
         if ( $extended ) {
             $response['new_end_ts'] = $new_end_ts;
             $response['extended']   = true;
