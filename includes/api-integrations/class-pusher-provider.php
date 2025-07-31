@@ -76,12 +76,20 @@ class WPAM_Pusher_Provider implements WPAM_Realtime_Provider {
         $channel = $this->get_channel_name();
 
         if ( $channel ) {
+            global $wpdb;
+            $lead_user = intval( get_post_meta( $auction_id, '_auction_lead_user', true ) );
+            $bidders  = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT user_id FROM {$wpdb->prefix}wc_auction_bids WHERE auction_id = %d", $auction_id ) );
+            $watchers = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT user_id FROM {$wpdb->prefix}wc_auction_watchlists WHERE auction_id = %d", $auction_id ) );
+            $participants = count( array_unique( array_merge( $bidders, $watchers ) ) );
+
             $this->pusher->trigger(
                 $channel,
                 'bid_update',
                 [
-                    'auction_id' => $auction_id,
-                    'bid'        => $bid_amount,
+                    'auction_id'  => $auction_id,
+                    'bid'         => $bid_amount,
+                    'lead_user'   => $lead_user,
+                    'participants' => $participants,
                 ]
             );
         }

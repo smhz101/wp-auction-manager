@@ -73,6 +73,13 @@ jQuery(function ($) {
   const userBids = {};
   const bidStatus = {};
 
+  function setStatusText(id, text) {
+    const el = $('.wpam-bid-status[data-auction-id="' + id + '"]');
+    if (el.length) {
+      el.text(text);
+    }
+  }
+
   function showToast(msg, type = 'info') {
     if (!wpam_ajax.show_notices) {
       return;
@@ -92,17 +99,18 @@ jQuery(function ($) {
     } else if (highest === userBid) {
       status = 'winning';
     }
+    if (status) {
+      const msg =
+        status === 'max'
+          ? i18n.max_bidder || "Max bid reached"
+          : status === 'winning'
+          ? i18n.winning || "You're winning"
+          : i18n.outbid || "You're losing";
+      setStatusText(id, msg);
 
-    if (status && bidStatus[id] !== status) {
-      bidStatus[id] = status;
-      if (status === 'max') {
-        showToast(i18n.max_bidder || "You're the max bidder");
-      } else {
-        showToast(
-          status === 'winning'
-            ? i18n.winning || "You're winning"
-            : i18n.outbid || "You've been outbid"
-        );
+      if (bidStatus[id] !== status) {
+        bidStatus[id] = status;
+        showToast(msg, status === 'outbid' ? 'warning' : 'info');
       }
     }
   }
@@ -127,7 +135,9 @@ jQuery(function ($) {
           }
           userBids[auctionId] = parseFloat(bidInput.val());
           bidStatus[auctionId] = 'winning';
-          showToast(i18n.winning || "You're winning");
+          const winMsg = i18n.winning || "You're winning";
+          showToast(winMsg);
+          setStatusText(auctionId, winMsg);
           if (res.data.new_end_ts) {
             $('.wpam-countdown')
               .data('end', res.data.new_end_ts)
@@ -214,7 +224,12 @@ jQuery(function ($) {
         const el = $('.wpam-current-bid[data-auction-id="' + data.auction_id + '"]');
         el.text(data.bid);
 
-        checkBidStatus(data.auction_id, parseFloat(data.bid));
+        if (typeof data.participants !== 'undefined') {
+          $('.wpam-participant-count[data-auction-id="' + data.auction_id + '"]').text(data.participants);
+        }
+
+        const lead = data.lead_user ? parseInt(data.lead_user, 10) : 0;
+        checkBidStatus(data.auction_id, parseFloat(data.bid), lead);
         showToast(i18n.outbid || 'A new bid has been placed');
       });
     });

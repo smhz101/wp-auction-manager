@@ -17,6 +17,7 @@ get_header();
             <?php _e( 'Place Bid', 'wpam' ); ?>
         </button>
     </form>
+    <div class="wpam-bid-status" data-auction-id="<?php the_ID(); ?>"></div>
     <?php wp_nonce_field( 'wpam_toggle_watchlist', 'wpam_watchlist_nonce', false ); ?>
     <button class="button wpam-watchlist-button" data-auction-id="<?php the_ID(); ?>">
         <?php _e( 'Toggle Watchlist', 'wpam' ); ?>
