@@ -342,6 +342,7 @@
           options: [
             { label: 'Standard', value: 'standard' },
             { label: 'Sealed', value: 'sealed' },
+            { label: 'Reverse', value: 'reverse' },
           ],
           onChange: (v) => updateField('wpam_default_auction_type', v),
         }),
