@@ -395,16 +395,17 @@ class WPAM_Admin {
 	}
 
 	public function render_auctions_page() {
-		$table = new WPAM_Auctions_Table();
-		$table->prepare_items();
-		echo '<div class="wrap">';
-		echo '<h1>' . esc_html__( 'Auctions', 'wpam' ) . '</h1>';
-		echo '<form method="get">';
-		echo '<input type="hidden" name="page" value="wpam-auctions" />';
-		$table->views();
-		$table->search_box( __( 'Search Auctions', 'wpam' ), 'auction-search' );
-		$table->display();
-		echo '</form></div>';
+               echo '<div class="wrap">';
+               echo '<h1>' . esc_html__( 'Auctions', 'wpam' ) . '</h1>';
+               echo '<table id="wpam-auctions-table" class="wp-list-table widefat striped">';
+               echo '<thead><tr>';
+               echo '<th>' . esc_html__( 'Auction', 'wpam' ) . '</th>';
+               echo '<th>' . esc_html__( 'Start', 'wpam' ) . '</th>';
+               echo '<th>' . esc_html__( 'End', 'wpam' ) . '</th>';
+               echo '<th>' . esc_html__( 'State', 'wpam' ) . '</th>';
+               echo '<th>' . esc_html__( 'Ending Reason', 'wpam' ) . '</th>';
+               echo '</tr></thead><tbody></tbody></table>';
+               echo '</div>';
 	}
 
 	public function render_bids_page() {
@@ -416,15 +417,15 @@ class WPAM_Admin {
 			echo '</div>';
 			return;
 		}
-		$table = new WPAM_Bids_Table( $auction_id );
-		$table->prepare_items();
-		echo '<h1>' . sprintf( esc_html__( 'Bids for Auction #%d', 'wpam' ), $auction_id ) . '</h1>';
-		echo '<form method="get">';
-		echo '<input type="hidden" name="page" value="wpam-bids" />';
-		echo '<input type="hidden" name="auction_id" value="' . esc_attr( $auction_id ) . '" />';
-		$table->display();
-		echo '</form></div>';
-	}
+               echo '<h1>' . sprintf( esc_html__( 'Bids for Auction #%d', 'wpam' ), $auction_id ) . '</h1>';
+               echo '<table id="wpam-bids-table" class="wp-list-table widefat striped">';
+               echo '<thead><tr>';
+               echo '<th>' . esc_html__( 'User', 'wpam' ) . '</th>';
+               echo '<th>' . esc_html__( 'Amount', 'wpam' ) . '</th>';
+               echo '<th>' . esc_html__( 'Bid Time', 'wpam' ) . '</th>';
+               echo '</tr></thead><tbody></tbody></table>';
+               echo '</div>';
+        }
 
 	public function render_messages_page() {
 
@@ -524,18 +525,30 @@ class WPAM_Admin {
 						$slug . '_page_wpam-settings',
 		);
 
-		if ( in_array( $hook, $admin_pages, true ) ) {
-			wp_enqueue_style(
-				'wpam-admin',
-				WPAM_PLUGIN_URL . 'admin/css/wpam-admin.css',
-				array( 'wp-components' ),
-				WPAM_PLUGIN_VERSION
-			);
-		}
+                if ( in_array( $hook, $admin_pages, true ) ) {
+                        wp_enqueue_style(
+                                'wpam-admin',
+                                WPAM_PLUGIN_URL . 'admin/css/wpam-admin.css',
+                                array( 'wp-components' ),
+                                WPAM_PLUGIN_VERSION
+                        );
+                }
 
-		if ( $slug . '_page_wpam-settings' !== $hook ) {
-						return;
-		}
+                if ( in_array( $hook, array( 'toplevel_page_wpam-' . $slug, $slug . '_page_wpam-auctions', $slug . '_page_wpam-bids' ), true ) ) {
+                        wp_enqueue_style( 'wpam-datatables', 'https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css', array(), '1.13.4' );
+                        wp_enqueue_script( 'wpam-datatables', 'https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js', array( 'jquery' ), '1.13.4', true );
+                        wp_enqueue_script( 'wpam-admin-tables', WPAM_PLUGIN_URL . 'admin/js/admin-tables.js', array( 'jquery', 'wpam-datatables' ), WPAM_PLUGIN_VERSION, true );
+                        wp_localize_script( 'wpam-admin-tables', 'wpamTables', array(
+                                'nonce'             => wp_create_nonce( 'wp_rest' ),
+                                'auctions_endpoint' => rest_url( 'wpam/v1/auctions' ),
+                                'bids_endpoint'     => rest_url( 'wpam/v1/bids' ),
+                                'auction_id'        => isset( $_GET['auction_id'] ) ? absint( $_GET['auction_id'] ) : 0,
+                        ) );
+                }
+
+                if ( $slug . '_page_wpam-settings' !== $hook ) {
+                                                return;
+                }
 
 		wp_enqueue_script(
 			'wpam-settings-app',
@@ -666,18 +679,42 @@ class WPAM_Admin {
 			)
 		);
 
-		register_rest_route(
-			'wpam/v1',
-			'/watchlist',
-			array(
-				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => array( '\\WPAM\\Includes\\WPAM_Watchlist', 'rest_get_watchlist' ),
-				'permission_callback' => function () {
-					return is_user_logged_in();
-				},
-			)
-		);
-	}
+                register_rest_route(
+                        'wpam/v1',
+                        '/watchlist',
+                        array(
+                                'methods'             => \WP_REST_Server::READABLE,
+                                'callback'            => array( '\\WPAM\\Includes\\WPAM_Watchlist', 'rest_get_watchlist' ),
+                                'permission_callback' => function () {
+                                        return is_user_logged_in();
+                                },
+                        )
+                );
+
+                register_rest_route(
+                        'wpam/v1',
+                        '/auctions',
+                        array(
+                                'methods'             => \WP_REST_Server::READABLE,
+                                'callback'            => array( '\\WPAM\\Includes\\WPAM_Admin_Rest', 'get_auctions' ),
+                                'permission_callback' => function () {
+                                        return current_user_can( 'manage_options' );
+                                },
+                        )
+                );
+
+                register_rest_route(
+                        'wpam/v1',
+                        '/bids',
+                        array(
+                                'methods'             => \WP_REST_Server::READABLE,
+                                'callback'            => array( '\\WPAM\\Includes\\WPAM_Admin_Rest', 'get_bids' ),
+                                'permission_callback' => function () {
+                                        return current_user_can( 'manage_options' );
+                                },
+                        )
+                );
+        }
 
         public function render_settings_page() {
                 echo '<div class="wrap">';
