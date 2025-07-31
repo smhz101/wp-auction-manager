@@ -42,7 +42,7 @@ msgstr ""
 msgid "Firebase Server Key"
 msgstr ""
 #: includes/class-wpam-bid.php
-msgid "You cannot bid again"
+msgid "Only one bid allowed for sealed auctions"
 msgstr ""
 
 #: includes/class-wpam-bid.php

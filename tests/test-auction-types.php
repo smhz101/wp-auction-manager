@@ -115,7 +115,7 @@ class Test_WPAM_Auction_Types extends WP_Ajax_UnitTestCase {
         try { $this->_handleAjax( 'wpam_place_bid' ); } catch ( WPAjaxDieContinueException $e ) {
             $resp = json_decode( $this->_last_response, true );
             $this->assertFalse( $resp['success'] );
-            $this->assertSame( 'You cannot bid again', $resp['data']['message'] );
+            $this->assertSame( 'Only one bid allowed for sealed auctions', $resp['data']['message'] );
             return;
         }
         $this->fail( 'Expected second sealed bid rejection' );
