@@ -1,6 +1,8 @@
 <?php
 namespace WPAM\Includes;
 
+use WPAM\Includes\WPAM_Auction_State;
+
 class WPAM_Bid {
     protected $realtime_provider;
 
@@ -132,6 +134,13 @@ class WPAM_Bid {
             }
         }
 
+        if ( $sealed ) {
+            $placed = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $table WHERE auction_id = %d AND user_id = %d", $auction_id, $user_id ) );
+            if ( $placed > 0 ) {
+                wp_send_json_error( [ 'message' => __( 'Only one bid allowed for sealed auctions', 'wpam' ) ] );
+            }
+        }
+
         $increment = WPAM_Auction::get_bid_increment( $auction_id, $highest );
 
         if ( ! $proxy_enabled ) {
@@ -245,6 +254,16 @@ class WPAM_Bid {
             update_post_meta( $auction_id, '_auction_lead_user', $new_lead_user );
         }
 
+        $max_reached = false;
+        if ( $proxy_enabled && $max_bid <= $new_highest && $new_highest_user !== $user_id ) {
+            $max_reached = true;
+        }
+
+        $max_reached = false;
+        if ( $proxy_enabled && $max_bid <= $new_highest && $new_highest_user !== $user_id ) {
+            $max_reached = true;
+        }
+
 
         // SMS notification via Twilio if enabled
         if ( ! $silent_enabled && get_option( 'wpam_enable_twilio' ) && get_option( 'wpam_lead_sms_alerts' ) ) {
@@ -280,9 +299,18 @@ class WPAM_Bid {
             $this->realtime_provider->send_bid_update( $auction_id, $bid );
         }
 
-        $response = [ 'message' => __( 'Bid received', 'wpam' ) ];
+        $message  = $sealed ? __( 'Sealed bid submitted', 'wpam' ) : __( 'Bid received', 'wpam' );
+        if ( $max_reached ) {
+            $message = __( 'Max bid reached', 'wpam' );
+        }
+
+        $response = [ 'message' => $message ];
         if ( $extended ) {
             $response['new_end_ts'] = $new_end_ts;
+            $response['extended']   = true;
+        }
+        if ( $max_reached ) {
+            $response['max_reached'] = true;
         }
 
         wp_send_json_success( $response );
@@ -321,7 +349,17 @@ class WPAM_Bid {
             }
         }
 
-        wp_send_json_success( [ 'highest_bid' => $highest, 'lead_user' => $lead_user ] );
+        $ending_reason = '';
+        if ( WPAM_Auction_State::ENDED === get_post_meta( $auction_id, '_auction_state', true ) ) {
+            $ending_reason = get_post_meta( $auction_id, '_auction_ending_reason', true );
+        }
+
+        $response = [ 'highest_bid' => $highest, 'lead_user' => $lead_user ];
+        if ( $ending_reason ) {
+            $response['ending_reason'] = $ending_reason;
+        }
+
+        wp_send_json_success( $response );
     }
 
     /**
@@ -528,9 +566,18 @@ class WPAM_Bid {
 
         WPAM_Notifications::notify_new_bid( $auction_id, $bid, $new_lead_user );
 
-        $response = [ 'message' => __( 'Bid received', 'wpam' ) ];
+        $message  = $sealed ? __( 'Sealed bid submitted', 'wpam' ) : __( 'Bid received', 'wpam' );
+        if ( $max_reached ) {
+            $message = __( 'Max bid reached', 'wpam' );
+        }
+
+        $response = [ 'message' => $message ];
         if ( $extended ) {
             $response['new_end_ts'] = $new_end_ts;
+            $response['extended']   = true;
+        }
+        if ( $max_reached ) {
+            $response['max_reached'] = true;
         }
 
         return rest_ensure_response( $response );
@@ -559,7 +606,17 @@ class WPAM_Bid {
             }
         }
 
-        return rest_ensure_response( [ 'highest_bid' => $highest, 'lead_user' => $lead_user ] );
+        $ending_reason = '';
+        if ( WPAM_Auction_State::ENDED === get_post_meta( $auction_id, '_auction_state', true ) ) {
+            $ending_reason = get_post_meta( $auction_id, '_auction_ending_reason', true );
+        }
+
+        $response = [ 'highest_bid' => $highest, 'lead_user' => $lead_user ];
+        if ( $ending_reason ) {
+            $response['ending_reason'] = $ending_reason;
+        }
+
+        return rest_ensure_response( $response );
     }
 
     public function add_account_endpoints() {
