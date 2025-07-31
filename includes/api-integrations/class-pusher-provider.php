@@ -152,6 +152,74 @@ class WPAM_Pusher_Provider implements WPAM_Realtime_Provider {
     }
 
     /**
+     * Trigger a bid_placed event on the auction channel.
+     */
+    public function trigger_bid_placed( $auction_id, $user_id, $amount ) {
+        if ( ! $this->pusher ) {
+            return;
+        }
+        $this->set_auction_id( $auction_id );
+        $channel = $this->get_channel_name();
+        if ( $channel ) {
+            $lead_user    = intval( get_post_meta( $auction_id, '_auction_lead_user', true ) );
+            $participants = $this->get_participant_count( $auction_id );
+            $this->pusher->trigger(
+                $channel,
+                'bid_placed',
+                [
+                    'auction_id'  => $auction_id,
+                    'user_id'     => $user_id,
+                    'amount'      => $amount,
+                    'lead_user'   => $lead_user,
+                    'participants' => $participants,
+                ]
+            );
+        }
+    }
+
+    /**
+     * Trigger a user_outbid event.
+     */
+    public function trigger_user_outbid( $auction_id, $user_id ) {
+        if ( ! $this->pusher ) {
+            return;
+        }
+        $this->set_auction_id( $auction_id );
+        $channel = $this->get_channel_name();
+        if ( $channel ) {
+            $this->pusher->trigger(
+                $channel,
+                'user_outbid',
+                [
+                    'auction_id' => $auction_id,
+                    'user_id'    => $user_id,
+                ]
+            );
+        }
+    }
+
+    /**
+     * Trigger an auction_status event (started, ended, etc.).
+     */
+    public function trigger_auction_status( $auction_id, $status, $reason = '' ) {
+        if ( ! $this->pusher ) {
+            return;
+        }
+        $this->set_auction_id( $auction_id );
+        $channel = $this->get_channel_name();
+        if ( $channel ) {
+            $payload = [
+                'auction_id' => $auction_id,
+                'status'     => $status,
+            ];
+            if ( $reason ) {
+                $payload['reason'] = $reason;
+            }
+            $this->pusher->trigger( $channel, 'auction_status', $payload );
+        }
+    }
+
+    /**
      * Handle events dispatched from WPAM_Event_Bus.
      *
      * @param string $event   Event name.
@@ -164,7 +232,8 @@ class WPAM_Pusher_Provider implements WPAM_Realtime_Provider {
 
         switch ( $event ) {
             case 'bid_placed':
-                if ( isset( $payload['auction_id'], $payload['amount'] ) ) {
+                if ( isset( $payload['auction_id'], $payload['user_id'], $payload['amount'] ) ) {
+                    $this->trigger_bid_placed( $payload['auction_id'], $payload['user_id'], $payload['amount'] );
                     $this->send_bid_update( $payload['auction_id'], $payload['amount'] );
                 }
                 break;
@@ -185,7 +254,15 @@ class WPAM_Pusher_Provider implements WPAM_Realtime_Provider {
                 }
                 break;
             case 'user_outbid':
-                // no realtime action for single user; handled via notifications.
+                if ( isset( $payload['auction_id'], $payload['user_id'] ) ) {
+                    $this->trigger_user_outbid( $payload['auction_id'], $payload['user_id'] );
+                }
+                break;
+            case 'auction_status':
+                if ( isset( $payload['auction_id'], $payload['status'] ) ) {
+                    $reason = isset( $payload['reason'] ) ? $payload['reason'] : '';
+                    $this->trigger_auction_status( $payload['auction_id'], $payload['status'], $reason );
+                }
                 break;
         }
     }
