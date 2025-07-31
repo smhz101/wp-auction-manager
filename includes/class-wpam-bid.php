@@ -103,11 +103,25 @@ class WPAM_Bid {
 
         $prev_highest_user = $highest_user;
 
+        $prev_lead_user = intval( get_post_meta( $auction_id, '_auction_lead_user', true ) );
+        $prev_lead_max  = 0;
+        if ( $prev_lead_user ) {
+            $prev_lead_max = get_user_meta( $prev_lead_user, 'wpam_proxy_max_' . $auction_id, true );
+            $prev_lead_max = $prev_lead_max ? floatval( $prev_lead_max ) : $highest;
+        } else {
+            $prev_lead_max = $highest;
+        }
+
         $proxy_enabled  = $reverse ? false : self::proxy_enabled( $auction_id );
         $silent_enabled = $sealed ? true : self::silent_enabled( $auction_id );
         $max_bid        = isset( $_POST['max_bid'] ) ? floatval( $_POST['max_bid'] ) : $bid;
         if ( $max_bid < $bid ) {
             $max_bid = $bid;
+        }
+
+        $new_lead_user = $prev_lead_user;
+        if ( $max_bid > $prev_lead_max ) {
+            $new_lead_user = $user_id;
         }
 
         $max_bids = intval( get_post_meta( $auction_id, '_auction_max_bids', 0 ) );
@@ -227,13 +241,17 @@ class WPAM_Bid {
         $new_highest_row  = $wpdb->get_row( $wpdb->prepare( "SELECT user_id, bid_amount FROM $table WHERE auction_id = %d ORDER BY bid_amount {$order}, id DESC LIMIT 1", $auction_id ), ARRAY_A );
         $new_highest_user = $new_highest_row ? intval( $new_highest_row['user_id'] ) : 0;
         $new_highest      = $new_highest_row ? floatval( $new_highest_row['bid_amount'] ) : 0;
+        if ( $new_lead_user !== $prev_lead_user ) {
+            update_post_meta( $auction_id, '_auction_lead_user', $new_lead_user );
+        }
+
 
         // SMS notification via Twilio if enabled
         if ( ! $silent_enabled && get_option( 'wpam_enable_twilio' ) && get_option( 'wpam_lead_sms_alerts' ) ) {
             if ( class_exists( 'WPAM_Twilio_Provider' ) ) {
                 $provider = new WPAM_Twilio_Provider();
 
-                if ( $new_highest_user === $user_id && $prev_highest_user !== $user_id ) {
+                if ( $new_lead_user === $user_id && $prev_lead_user !== $user_id ) {
                     $phone = get_user_meta( $user_id, 'billing_phone', true );
                     if ( $phone ) {
                         $msg = sprintf(
@@ -245,8 +263,8 @@ class WPAM_Bid {
                     }
                 }
 
-                if ( $prev_highest_user && $prev_highest_user !== $new_highest_user ) {
-                    $prev_phone = get_user_meta( $prev_highest_user, 'billing_phone', true );
+                if ( $prev_lead_user && $prev_lead_user !== $new_lead_user ) {
+                    $prev_phone = get_user_meta( $prev_lead_user, 'billing_phone', true );
                     if ( $prev_phone ) {
                         $msg = sprintf( __( 'You have been outbid on "%s".', 'wpam' ), get_the_title( $auction_id ) );
                         $provider->send( $prev_phone, $msg );
@@ -256,7 +274,7 @@ class WPAM_Bid {
         }
 
         // Always send internal notifications
-        WPAM_Notifications::notify_new_bid( $auction_id, $bid, $highest_user );
+        WPAM_Notifications::notify_new_bid( $auction_id, $bid, $new_lead_user );
 
         if ( ! $silent_enabled && $this->realtime_provider ) {
             $this->realtime_provider->send_bid_update( $auction_id, $bid );
@@ -290,16 +308,20 @@ class WPAM_Bid {
         $query   = $reverse ? "SELECT MIN(bid_amount) FROM $table WHERE auction_id = %d" : "SELECT MAX(bid_amount) FROM $table WHERE auction_id = %d";
         $highest = $wpdb->get_var( $wpdb->prepare( $query, $auction_id ) );
         $highest = $highest ? floatval( $highest ) : 0;
+        $lead_user = intval( get_post_meta( $auction_id, '_auction_lead_user', true ) );
+
+        $lead_user = intval( get_post_meta( $auction_id, '_auction_lead_user', true ) );
 
         if ( $sealed || self::silent_enabled( $auction_id ) ) {
             $end   = get_post_meta( $auction_id, '_auction_end', true );
             $end_ts = $end ? ( new \DateTimeImmutable( $end, wp_timezone() ) )->getTimestamp() : 0;
             if ( ( new \DateTimeImmutable( 'now', wp_timezone() ) )->getTimestamp() < $end_ts ) {
                 $highest = 0;
+                $lead_user = 0;
             }
         }
 
-        wp_send_json_success( [ 'highest_bid' => $highest ] );
+        wp_send_json_success( [ 'highest_bid' => $highest, 'lead_user' => $lead_user ] );
     }
 
     /**
@@ -341,6 +363,15 @@ class WPAM_Bid {
         $highest_user = $highest_row ? intval( $highest_row['user_id'] ) : 0;
 
         $prev_highest_user = $highest_user;
+
+        $prev_lead_user = intval( get_post_meta( $auction_id, '_auction_lead_user', true ) );
+        $prev_lead_max  = 0;
+        if ( $prev_lead_user ) {
+            $prev_lead_max = get_user_meta( $prev_lead_user, 'wpam_proxy_max_' . $auction_id, true );
+            $prev_lead_max = $prev_lead_max ? floatval( $prev_lead_max ) : $highest;
+        } else {
+            $prev_lead_max = $highest;
+        }
 
         $proxy_enabled  = $reverse ? false : self::proxy_enabled( $auction_id );
         $silent_enabled = $sealed ? true : self::silent_enabled( $auction_id );
@@ -465,12 +496,15 @@ class WPAM_Bid {
         $new_highest_row  = $wpdb->get_row( $wpdb->prepare( "SELECT user_id, bid_amount FROM $table WHERE auction_id = %d ORDER BY bid_amount {$order}, id DESC LIMIT 1", $auction_id ), ARRAY_A );
         $new_highest_user = $new_highest_row ? intval( $new_highest_row['user_id'] ) : 0;
         $new_highest      = $new_highest_row ? floatval( $new_highest_row['bid_amount'] ) : 0;
+        if ( $new_lead_user !== $prev_lead_user ) {
+            update_post_meta( $auction_id, '_auction_lead_user', $new_lead_user );
+        }
 
         if ( ! $silent_enabled && get_option( 'wpam_enable_twilio' ) && get_option( 'wpam_lead_sms_alerts' ) ) {
             if ( class_exists( 'WPAM_Twilio_Provider' ) ) {
                 $provider = new WPAM_Twilio_Provider();
 
-                if ( $new_highest_user === $user_id && $prev_highest_user !== $user_id ) {
+                if ( $new_lead_user === $user_id && $prev_lead_user !== $user_id ) {
                     $phone = get_user_meta( $user_id, 'billing_phone', true );
                     if ( $phone ) {
                         $msg = sprintf(
@@ -482,8 +516,8 @@ class WPAM_Bid {
                     }
                 }
 
-                if ( $prev_highest_user && $prev_highest_user !== $new_highest_user ) {
-                    $prev_phone = get_user_meta( $prev_highest_user, 'billing_phone', true );
+                if ( $prev_lead_user && $prev_lead_user !== $new_lead_user ) {
+                    $prev_phone = get_user_meta( $prev_lead_user, 'billing_phone', true );
                     if ( $prev_phone ) {
                         $msg = sprintf( __( 'You have been outbid on "%s".', 'wpam' ), get_the_title( $auction_id ) );
                         $provider->send( $prev_phone, $msg );
@@ -492,7 +526,7 @@ class WPAM_Bid {
             }
         }
 
-        WPAM_Notifications::notify_new_bid( $auction_id, $bid, $highest_user );
+        WPAM_Notifications::notify_new_bid( $auction_id, $bid, $new_lead_user );
 
         $response = [ 'message' => __( 'Bid received', 'wpam' ) ];
         if ( $extended ) {
@@ -520,11 +554,12 @@ class WPAM_Bid {
             $end   = get_post_meta( $auction_id, '_auction_end', true );
             $end_ts = $end ? ( new \DateTimeImmutable( $end, wp_timezone() ) )->getTimestamp() : 0;
             if ( ( new \DateTimeImmutable( 'now', wp_timezone() ) )->getTimestamp() < $end_ts ) {
-                $highest = 0;
+                $highest   = 0;
+                $lead_user = 0;
             }
         }
 
-        return rest_ensure_response( [ 'highest_bid' => $highest ] );
+        return rest_ensure_response( [ 'highest_bid' => $highest, 'lead_user' => $lead_user ] );
     }
 
     public function add_account_endpoints() {

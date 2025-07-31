@@ -31,19 +31,26 @@ jQuery(function ($) {
     toastr[type](msg);
   }
 
-  function checkBidStatus(id, highest) {
+  function checkBidStatus(id, highest, leadUser) {
     if (typeof userBids[id] === 'undefined') {
       return;
     }
     let status = '';
-    if (highest > userBids[id]) {
+    const currentUser = parseInt(wpam_ajax.current_user_id, 10);
+    if (leadUser && currentUser && leadUser === currentUser) {
+      status = 'max';
+    } else if (highest > userBids[id]) {
       status = 'outbid';
     } else if (highest === userBids[id]) {
       status = 'winning';
     }
     if (status && bidStatus[id] !== status) {
       bidStatus[id] = status;
-      showToast(status === 'winning' ? "You're winning" : "You've been outbid");
+      if (status === 'max') {
+        showToast("You're the max bidder");
+      } else {
+        showToast(status === 'winning' ? "You're winning" : "You've been outbid");
+      }
     }
   }
 
@@ -112,8 +119,9 @@ jQuery(function ($) {
         function (res) {
           if (res.success) {
             const highest = parseFloat(res.data.highest_bid);
+            const lead = res.data.lead_user ? parseInt(res.data.lead_user, 10) : 0;
             bidEl.text(res.data.highest_bid);
-            checkBidStatus(auctionId, highest);
+            checkBidStatus(auctionId, highest, lead);
           }
         }
       );
