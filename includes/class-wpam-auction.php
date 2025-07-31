@@ -10,7 +10,8 @@ if ( class_exists( 'WC_Product' ) && ! class_exists( 'WC_Product_Auction' ) ) {
 }
 
 class WPAM_Auction {
-	const ABOUT_TO_START_THRESHOLD = HOUR_IN_SECONDS;
+        const ABOUT_TO_START_THRESHOLD = HOUR_IN_SECONDS;
+        const REMINDER_THRESHOLD       = 30 * MINUTE_IN_SECONDS;
 	public function __construct() {
 		add_action( 'init', array( $this, 'register_product_type' ) );
 		add_filter( 'woocommerce_product_data_tabs', array( $this, 'add_product_data_tab' ) );
@@ -21,10 +22,12 @@ class WPAM_Auction {
 		add_action( 'init', array( $this, 'schedule_cron' ) );
 		add_action( 'init', array( $this, 'register_meta_fields' ) );
 		add_action( 'wpam_check_ended_auctions', array( $this, 'check_ended_auctions' ) );
-		add_action( 'wpam_update_auction_states', array( $this, 'update_auction_states' ) );
-		add_action( 'wpam_auction_start', array( $this, 'handle_auction_start' ) );
-		add_action( 'wpam_auction_end', array( $this, 'handle_auction_end' ) );
-	}
+                add_action( 'wpam_update_auction_states', array( $this, 'update_auction_states' ) );
+                add_action( 'wpam_auction_start', array( $this, 'handle_auction_start' ) );
+                add_action( 'wpam_auction_end', array( $this, 'handle_auction_end' ) );
+                add_action( 'wpam_send_auction_reminders', array( $this, 'send_auction_reminders' ) );
+                add_filter( 'cron_schedules', array( $this, 'register_cron_schedules' ) );
+        }
 
 	public function register_meta_fields() {
 		register_post_meta(
@@ -376,17 +379,18 @@ class WPAM_Auction {
 			$start = get_post_meta( $post_id, '_auction_start', true );
 		}
 
-		if ( isset( $_POST['_auction_end'] ) ) {
+                if ( isset( $_POST['_auction_end'] ) ) {
 
-			$end = wc_clean( $_POST['_auction_end'] );
-			update_post_meta( $post_id, '_auction_end', $end );
+                        $end = wc_clean( $_POST['_auction_end'] );
+                        update_post_meta( $post_id, '_auction_end', $end );
 
-			$timestamp = strtotime( $end );
-			if ( $timestamp && $timestamp > time() ) {
-				wp_clear_scheduled_hook( 'wpam_handle_auction_end', array( $post_id ) );
-				wp_schedule_single_event( $timestamp, 'wpam_handle_auction_end', array( $post_id ) );
-			}
-		}
+                        $timestamp = strtotime( $end );
+                        if ( $timestamp && $timestamp > time() ) {
+                                wp_clear_scheduled_hook( 'wpam_handle_auction_end', array( $post_id ) );
+                                wp_schedule_single_event( $timestamp, 'wpam_handle_auction_end', array( $post_id ) );
+                        }
+                        delete_post_meta( $post_id, '_auction_reminder_sent' );
+                }
 
                 $meta_keys = array(
                         '_auction_type',
@@ -448,12 +452,13 @@ class WPAM_Auction {
 				$duration = strtotime( get_post_meta( $auction_id, '_auction_end', true ) ) - strtotime( get_post_meta( $auction_id, '_auction_start', true ) );
 				$start    = wp_date( 'Y-m-d H:i:s', null, $timezone );
 				$end      = wp_date( 'Y-m-d H:i:s', current_datetime()->getTimestamp() + $duration, $timezone );
-				update_post_meta( $auction_id, '_auction_start', $start );
-				update_post_meta( $auction_id, '_auction_end', $end );
-				delete_post_meta( $auction_id, '_auction_ended' );
-				wp_schedule_single_event( (int) get_gmt_from_date( $end, 'U' ), 'wpam_auction_end', array( $auction_id ) );
-				return;
-			}
+                                update_post_meta( $auction_id, '_auction_start', $start );
+                                update_post_meta( $auction_id, '_auction_end', $end );
+                                delete_post_meta( $auction_id, '_auction_ended' );
+                                delete_post_meta( $auction_id, '_auction_reminder_sent' );
+                                wp_schedule_single_event( (int) get_gmt_from_date( $end, 'U' ), 'wpam_auction_end', array( $auction_id ) );
+                                return;
+                        }
 			update_post_meta( $auction_id, '_auction_state', WPAM_Auction_State::ENDED );
 			update_post_meta( $auction_id, '_auction_ending_reason', $ending_reason );
 			return;
@@ -470,12 +475,13 @@ class WPAM_Auction {
 				$duration = strtotime( get_post_meta( $auction_id, '_auction_end', true ) ) - strtotime( get_post_meta( $auction_id, '_auction_start', true ) );
 				$start    = wp_date( 'Y-m-d H:i:s', null, $timezone );
 				$end      = wp_date( 'Y-m-d H:i:s', current_datetime()->getTimestamp() + $duration, $timezone );
-				update_post_meta( $auction_id, '_auction_start', $start );
-				update_post_meta( $auction_id, '_auction_end', $end );
-				delete_post_meta( $auction_id, '_auction_ended' );
-				wp_schedule_single_event( (int) get_gmt_from_date( $end, 'U' ), 'wpam_auction_end', array( $auction_id ) );
-				return;
-			}
+                                update_post_meta( $auction_id, '_auction_start', $start );
+                                update_post_meta( $auction_id, '_auction_end', $end );
+                                delete_post_meta( $auction_id, '_auction_ended' );
+                                delete_post_meta( $auction_id, '_auction_reminder_sent' );
+                                wp_schedule_single_event( (int) get_gmt_from_date( $end, 'U' ), 'wpam_auction_end', array( $auction_id ) );
+                                return;
+                        }
 			update_post_meta( $auction_id, '_auction_state', WPAM_Auction_State::ENDED );
 			update_post_meta( $auction_id, '_auction_ending_reason', $ending_reason );
 			return;
@@ -533,14 +539,17 @@ class WPAM_Auction {
 		do_action( 'wpam_after_auction_end', $auction_id, $user_id, $amount );
 	}
 
-	public function schedule_cron() {
-		if ( ! wp_next_scheduled( 'wpam_check_ended_auctions' ) ) {
-			wp_schedule_event( current_datetime()->getTimestamp(), 'hourly', 'wpam_check_ended_auctions' );
-		}
-		if ( ! wp_next_scheduled( 'wpam_update_auction_states' ) ) {
-			wp_schedule_event( current_datetime()->getTimestamp(), 'hourly', 'wpam_update_auction_states' );
-		}
-	}
+        public function schedule_cron() {
+                if ( ! wp_next_scheduled( 'wpam_check_ended_auctions' ) ) {
+                        wp_schedule_event( current_datetime()->getTimestamp(), 'hourly', 'wpam_check_ended_auctions' );
+                }
+                if ( ! wp_next_scheduled( 'wpam_update_auction_states' ) ) {
+                        wp_schedule_event( current_datetime()->getTimestamp(), 'hourly', 'wpam_update_auction_states' );
+                }
+                if ( ! wp_next_scheduled( 'wpam_send_auction_reminders' ) ) {
+                        wp_schedule_event( current_datetime()->getTimestamp(), 'wpam_quarter_hour', 'wpam_send_auction_reminders' );
+                }
+        }
 
 	public function check_ended_auctions() {
 		$args = array(
@@ -609,6 +618,58 @@ class WPAM_Auction {
                         update_post_meta( $post->ID, '_auction_state', $state );
                 }
                 wp_reset_postdata();
+        }
+
+        public function send_auction_reminders() {
+                $now       = current_datetime()->getTimestamp();
+                $timezone  = wp_timezone();
+                $args = array(
+                        'post_type'      => 'product',
+                        'posts_per_page' => -1,
+                        'post_status'    => 'publish',
+                        'meta_query'     => array(
+                                array(
+                                        'key'     => '_auction_end',
+                                        'value'   => array(
+                                                wp_date( 'Y-m-d H:i:s', $now, $timezone ),
+                                                wp_date( 'Y-m-d H:i:s', $now + self::REMINDER_THRESHOLD, $timezone )
+                                        ),
+                                        'compare' => 'BETWEEN',
+                                        'type'    => 'DATETIME',
+                                ),
+                                array(
+                                        'key'     => '_auction_start',
+                                        'value'   => wp_date( 'Y-m-d H:i:s', $now, $timezone ),
+                                        'compare' => '<=',
+                                        'type'    => 'DATETIME',
+                                ),
+                                array(
+                                        'key'     => '_auction_ended',
+                                        'compare' => 'NOT EXISTS',
+                                ),
+                                array(
+                                        'key'     => '_auction_reminder_sent',
+                                        'compare' => 'NOT EXISTS',
+                                ),
+                        ),
+                );
+
+                $query = new \WP_Query( $args );
+                foreach ( $query->posts as $post ) {
+                        WPAM_Notifications::notify_auction_reminder( $post->ID );
+                        update_post_meta( $post->ID, '_auction_reminder_sent', 1 );
+                }
+                wp_reset_postdata();
+        }
+
+        public function register_cron_schedules( $schedules ) {
+                if ( ! isset( $schedules['wpam_quarter_hour'] ) ) {
+                        $schedules['wpam_quarter_hour'] = array(
+                                'interval' => 15 * MINUTE_IN_SECONDS,
+                                'display'  => __( 'Every 15 Minutes', 'wpam' ),
+                        );
+                }
+                return $schedules;
         }
 
         /**
