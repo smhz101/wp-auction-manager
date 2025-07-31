@@ -137,7 +137,7 @@ class WPAM_Bid {
         if ( $sealed ) {
             $placed = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $table WHERE auction_id = %d AND user_id = %d", $auction_id, $user_id ) );
             if ( $placed > 0 ) {
-                wp_send_json_error( [ 'message' => __( 'Only one bid allowed for sealed auctions', 'wpam' ) ] );
+                wp_send_json_error( [ 'message' => __( 'You cannot bid again', 'wpam' ) ] );
             }
         }
 

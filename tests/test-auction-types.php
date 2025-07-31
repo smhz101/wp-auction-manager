@@ -91,4 +91,33 @@ class Test_WPAM_Auction_Types extends WP_Ajax_UnitTestCase {
         }
         $this->assertSame( 50.0, floatval( $resp['data']['highest_bid'] ) );
     }
+
+    public function test_sealed_second_bid_denied() {
+        $auction_id = $this->factory->post->create([ 'post_type' => 'product' ]);
+        update_post_meta( $auction_id, '_auction_type', 'sealed' );
+        update_post_meta( $auction_id, '_auction_start', date( 'Y-m-d H:i:s', time() - 3600 ) );
+        update_post_meta( $auction_id, '_auction_end', date( 'Y-m-d H:i:s', time() + 3600 ) );
+        $user_id = $this->factory->user->create();
+        wp_set_current_user( $user_id );
+
+        $_POST = [
+            'nonce'      => wp_create_nonce( 'wpam_place_bid' ),
+            'auction_id' => $auction_id,
+            'bid'        => 50,
+        ];
+        try { $this->_handleAjax( 'wpam_place_bid' ); } catch ( WPAjaxDieContinueException $e ) {}
+
+        $_POST = [
+            'nonce'      => wp_create_nonce( 'wpam_place_bid' ),
+            'auction_id' => $auction_id,
+            'bid'        => 55,
+        ];
+        try { $this->_handleAjax( 'wpam_place_bid' ); } catch ( WPAjaxDieContinueException $e ) {
+            $resp = json_decode( $this->_last_response, true );
+            $this->assertFalse( $resp['success'] );
+            $this->assertSame( 'You cannot bid again', $resp['data']['message'] );
+            return;
+        }
+        $this->fail( 'Expected second sealed bid rejection' );
+    }
 }
