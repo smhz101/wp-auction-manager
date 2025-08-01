@@ -13,15 +13,27 @@ class WPAM_Admin {
 		add_action( 'transition_post_status', array( $this, 'maybe_log_status_change' ), 10, 3 );
 	}
 
-	public function add_menu() {
-		add_menu_page( __( 'Auctions', 'wpam' ), __( 'Auctions', 'wpam' ), 'manage_options', 'wpam-auctions', array( $this, 'render_auctions_page' ), 'dashicons-hammer', 56 );
-		add_submenu_page( 'wpam-auctions', __( 'All Auctions', 'wpam' ), __( 'All Auctions', 'wpam' ), 'manage_options', 'wpam-auctions', array( $this, 'render_auctions_page' ) );
-		add_submenu_page( 'wpam-auctions', __( 'Bids', 'wpam' ), __( 'Bids', 'wpam' ), 'manage_options', 'wpam-bids', array( $this, 'render_bids_page' ) );
-		add_submenu_page( 'wpam-auctions', __( 'Messages', 'wpam' ), __( 'Messages', 'wpam' ), 'manage_options', 'wpam-messages', array( $this, 'render_messages_page' ) );
-		add_submenu_page( 'wpam-auctions', __( 'Logs', 'wpam' ), __( 'Logs', 'wpam' ), 'manage_options', 'wpam-logs', array( $this, 'render_logs_page' ) );
-		add_submenu_page( 'wpam-auctions', __( 'Flagged Users', 'wpam' ), __( 'Flagged Users', 'wpam' ), 'manage_options', 'wpam-flagged', array( $this, 'render_flagged_page' ) );
-		add_submenu_page( 'wpam-auctions', __( 'Settings', 'wpam' ), __( 'Settings', 'wpam' ), 'manage_options', 'wpam-settings', array( $this, 'render_settings_page' ) );
-	}
+       public function add_menu() {
+               add_menu_page(
+                       __( 'Auctions', 'wpam' ),
+                       __( 'Auctions', 'wpam' ),
+                       'manage_options',
+                       'wpam-auctions',
+                       array( $this, 'render_auctions_page' ),
+                       'dashicons-hammer',
+                       56
+               );
+               // Navigation is handled by the React app; submenu pages are intentionally
+               // not registered.
+               /*
+               add_submenu_page( 'wpam-auctions', __( 'All Auctions', 'wpam' ), __( 'All Auctions', 'wpam' ), 'manage_options', 'wpam-auctions', array( $this, 'render_auctions_page' ) );
+               add_submenu_page( 'wpam-auctions', __( 'Bids', 'wpam' ), __( 'Bids', 'wpam' ), 'manage_options', 'wpam-bids', array( $this, 'render_bids_page' ) );
+               add_submenu_page( 'wpam-auctions', __( 'Messages', 'wpam' ), __( 'Messages', 'wpam' ), 'manage_options', 'wpam-messages', array( $this, 'render_messages_page' ) );
+               add_submenu_page( 'wpam-auctions', __( 'Logs', 'wpam' ), __( 'Logs', 'wpam' ), 'manage_options', 'wpam-logs', array( $this, 'render_logs_page' ) );
+               add_submenu_page( 'wpam-auctions', __( 'Flagged Users', 'wpam' ), __( 'Flagged Users', 'wpam' ), 'manage_options', 'wpam-flagged', array( $this, 'render_flagged_page' ) );
+               add_submenu_page( 'wpam-auctions', __( 'Settings', 'wpam' ), __( 'Settings', 'wpam' ), 'manage_options', 'wpam-settings', array( $this, 'render_settings_page' ) );
+               */
+       }
 
 	public function register_settings() {
 		register_setting( 'wpam_settings', 'wpam_default_increment' );
