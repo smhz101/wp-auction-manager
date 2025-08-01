@@ -13,27 +13,27 @@ class WPAM_Admin {
 		add_action( 'transition_post_status', array( $this, 'maybe_log_status_change' ), 10, 3 );
 	}
 
-       public function add_menu() {
-               add_menu_page(
-                       __( 'Auctions', 'wpam' ),
-                       __( 'Auctions', 'wpam' ),
-                       'manage_options',
-                       'wpam-auctions',
-                       array( $this, 'render_auctions_page' ),
-                       'dashicons-hammer',
-                       56
-               );
-               // Navigation is handled by the React app; submenu pages are intentionally
-               // not registered.
-               /*
-               add_submenu_page( 'wpam-auctions', __( 'All Auctions', 'wpam' ), __( 'All Auctions', 'wpam' ), 'manage_options', 'wpam-auctions', array( $this, 'render_auctions_page' ) );
-               add_submenu_page( 'wpam-auctions', __( 'Bids', 'wpam' ), __( 'Bids', 'wpam' ), 'manage_options', 'wpam-bids', array( $this, 'render_bids_page' ) );
-               add_submenu_page( 'wpam-auctions', __( 'Messages', 'wpam' ), __( 'Messages', 'wpam' ), 'manage_options', 'wpam-messages', array( $this, 'render_messages_page' ) );
-               add_submenu_page( 'wpam-auctions', __( 'Logs', 'wpam' ), __( 'Logs', 'wpam' ), 'manage_options', 'wpam-logs', array( $this, 'render_logs_page' ) );
-               add_submenu_page( 'wpam-auctions', __( 'Flagged Users', 'wpam' ), __( 'Flagged Users', 'wpam' ), 'manage_options', 'wpam-flagged', array( $this, 'render_flagged_page' ) );
-               add_submenu_page( 'wpam-auctions', __( 'Settings', 'wpam' ), __( 'Settings', 'wpam' ), 'manage_options', 'wpam-settings', array( $this, 'render_settings_page' ) );
-               */
-       }
+	public function add_menu() {
+			add_menu_page(
+				__( 'Auctions', 'wpam' ),
+				__( 'Auctions', 'wpam' ),
+				'manage_options',
+				'wpam-auctions',
+				array( $this, 'render_auctions_page' ),
+				'dashicons-hammer',
+				56
+			);
+			// Navigation is handled by the React app; submenu pages are intentionally
+			// not registered.
+			/*
+			add_submenu_page( 'wpam-auctions', __( 'All Auctions', 'wpam' ), __( 'All Auctions', 'wpam' ), 'manage_options', 'wpam-auctions', array( $this, 'render_auctions_page' ) );
+			add_submenu_page( 'wpam-auctions', __( 'Bids', 'wpam' ), __( 'Bids', 'wpam' ), 'manage_options', 'wpam-bids', array( $this, 'render_bids_page' ) );
+			add_submenu_page( 'wpam-auctions', __( 'Messages', 'wpam' ), __( 'Messages', 'wpam' ), 'manage_options', 'wpam-messages', array( $this, 'render_messages_page' ) );
+			add_submenu_page( 'wpam-auctions', __( 'Logs', 'wpam' ), __( 'Logs', 'wpam' ), 'manage_options', 'wpam-logs', array( $this, 'render_logs_page' ) );
+			add_submenu_page( 'wpam-auctions', __( 'Flagged Users', 'wpam' ), __( 'Flagged Users', 'wpam' ), 'manage_options', 'wpam-flagged', array( $this, 'render_flagged_page' ) );
+			add_submenu_page( 'wpam-auctions', __( 'Settings', 'wpam' ), __( 'Settings', 'wpam' ), 'manage_options', 'wpam-settings', array( $this, 'render_settings_page' ) );
+			*/
+	}
 
 	public function register_settings() {
 		register_setting( 'wpam_settings', 'wpam_default_increment' );
@@ -281,14 +281,14 @@ class WPAM_Admin {
 		$screen = get_current_screen();
 
 		if ( 'post-new.php' === $hook && 'product' === $screen->post_type && 'add' === $screen->action ) {
-                       wp_enqueue_script( 'wpam-select-auction-type', WPAM_PLUGIN_URL . 'assets/admin/js/select-auction-product-type.js', array( 'jquery' ), WPAM_PLUGIN_VERSION, true );
+						wp_enqueue_script( 'wpam-select-auction-type', WPAM_PLUGIN_URL . 'assets/admin/js/select-auction-product-type.js', array( 'jquery' ), WPAM_PLUGIN_VERSION, true );
 		}
 
 		if ( in_array( $hook, array( 'post-new.php', 'post.php' ), true ) && 'product' === $screen->post_type ) {
-			wp_enqueue_style( 'flatpickr', 'https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css', array(), '4.6.13' );
-			wp_enqueue_script( 'flatpickr', 'https://cdn.jsdelivr.net/npm/flatpickr', array(), '4.6.13', true );
-                       wp_enqueue_script( 'wpam-date-picker', WPAM_PLUGIN_URL . 'assets/admin/js/auction-date-picker.js', array( 'jquery', 'flatpickr' ), WPAM_PLUGIN_VERSION, true );
-                       wp_enqueue_script( 'wpam-auction-type-toggle', WPAM_PLUGIN_URL . 'assets/admin/js/auction-type-toggle.js', array( 'jquery' ), WPAM_PLUGIN_VERSION, true );
+			wp_enqueue_style( 'flatpickr', WPAM_PLUGIN_URL . 'assets/admin/css/flatpickr.min.css', array(), WPAM_PLUGIN_VERSION );
+			wp_enqueue_script( 'flatpickr', WPAM_PLUGIN_URL . 'assets/admin/js/flatpickr.min.js', array(), WPAM_PLUGIN_VERSION, true );
+			wp_enqueue_script( 'wpam-date-picker', WPAM_PLUGIN_URL . 'assets/admin/js/auction-date-picker.js', array( 'jquery', 'flatpickr' ), WPAM_PLUGIN_VERSION, true );
+			wp_enqueue_script( 'wpam-auction-type-toggle', WPAM_PLUGIN_URL . 'assets/admin/js/auction-type-toggle.js', array( 'jquery' ), WPAM_PLUGIN_VERSION, true );
 		}
 
 		$slug        = 'auctions';
@@ -302,20 +302,8 @@ class WPAM_Admin {
 		);
 
 		if ( in_array( $hook, $admin_pages, true ) ) {
-			wp_enqueue_style(
-				'wpam-admin',
-                                WPAM_PLUGIN_URL . 'assets/admin/css/wpam-admin.css',
-				array( 'wp-components' ),
-				WPAM_PLUGIN_VERSION
-			);
-
-			wp_enqueue_script(
-				'wpam-admin-tables',
-                                WPAM_PLUGIN_URL . 'assets/admin/js/admin-tables.js',
-				array( 'wp-element', 'wp-components', 'wp-api-fetch' ),
-				WPAM_PLUGIN_VERSION,
-				true
-			);
+			wp_enqueue_style( 'wpam-admin', WPAM_PLUGIN_URL . 'assets/admin/css/wpam-admin.css', array( 'wp-components' ), WPAM_PLUGIN_VERSION );
+			wp_enqueue_script( 'wpam-admin-tables', WPAM_PLUGIN_URL . 'assets/admin/js/admin-tables.js', array( 'wp-element', 'wp-components', 'wp-api-fetch' ), WPAM_PLUGIN_VERSION, true );
 		}
 
 		if ( in_array( $hook, $admin_pages, true ) ) {
@@ -358,13 +346,7 @@ class WPAM_Admin {
 			return;
 		}
 
-                wp_enqueue_script(
-                        'wpam-settings-app',
-                        WPAM_PLUGIN_URL . 'assets/admin/js/settings-app.js',
-			array( 'wp-element', 'wp-components', 'wp-api-fetch' ),
-			WPAM_PLUGIN_VERSION,
-			true
-		);
+		wp_enqueue_script( 'wpam-settings-app', WPAM_PLUGIN_URL . 'assets/admin/js/settings-app.js', array( 'wp-element', 'wp-components', 'wp-api-fetch' ), WPAM_PLUGIN_VERSION, true );
 
 		wp_localize_script(
 			'wpam-settings-app',
