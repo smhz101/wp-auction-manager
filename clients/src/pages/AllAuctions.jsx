@@ -1,4 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
+import axios from 'axios';
+import {
+  useReactTable,
+  getCoreRowModel,
+  flexRender,
+  createColumnHelper,
+} from '@tanstack/react-table';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
 export default function AllAuctions() {
@@ -9,16 +16,34 @@ export default function AllAuctions() {
     const { auctions_endpoint, nonce } = window.wpamData || {};
     if (!auctions_endpoint) return;
 
-    fetch(auctions_endpoint, {
-      headers: { 'X-WP-Nonce': nonce },
-    })
-      .then((res) => res.json())
+    axios
+      .get(auctions_endpoint, {
+        headers: { 'X-WP-Nonce': nonce },
+      })
       .then((res) => {
-        setAuctions(res.data || []);
+        setAuctions(res.data.data || []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
   }, []);
+
+  const columnHelper = createColumnHelper();
+  const columns = useMemo(
+    () => [
+      columnHelper.accessor('id', { header: 'ID' }),
+      columnHelper.accessor('title', { header: 'Title' }),
+      columnHelper.accessor('start', { header: 'Start' }),
+      columnHelper.accessor('end', { header: 'End' }),
+      columnHelper.accessor('state', { header: 'State' }),
+    ],
+    []
+  );
+
+  const table = useReactTable({
+    data: auctions,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+  });
 
   return (
     <Card>
@@ -27,29 +52,37 @@ export default function AllAuctions() {
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div>
-            <h1>Hello............</h1>
-            <p>Loading...</p>
-          </div>
+          <p>Loading...</p>
         ) : (
           <table className="min-w-full text-sm">
             <thead>
-              <tr className="border-b font-semibold text-left">
-                <th className="px-2 py-1">ID</th>
-                <th className="px-2 py-1">Title</th>
-                <th className="px-2 py-1">Start</th>
-                <th className="px-2 py-1">End</th>
-                <th className="px-2 py-1">State</th>
-              </tr>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr
+                  key={headerGroup.id}
+                  className="border-b font-semibold text-left"
+                >
+                  {headerGroup.headers.map((header) => (
+                    <th key={header.id} className="px-2 py-1">
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                    </th>
+                  ))}
+                </tr>
+              ))}
             </thead>
             <tbody>
-              {auctions.map((a) => (
-                <tr key={a.id} className="border-b last:border-b-0">
-                  <td className="px-2 py-1">{a.id}</td>
-                  <td className="px-2 py-1">{a.title}</td>
-                  <td className="px-2 py-1">{a.start}</td>
-                  <td className="px-2 py-1">{a.end}</td>
-                  <td className="px-2 py-1">{a.state}</td>
+              {table.getRowModel().rows.map((row) => (
+                <tr key={row.id} className="border-b last:border-b-0">
+                  {row.getVisibleCells().map((cell) => (
+                    <td key={cell.id} className="px-2 py-1">
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </td>
+                  ))}
                 </tr>
               ))}
             </tbody>
