@@ -81,10 +81,12 @@ class WPAM_Admin_Rest {
 		global $wpdb;
 		$auction_id = absint( $request->get_param( 'auction_id' ) );
 		if ( ! $auction_id ) {
-			return rest_ensure_response( array(
+			return rest_ensure_response(
+				array(
 					'total' => 0,
 					'data'  => array(),
-			) );
+				)
+			);
 		}
 
 		$per_page = max( 1, intval( $request->get_param( 'per_page' ) ) );
@@ -103,37 +105,39 @@ class WPAM_Admin_Rest {
 				'bid_time' => $row['bid_time'],
 			);
 		}
-		
-		return rest_ensure_response( array(
+
+		return rest_ensure_response(
+			array(
 				'total' => intval( $total ),
 				'data'  => $data,
-		) );
+			)
+		);
 	}
 
 	public static function get_messages( \WP_REST_Request $request ) {
 		global $wpdb;
-		$table     = $wpdb->prefix . 'wc_auction_messages';
-		$per_page  = max( 1, intval( $request->get_param( 'per_page' ) ) );
-		$page      = max( 1, intval( $request->get_param( 'page' ) ) );
-		$offset    = ( $page - 1 ) * $per_page;
-		$search    = sanitize_text_field( $request->get_param( 'search' ) );
+		$table    = $wpdb->prefix . 'wc_auction_messages';
+		$per_page = max( 1, intval( $request->get_param( 'per_page' ) ) );
+		$page     = max( 1, intval( $request->get_param( 'page' ) ) );
+		$offset   = ( $page - 1 ) * $per_page;
+		$search   = sanitize_text_field( $request->get_param( 'search' ) );
 
 		$where = '';
 		$args  = array();
 		if ( $search ) {
-			$where = ' WHERE message LIKE %s';
+			$where  = ' WHERE message LIKE %s';
 			$args[] = '%' . $wpdb->esc_like( $search ) . '%';
 		}
 
-		$sql   = "SELECT SQL_CALC_FOUND_ROWS * FROM $table" . $where . ' ORDER BY created_at DESC LIMIT %d OFFSET %d';
+		$sql    = "SELECT SQL_CALC_FOUND_ROWS * FROM $table" . $where . ' ORDER BY created_at DESC LIMIT %d OFFSET %d';
 		$args[] = $per_page;
 		$args[] = $offset;
-		$rows  = $wpdb->get_results( $wpdb->prepare( $sql, ...$args ), ARRAY_A );
-		$total = $wpdb->get_var( 'SELECT FOUND_ROWS()' );
+		$rows   = $wpdb->get_results( $wpdb->prepare( $sql, ...$args ), ARRAY_A );
+		$total  = $wpdb->get_var( 'SELECT FOUND_ROWS()' );
 
 		$data = array();
 		foreach ( $rows as $row ) {
-			$user = get_user_by( 'id', $row['user_id'] );
+			$user   = get_user_by( 'id', $row['user_id'] );
 			$data[] = array(
 				'auction' => get_the_title( $row['auction_id'] ) ?: sprintf( '#%d', $row['auction_id'] ),
 				'user'    => $user ? $user->display_name : sprintf( '#%d', $row['user_id'] ),
@@ -162,7 +166,7 @@ class WPAM_Admin_Rest {
 
 		$data = array();
 		foreach ( $rows as $row ) {
-			$admin = get_user_by( 'id', $row['admin_id'] );
+			$admin   = get_user_by( 'id', $row['admin_id'] );
 			$details = maybe_unserialize( $row['details'] );
 			if ( is_array( $details ) ) {
 				$details = wp_json_encode( $details );
@@ -195,7 +199,7 @@ class WPAM_Admin_Rest {
 
 		$data = array();
 		foreach ( $rows as $row ) {
-			$user = get_user_by( 'id', $row['user_id'] );
+			$user   = get_user_by( 'id', $row['user_id'] );
 			$data[] = array(
 				'user'       => $user ? $user->display_name : sprintf( '#%d', $row['user_id'] ),
 				'reason'     => $row['reason'],
