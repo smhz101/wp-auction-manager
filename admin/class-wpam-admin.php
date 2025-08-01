@@ -302,8 +302,8 @@ class WPAM_Admin {
 		);
 
 		if ( in_array( $hook, $admin_pages, true ) ) {
-				wp_enqueue_style( 'wpam-admin', WPAM_PLUGIN_URL . 'assets/admin/css/wpam-admin.css', array( 'wp-components' ), WPAM_PLUGIN_VERSION );
-				wp_enqueue_script( 'wpam-admin-tables', WPAM_PLUGIN_URL . 'assets/admin/js/admin-tables.js', array( 'wp-element', 'wp-components', 'wp-api-fetch' ), WPAM_PLUGIN_VERSION, true );
+				// wp_enqueue_style( 'wpam-admin', WPAM_PLUGIN_URL . 'assets/admin/css/wpam-admin.css', array( 'wp-components' ), WPAM_PLUGIN_VERSION );
+				// wp_enqueue_script( 'wpam-admin-tables', WPAM_PLUGIN_URL . 'assets/admin/js/admin-tables.js', array( 'wp-element', 'wp-components', 'wp-api-fetch' ), WPAM_PLUGIN_VERSION, true );
 
 				wp_enqueue_style( 'wpam-admin-app', WPAM_PLUGIN_URL . 'assets/admin/css/admin-app.css', array(), WPAM_PLUGIN_VERSION );
 				wp_enqueue_script( 'wpam-admin-app', WPAM_PLUGIN_URL . 'assets/admin/js/admin-app.js', array(), WPAM_PLUGIN_VERSION, true );
@@ -314,64 +314,65 @@ class WPAM_Admin {
 					array(
 						'nonce'             => wp_create_nonce( 'wp_rest' ),
 						'auctions_endpoint' => rest_url( 'wpam/v1/auctions' ),
-						'bids_endpoint'     => 'wpam/v1/bids',
-						'messages_endpoint' => 'wpam/v1/messages',
-						'logs_endpoint'     => 'wpam/v1/logs',
-						'flagged_endpoint'  => 'wpam/v1/flagged',
+						'bids_endpoint'     => rest_url('wpam/v1/bids'),
+						'messages_endpoint' => rest_url('wpam/v1/messages'),
+						'logs_endpoint'     => rest_url('wpam/v1/logs'),
+						'flagged_endpoint'  => rest_url('wpam/v1/flagged'),
+						'settings_endpoint' => rest_url('wpam/v1/settings'),
 					)
 				);
 		}
 
-		if ( in_array( $hook, $admin_pages, true ) ) {
+		// if ( in_array( $hook, $admin_pages, true ) ) {
 
-			wp_localize_script(
-				'wpam-admin-tables',
-				'wpamTables',
-				array(
-					'nonce'             => wp_create_nonce( 'wp_rest' ),
+		// 	wp_localize_script(
+		// 		'wpam-admin-tables',
+		// 		'wpamTables',
+		// 		array(
+		// 			'nonce'             => wp_create_nonce( 'wp_rest' ),
 
-					'auctions_endpoint' => rest_url( 'wpam/v1/auctions' ),
-					'bids_endpoint'     => 'wpam/v1/bids',
-					'messages_endpoint' => 'wpam/v1/messages',
-					'logs_endpoint'     => 'wpam/v1/logs',
-					'flagged_endpoint'  => 'wpam/v1/flagged',
+		// 			'auctions_endpoint' => rest_url( 'wpam/v1/auctions' ),
+		// 			'bids_endpoint'     => 'wpam/v1/bids',
+		// 			'messages_endpoint' => 'wpam/v1/messages',
+		// 			'logs_endpoint'     => 'wpam/v1/logs',
+		// 			'flagged_endpoint'  => 'wpam/v1/flagged',
 
-					'auction_id'        => isset( $_GET['auction_id'] ) ? absint( $_GET['auction_id'] ) : 0,
-					'i18n'              => array(
-						'auction'     => __( 'Auction', 'wpam' ),
-						'start'       => __( 'Start', 'wpam' ),
-						'end'         => __( 'End', 'wpam' ),
-						'state'       => __( 'State', 'wpam' ),
-						'reason'      => __( 'Ending Reason', 'wpam' ),
-						'user'        => __( 'User', 'wpam' ),
-						'amount'      => __( 'Amount', 'wpam' ),
-						'bid_time'    => __( 'Bid Time', 'wpam' ),
-						'message'     => __( 'Message', 'wpam' ),
-						'status'      => __( 'Status', 'wpam' ),
-						'date'        => __( 'Date', 'wpam' ),
-						'admin'       => __( 'Admin', 'wpam' ),
-						'action'      => __( 'Action', 'wpam' ),
-						'details'     => __( 'Details', 'wpam' ),
-						'reason_user' => __( 'Reason', 'wpam' ),
-					),
-				)
-			);
-		}
+		// 			'auction_id'        => isset( $_GET['auction_id'] ) ? absint( $_GET['auction_id'] ) : 0,
+		// 			'i18n'              => array(
+		// 				'auction'     => __( 'Auction', 'wpam' ),
+		// 				'start'       => __( 'Start', 'wpam' ),
+		// 				'end'         => __( 'End', 'wpam' ),
+		// 				'state'       => __( 'State', 'wpam' ),
+		// 				'reason'      => __( 'Ending Reason', 'wpam' ),
+		// 				'user'        => __( 'User', 'wpam' ),
+		// 				'amount'      => __( 'Amount', 'wpam' ),
+		// 				'bid_time'    => __( 'Bid Time', 'wpam' ),
+		// 				'message'     => __( 'Message', 'wpam' ),
+		// 				'status'      => __( 'Status', 'wpam' ),
+		// 				'date'        => __( 'Date', 'wpam' ),
+		// 				'admin'       => __( 'Admin', 'wpam' ),
+		// 				'action'      => __( 'Action', 'wpam' ),
+		// 				'details'     => __( 'Details', 'wpam' ),
+		// 				'reason_user' => __( 'Reason', 'wpam' ),
+		// 			),
+		// 		)
+		// 	);
+		// }
 
-		if ( $slug . '_page_wpam-settings' !== $hook ) {
-			return;
-		}
+		// if ( $slug . '_page_wpam-settings' !== $hook ) {
+		// 	return;
+		// }
 
-		wp_enqueue_script( 'wpam-settings-app', WPAM_PLUGIN_URL . 'assets/admin/js/settings-app.js', array( 'wp-element', 'wp-components', 'wp-api-fetch' ), WPAM_PLUGIN_VERSION, true );
+		// wp_enqueue_script( 'wpam-settings-app', WPAM_PLUGIN_URL . 'assets/admin/js/settings-app.js', array( 'wp-element', 'wp-components', 'wp-api-fetch' ), WPAM_PLUGIN_VERSION, true );
 
-		wp_localize_script(
-			'wpam-settings-app',
-			'wpamSettings',
-			array(
-				'nonce'         => wp_create_nonce( 'wp_rest' ),
-				'rest_endpoint' => 'wpam/v1/settings',
-			)
-		);
+		// wp_localize_script(
+		// 	'wpam-settings-app',
+		// 	'wpamSettings',
+		// 	array(
+		// 		'nonce'         => wp_create_nonce( 'wp_rest' ),
+		// 		'rest_endpoint' => 'wpam/v1/settings',
+		// 	)
+		// );
 	}
 
 	public function register_rest_routes() {
