@@ -1,5 +1,6 @@
-import { Routes, Route, BrowserRouter, useNavigate } from "react-router-dom";
+import { Routes, Route, MemoryRouter, useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import highlightSubmenu from "@/lib/highlightSubmenu";
 import AllAuctions from "./pages/AllAuctions.jsx";
 import Bids from "./pages/Bids.jsx";
 import Messages from "./pages/Messages.jsx";
@@ -9,11 +10,20 @@ import Settings from "./pages/Settings.jsx";
 
 function AppRoutes() {
   const navigate = useNavigate();
+  const location = useLocation();
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const path = params.get("path") || "/all-auctions";
-    navigate(path);
+    navigate(path, { replace: true });
   }, [navigate]);
+
+  useEffect(() => {
+    const newUrl = `admin.php?page=wpam-auctions&path=${location.pathname}`;
+    window.history.replaceState({}, '', newUrl);
+    highlightSubmenu(location.pathname);
+  }, [location]);
+
   return (
     <Routes>
       <Route path="/all-auctions" element={<AllAuctions />} />
@@ -27,9 +37,11 @@ function AppRoutes() {
 }
 
 export default function App() {
+  const params = new URLSearchParams(window.location.search);
+  const initialPath = params.get('path') || '/all-auctions';
   return (
-    <BrowserRouter>
+    <MemoryRouter initialEntries={[initialPath]}>
       <AppRoutes />
-    </BrowserRouter>
+    </MemoryRouter>
   );
 }
