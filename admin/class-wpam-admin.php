@@ -281,14 +281,14 @@ class WPAM_Admin {
 		$screen = get_current_screen();
 
 		if ( 'post-new.php' === $hook && 'product' === $screen->post_type && 'add' === $screen->action ) {
-			wp_enqueue_script( 'wpam-select-auction-type', WPAM_PLUGIN_URL . 'admin/js/select-auction-product-type.js', array( 'jquery' ), WPAM_PLUGIN_VERSION, true );
+                       wp_enqueue_script( 'wpam-select-auction-type', WPAM_PLUGIN_URL . 'assets/admin/js/select-auction-product-type.js', array( 'jquery' ), WPAM_PLUGIN_VERSION, true );
 		}
 
 		if ( in_array( $hook, array( 'post-new.php', 'post.php' ), true ) && 'product' === $screen->post_type ) {
 			wp_enqueue_style( 'flatpickr', 'https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css', array(), '4.6.13' );
 			wp_enqueue_script( 'flatpickr', 'https://cdn.jsdelivr.net/npm/flatpickr', array(), '4.6.13', true );
-			wp_enqueue_script( 'wpam-date-picker', WPAM_PLUGIN_URL . 'admin/js/auction-date-picker.js', array( 'jquery', 'flatpickr' ), WPAM_PLUGIN_VERSION, true );
-			wp_enqueue_script( 'wpam-auction-type-toggle', WPAM_PLUGIN_URL . 'admin/js/auction-type-toggle.js', array( 'jquery' ), WPAM_PLUGIN_VERSION, true );
+                       wp_enqueue_script( 'wpam-date-picker', WPAM_PLUGIN_URL . 'assets/admin/js/auction-date-picker.js', array( 'jquery', 'flatpickr' ), WPAM_PLUGIN_VERSION, true );
+                       wp_enqueue_script( 'wpam-auction-type-toggle', WPAM_PLUGIN_URL . 'assets/admin/js/auction-type-toggle.js', array( 'jquery' ), WPAM_PLUGIN_VERSION, true );
 		}
 
 		$slug        = 'auctions';
@@ -304,14 +304,14 @@ class WPAM_Admin {
 		if ( in_array( $hook, $admin_pages, true ) ) {
 			wp_enqueue_style(
 				'wpam-admin',
-				WPAM_PLUGIN_URL . 'admin/css/wpam-admin.css',
+                                WPAM_PLUGIN_URL . 'assets/admin/css/wpam-admin.css',
 				array( 'wp-components' ),
 				WPAM_PLUGIN_VERSION
 			);
 
 			wp_enqueue_script(
 				'wpam-admin-tables',
-				WPAM_PLUGIN_URL . 'admin/js/admin-tables.js',
+                                WPAM_PLUGIN_URL . 'assets/admin/js/admin-tables.js',
 				array( 'wp-element', 'wp-components', 'wp-api-fetch' ),
 				WPAM_PLUGIN_VERSION,
 				true
@@ -358,9 +358,9 @@ class WPAM_Admin {
 			return;
 		}
 
-		wp_enqueue_script(
-			'wpam-settings-app',
-			WPAM_PLUGIN_URL . 'admin/js/settings-app.js',
+                wp_enqueue_script(
+                        'wpam-settings-app',
+                        WPAM_PLUGIN_URL . 'assets/admin/js/settings-app.js',
 			array( 'wp-element', 'wp-components', 'wp-api-fetch' ),
 			WPAM_PLUGIN_VERSION,
 			true
