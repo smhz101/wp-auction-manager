@@ -6,7 +6,6 @@ import {
   useLocation,
 } from "react-router-dom";
 import { useEffect } from "react";
-import highlightSubmenu from "@/lib/highlightSubmenu";
 import AdminLayout from "@/components/layout/AdminLayout.jsx";
 import AllAuctions from "./pages/AllAuctions.jsx";
 import Bids from "./pages/Bids.jsx";
@@ -28,7 +27,6 @@ function AppRoutes() {
   useEffect(() => {
     const newUrl = `admin.php?page=wpam-auctions&path=${location.pathname}`;
     window.history.replaceState({}, "", newUrl);
-    highlightSubmenu(location.pathname);
   }, [location]);
 
   return (

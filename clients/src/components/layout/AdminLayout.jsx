@@ -1,5 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import highlightSubmenu from "@/lib/highlightSubmenu";
 
 export default function AdminLayout({ children }) {
   const location = useLocation();
@@ -7,6 +9,10 @@ export default function AdminLayout({ children }) {
     { label: "All Auctions", path: "/all-auctions" },
     { label: "Settings", path: "/settings" },
   ];
+
+  useEffect(() => {
+    highlightSubmenu(location.pathname);
+  }, [location.pathname]);
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-10 border-b bg-background">
