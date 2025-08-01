@@ -302,14 +302,27 @@ class WPAM_Admin {
 		);
 
 		if ( in_array( $hook, $admin_pages, true ) ) {
-			// wp_enqueue_style( 'wpam-admin', WPAM_PLUGIN_URL . 'assets/admin/css/wpam-admin.css', array( 'wp-components' ), WPAM_PLUGIN_VERSION );
-			// wp_enqueue_script( 'wpam-admin-tables', WPAM_PLUGIN_URL . 'assets/admin/js/admin-tables.js', array( 'wp-element', 'wp-components', 'wp-api-fetch' ), WPAM_PLUGIN_VERSION, true );
+				wp_enqueue_style( 'wpam-admin', WPAM_PLUGIN_URL . 'assets/admin/css/wpam-admin.css', array( 'wp-components' ), WPAM_PLUGIN_VERSION );
+				wp_enqueue_script( 'wpam-admin-tables', WPAM_PLUGIN_URL . 'assets/admin/js/admin-tables.js', array( 'wp-element', 'wp-components', 'wp-api-fetch' ), WPAM_PLUGIN_VERSION, true );
+
+				wp_enqueue_style( 'wpam-admin-app', WPAM_PLUGIN_URL . 'assets/admin/css/admin-app.css', array(), WPAM_PLUGIN_VERSION );
+				wp_enqueue_script( 'wpam-admin-app', WPAM_PLUGIN_URL . 'assets/admin/js/admin-app.js', array(), WPAM_PLUGIN_VERSION, true );
+
+				wp_localize_script(
+					'wpam-admin-app',
+					'wpamData',
+					array(
+						'nonce'             => wp_create_nonce( 'wp_rest' ),
+						'auctions_endpoint' => rest_url( 'wpam/v1/auctions' ),
+						'bids_endpoint'     => 'wpam/v1/bids',
+						'messages_endpoint' => 'wpam/v1/messages',
+						'logs_endpoint'     => 'wpam/v1/logs',
+						'flagged_endpoint'  => 'wpam/v1/flagged',
+					)
+				);
 		}
 
 		if ( in_array( $hook, $admin_pages, true ) ) {
-
-			wp_enqueue_style( 'wpam-admin-dist', WPAM_PLUGIN_URL . 'assets/admin/css/admin-app.css', array(), WPAM_PLUGIN_VERSION );
-			wp_enqueue_script( 'wpam-admin-dist', WPAM_PLUGIN_URL . 'assets/admin/js/admin-app.js', array(), WPAM_PLUGIN_VERSION, true );
 
 			wp_localize_script(
 				'wpam-admin-tables',

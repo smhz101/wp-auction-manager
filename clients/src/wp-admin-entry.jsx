@@ -1,10 +1,10 @@
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
-import App from "./App.jsx";
-import "./index.css";
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import App from './App.jsx';
+import './index.css';
 
 function mount() {
-  const el = document.getElementById("wpam-auctions-root");
+  const el = document.getElementById('wpam-auctions-root');
   if (el) {
     createRoot(el).render(
       <StrictMode>
@@ -14,10 +14,10 @@ function mount() {
   }
 }
 
-if (document.readyState !== "loading") {
+if (document.readyState !== 'loading') {
   mount();
 } else {
-  document.addEventListener("DOMContentLoaded", mount);
+  document.addEventListener('DOMContentLoaded', mount);
 }
 
 export default mount;

@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite build --watch",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -14,6 +14,7 @@
     "@reduxjs/toolkit": "^2.8.2",
     "@shadcn/ui": "^0.0.4",
     "@tanstack/react-table": "^8.21.3",
+    "axios": "^1.11.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.536.0",
