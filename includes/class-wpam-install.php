@@ -87,9 +87,35 @@ class WPAM_Install {
             KEY auction_id (auction_id),
             KEY admin_id (admin_id)
         ) $charset_collate;";
-		dbDelta( $logs_sql );
+                dbDelta( $logs_sql );
 
-		add_rewrite_endpoint( 'watchlist', EP_ROOT | EP_PAGES );
+                // Register custom roles.
+                add_role(
+                        'auction_seller',
+                        __( 'Auction Seller', 'wpam' ),
+                        array(
+                                'read'           => true,
+                                'auction_seller' => true,
+                        )
+                );
+
+                add_role(
+                        'auction_bidder',
+                        __( 'Auction Bidder', 'wpam' ),
+                        array(
+                                'read'           => true,
+                                'auction_bidder' => true,
+                        )
+                );
+
+                // Ensure administrators retain full access.
+                $admin = get_role( 'administrator' );
+                if ( $admin ) {
+                        $admin->add_cap( 'auction_seller' );
+                        $admin->add_cap( 'auction_bidder' );
+                }
+
+                add_rewrite_endpoint( 'watchlist', EP_ROOT | EP_PAGES );
 		add_rewrite_endpoint( 'my-bids', EP_ROOT | EP_PAGES );
 		add_rewrite_endpoint( 'auctions-won', EP_ROOT | EP_PAGES );
 		flush_rewrite_rules();

@@ -396,6 +396,10 @@ class WPAM_Auction {
                        return;
                }
 
+               if ( ! current_user_can( 'auction_seller' ) ) {
+                       wp_die( esc_html__( 'You are not allowed to create auctions.', 'wpam' ) );
+               }
+
                // Force product type to auction
 		if ( isset( $_POST['product-type'] ) && $_POST['product-type'] === 'auction' ) {
 			wp_set_object_terms( $post_id, 'auction', 'product_type', false );
