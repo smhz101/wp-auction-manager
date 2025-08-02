@@ -105,7 +105,6 @@ function wpam_deactivation() {
         'wpam_update_auction_states',
         'wpam_auction_start',
         'wpam_auction_end',
-        'wpam_handle_auction_end',
     ];
 
     foreach ( $hooks as $hook ) {
