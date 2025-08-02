@@ -8,6 +8,8 @@ get_header();
     $start_ts = $start ? strtotime( $start ) : 0;
     $end      = get_post_meta( get_the_ID(), '_auction_end', true );
     $end_ts   = $end ? strtotime( $end ) : 0;
+    $buy_now_enabled = get_post_meta( get_the_ID(), '_auction_enable_buy_now', true );
+    $buy_now_price   = get_post_meta( get_the_ID(), '_auction_buy_now', true );
     ?>
     <p class="wpam-countdown" data-start="<?php echo esc_attr( $start_ts ); ?>" data-end="<?php echo esc_attr( $end_ts ); ?>"></p>
     <form class="wpam-bid-form">
@@ -24,6 +26,12 @@ get_header();
     <button class="button wpam-watchlist-button" data-auction-id="<?php echo esc_attr( get_the_ID() ); ?>">
         <?php _e( 'Toggle Watchlist', 'wpam' ); ?>
     </button>
+    <?php if ( $buy_now_enabled && $buy_now_price ) : ?>
+        <?php wp_nonce_field( 'wpam_buy_now', 'wpam_buy_now_nonce', false ); ?>
+        <button class="button wpam-buy-now-button" data-auction-id="<?php echo esc_attr( get_the_ID() ); ?>">
+            <?php printf( __( 'Buy Now for %s', 'wpam' ), function_exists( 'wc_price' ) ? wc_price( $buy_now_price ) : esc_html( $buy_now_price ) ); ?>
+        </button>
+    <?php endif; ?>
 
     <div class="wpam-messages">
         <h2><?php esc_html_e( 'Questions & Answers', 'wpam' ); ?></h2>

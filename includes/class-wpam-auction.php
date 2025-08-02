@@ -166,26 +166,36 @@ class WPAM_Auction {
 			)
 		);
 
-		woocommerce_wp_text_input(
-			array(
-				'id'                => '_auction_reserve',
-				'label'             => __( 'Reserve Price', 'wpam' ),
-				'description'       => __( 'Minimum price required for a valid sale.', 'wpam' ),
-				'desc_tip'          => true,
-				'type'              => 'number',
-				'custom_attributes' => array(
-					'step' => '0.01',
-					'min'  => '0',
-				),
-				'value'             => get_post_meta( $post_id, '_auction_reserve', true ),
-			)
-		);
+                woocommerce_wp_text_input(
+                        array(
+                                'id'                => '_auction_reserve',
+                                'label'             => __( 'Reserve Price', 'wpam' ),
+                                'description'       => __( 'Minimum price required for a valid sale.', 'wpam' ),
+                                'desc_tip'          => true,
+                                'type'              => 'number',
+                                'custom_attributes' => array(
+                                        'step' => '0.01',
+                                        'min'  => '0',
+                                ),
+                                'value'             => get_post_meta( $post_id, '_auction_reserve', true ),
+                        )
+                );
 
-		woocommerce_wp_text_input(
-			array(
-				'id'                => '_auction_buy_now',
-				'label'             => __( 'Buy Now Price', 'wpam' ),
-				'description'       => __( 'Optional instant purchase amount.', 'wpam' ),
+                woocommerce_wp_checkbox(
+                        array(
+                                'id'          => '_auction_enable_buy_now',
+                                'label'       => __( 'Enable Buy Now', 'wpam' ),
+                                'description' => __( 'Allow instant purchase for this auction.', 'wpam' ),
+                                'desc_tip'    => true,
+                                'value'       => get_post_meta( $post_id, '_auction_enable_buy_now', true ),
+                        )
+                );
+
+                woocommerce_wp_text_input(
+                        array(
+                                'id'                => '_auction_buy_now',
+                                'label'             => __( 'Buy Now Price', 'wpam' ),
+                                'description'       => __( 'Optional instant purchase amount.', 'wpam' ),
 				'desc_tip'          => true,
 				'type'              => 'number',
 				'custom_attributes' => array(
@@ -418,6 +428,7 @@ class WPAM_Auction {
                 $meta_keys = array(
                         '_auction_type',
                         '_auction_reserve',
+                        '_auction_enable_buy_now',
                         '_auction_buy_now',
                         '_auction_increment',
                         '_auction_soft_close',

@@ -10,6 +10,9 @@ class WPAM_Bid {
         add_action( 'wp_ajax_wpam_place_bid', [ $this, 'place_bid' ] );
         add_action( 'wp_ajax_nopriv_wpam_place_bid', [ $this, 'place_bid' ] );
 
+        add_action( 'wp_ajax_wpam_buy_now', [ $this, 'buy_now' ] );
+        add_action( 'wp_ajax_nopriv_wpam_buy_now', [ $this, 'buy_now' ] );
+
         add_action( 'init', [ $this, 'add_account_endpoints' ] );
         add_filter( 'woocommerce_account_menu_items', [ $this, 'add_account_menu_items' ] );
         add_action( 'woocommerce_account_my-bids_endpoint', [ $this, 'render_my_bids_page' ] );
@@ -404,6 +407,80 @@ class WPAM_Bid {
         }
 
         wp_send_json_success( $response );
+    }
+
+    public function buy_now() {
+        check_ajax_referer( 'wpam_buy_now', 'nonce' );
+
+        if ( empty( $_POST['auction_id'] ) ) {
+            wp_send_json_error( [ 'message' => __( 'Invalid auction', 'wpam' ) ] );
+        }
+
+        $auction_id = absint( $_POST['auction_id'] );
+        $user_id    = get_current_user_id();
+
+        if ( 0 === $user_id ) {
+            wp_send_json_error( [ 'message' => __( 'Please login', 'wpam' ) ] );
+        }
+
+        $enabled = get_post_meta( $auction_id, '_auction_enable_buy_now', true );
+        $price   = get_post_meta( $auction_id, '_auction_buy_now', true );
+        if ( ! $enabled || ! $price ) {
+            wp_send_json_error( [ 'message' => __( 'Buy now unavailable', 'wpam' ) ] );
+        }
+
+        $start    = get_post_meta( $auction_id, '_auction_start', true );
+        $end      = get_post_meta( $auction_id, '_auction_end', true );
+        $timezone = wp_timezone();
+        $start_ts = $start ? ( new \DateTimeImmutable( $start, $timezone ) )->getTimestamp() : 0;
+        $end_ts   = $end ? ( new \DateTimeImmutable( $end, $timezone ) )->getTimestamp() : 0;
+        $now      = ( new \DateTimeImmutable( 'now', $timezone ) )->getTimestamp();
+        if ( $now < $start_ts || $now > $end_ts ) {
+            wp_send_json_error( [ 'message' => __( 'Auction not active', 'wpam' ) ] );
+        }
+
+        $amount = function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $price ) : (float) $price;
+
+        $order = wc_create_order( [ 'customer_id' => $user_id ] );
+        $order->add_product( wc_get_product( $auction_id ), 1, [ 'subtotal' => $amount, 'total' => $amount ] );
+
+        $fee = function_exists( 'wc_format_decimal' ) ? wc_format_decimal( get_post_meta( $auction_id, '_auction_fee', 0 ) ) : (float) get_post_meta( $auction_id, '_auction_fee', 0 );
+        $fee = apply_filters( 'wpam_auction_fee_calculated', $fee, $auction_id, $amount );
+        if ( $fee > 0 ) {
+            $item = new \WC_Order_Item_Fee();
+            $item->set_name( __( 'Auction Fee', 'wpam' ) );
+            $item->set_amount( $fee );
+            $item->set_total( $fee );
+            $order->add_item( $item );
+        }
+
+        $order->calculate_totals();
+        $order->save();
+
+        update_post_meta( $auction_id, '_auction_winner', $user_id );
+        update_post_meta( $auction_id, '_auction_order_id', $order->get_id() );
+        update_post_meta( $auction_id, '_auction_sold', '1' );
+        update_post_meta( $auction_id, '_stock_status', 'outofstock' );
+        update_post_meta( $auction_id, '_auction_state', WPAM_Auction_State::ENDED );
+        update_post_meta( $auction_id, '_auction_ending_reason', 'buy_now' );
+        update_post_meta( $auction_id, '_auction_ended', 1 );
+        wp_clear_scheduled_hook( 'wpam_auction_end', [ $auction_id ] );
+
+        WPAM_Event_Bus::dispatch( 'auction_status', [
+            'auction_id' => $auction_id,
+            'status'     => 'ended',
+            'reason'     => 'buy_now',
+        ] );
+
+        $user    = get_user_by( 'id', $user_id );
+        $subject = sprintf( __( 'You purchased the auction: %s', 'wpam' ), get_the_title( $auction_id ) );
+        $message = sprintf( __( 'Order #%1$d has been created for %2$s.', 'wpam' ), $order->get_id(), wc_price( $amount ) );
+        wp_mail( $user->user_email, $subject, $message );
+
+        wp_send_json_success( [
+            'message'  => __( 'Auction bought successfully', 'wpam' ),
+            'order_id' => $order->get_id(),
+        ] );
     }
 
     /**
