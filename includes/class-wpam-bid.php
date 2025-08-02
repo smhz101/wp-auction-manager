@@ -129,6 +129,10 @@ class WPAM_Bid {
             wp_send_json_error( [ 'message' => __( 'Please login', 'wpam' ) ] );
         }
 
+        if ( ! current_user_can( 'auction_bidder' ) ) {
+            wp_send_json_error( [ 'message' => __( 'You are not allowed to bid', 'wpam' ) ] );
+        }
+
         if ( get_option( 'wpam_require_kyc' ) && ! get_user_meta( $user_id, 'wpam_kyc_verified', true ) ) {
             wp_send_json_error( [ 'message' => __( 'Verification required', 'wpam' ) ] );
         }
@@ -498,6 +502,10 @@ class WPAM_Bid {
         $user_id = get_current_user_id();
         if ( ! $user_id ) {
             return new \WP_Error( 'wpam_login', __( 'Please login', 'wpam' ), [ 'status' => 403 ] );
+        }
+
+        if ( ! current_user_can( 'auction_bidder' ) ) {
+            return new \WP_Error( 'wpam_forbidden', __( 'You are not allowed to bid', 'wpam' ), [ 'status' => 403 ] );
         }
 
         $start = get_post_meta( $auction_id, '_auction_start', true );

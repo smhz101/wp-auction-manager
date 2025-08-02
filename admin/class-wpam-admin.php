@@ -61,16 +61,22 @@ class WPAM_Admin {
 		register_setting( 'wpam_settings', 'wpam_enable_silent_bidding', array( 'sanitize_callback' => 'rest_sanitize_boolean' ) );
                register_setting( 'wpam_settings', 'wpam_buyer_premium', array( 'sanitize_callback' => array( $this, 'sanitize_decimal' ) ) );
                register_setting( 'wpam_settings', 'wpam_seller_fee', array( 'sanitize_callback' => array( $this, 'sanitize_decimal' ) ) );
-		register_setting( 'wpam_settings', 'wpam_webhook_url', array( 'sanitize_callback' => 'esc_url_raw' ) );
+                register_setting( 'wpam_settings', 'wpam_webhook_url', array( 'sanitize_callback' => 'esc_url_raw' ) );
 
-		add_settings_section( 'wpam_general', __( 'Auction Defaults', 'wpam' ), '__return_false', 'wpam_settings' );
+                // Role assignment settings.
+                register_setting( 'wpam_roles_settings', 'wpam_sellers', array( 'sanitize_callback' => array( $this, 'sanitize_sellers' ) ) );
+                register_setting( 'wpam_roles_settings', 'wpam_bidders', array( 'sanitize_callback' => array( $this, 'sanitize_bidders' ) ) );
+
+                add_settings_section( 'wpam_general', __( 'Auction Defaults', 'wpam' ), '__return_false', 'wpam_settings' );
 		add_settings_section( 'wpam_providers', __( 'Providers', 'wpam' ), '__return_false', 'wpam_settings' );
 		add_settings_section( 'wpam_twilio', __( 'Twilio Integration', 'wpam' ), '__return_false', 'wpam_settings' );
 		add_settings_section( 'wpam_firebase', __( 'Firebase Integration', 'wpam' ), '__return_false', 'wpam_settings' );
 		add_settings_section( 'wpam_realtime', __( 'Realtime Integration', 'wpam' ), '__return_false', 'wpam_settings' );
 
-		add_settings_section( 'wpam_pusher', __( 'Pusher Realtime', 'wpam' ), '__return_false', 'wpam_settings' );
-		add_settings_section( 'wpam_webhooks', __( 'Webhooks', 'wpam' ), '__return_false', 'wpam_settings' );
+                add_settings_section( 'wpam_pusher', __( 'Pusher Realtime', 'wpam' ), '__return_false', 'wpam_settings' );
+                add_settings_section( 'wpam_webhooks', __( 'Webhooks', 'wpam' ), '__return_false', 'wpam_settings' );
+
+                add_settings_section( 'wpam_roles', __( 'Auction Roles', 'wpam' ), '__return_false', 'wpam_roles_settings' );
 
 		add_settings_field( 'wpam_soft_close_threshold', __( 'Soft Close Threshold (seconds)', 'wpam' ), array( $this, 'field_soft_close_threshold' ), 'wpam_settings', 'wpam_general' );
 
@@ -113,10 +119,62 @@ class WPAM_Admin {
 		add_settings_field( 'wpam_pusher_cluster', __( 'Pusher Cluster', 'wpam' ), array( $this, 'field_pusher_cluster' ), 'wpam_settings', 'wpam_realtime' );
 
                add_settings_field( 'wpam_webhook_url', __( 'Webhook URL', 'wpam' ), array( $this, 'field_webhook_url' ), 'wpam_settings', 'wpam_webhooks' );
+
+               add_settings_field( 'wpam_sellers', __( 'Auction Sellers', 'wpam' ), array( $this, 'field_sellers' ), 'wpam_roles_settings', 'wpam_roles' );
+               add_settings_field( 'wpam_bidders', __( 'Auction Bidders', 'wpam' ), array( $this, 'field_bidders' ), 'wpam_roles_settings', 'wpam_roles' );
        }
 
        public function sanitize_decimal( $value ) {
                return function_exists( 'wc_format_decimal' ) ? wc_format_decimal( $value ) : (float) $value;
+       }
+
+       private function sanitize_role_users( $user_ids, $role, $option ) {
+               $user_ids = array_map( 'intval', (array) $user_ids );
+               $previous = (array) get_option( $option, array() );
+
+               foreach ( array_diff( $previous, $user_ids ) as $id ) {
+                       $user = get_userdata( $id );
+                       if ( $user ) {
+                               $user->remove_role( $role );
+                       }
+               }
+
+               foreach ( $user_ids as $id ) {
+                       $user = get_userdata( $id );
+                       if ( $user ) {
+                               $user->add_role( $role );
+                       }
+               }
+
+               return $user_ids;
+       }
+
+       public function sanitize_sellers( $value ) {
+               return $this->sanitize_role_users( $value, 'auction_seller', 'wpam_sellers' );
+       }
+
+       public function sanitize_bidders( $value ) {
+               return $this->sanitize_role_users( $value, 'auction_bidder', 'wpam_bidders' );
+       }
+
+       private function render_user_select( $option_name ) {
+               $selected = (array) get_option( $option_name, array() );
+               $users    = get_users();
+               echo '<select multiple="multiple" name="' . esc_attr( $option_name ) . '[]" style="height:150px;">';
+               foreach ( $users as $user ) {
+                       $is_selected = in_array( $user->ID, $selected, true ) ? 'selected="selected"' : '';
+                       echo '<option value="' . esc_attr( $user->ID ) . '" ' . $is_selected . '>' . esc_html( $user->display_name ) . '</option>';
+               }
+               echo '</select>';
+               echo '<p class="description">' . esc_html__( 'Hold Ctrl (Windows) or Command (Mac) to select multiple users.', 'wpam' ) . '</p>';
+       }
+
+       public function field_sellers() {
+               $this->render_user_select( 'wpam_sellers' );
+       }
+
+       public function field_bidders() {
+               $this->render_user_select( 'wpam_bidders' );
        }
 
        public function field_twilio_sid() {
@@ -408,11 +466,11 @@ class WPAM_Admin {
 				array(
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => array( '\\WPAM\\Includes\\WPAM_Bid', 'rest_place_bid' ),
-					'permission_callback' => function () {
-						return is_user_logged_in();
-					},
-				)
-			);
+                                'permission_callback' => function () {
+                                                return current_user_can( 'auction_bidder' );
+                                        },
+                                )
+                        );
 
 			register_rest_route(
 				'wpam/v1',
@@ -682,9 +740,14 @@ class WPAM_Admin {
 	public function render_settings_page() {
 		echo '<div class="wrap">';
 		echo '<h1>' . esc_html__( 'Settings', 'wpam' ) . '</h1>';
-		echo '<div id="wpam-settings-root"></div>';
-		echo '</div>';
-	}
+                echo '<div id="wpam-settings-root"></div>';
+                echo '<form method="post" action="options.php">';
+                settings_fields( 'wpam_roles_settings' );
+                do_settings_sections( 'wpam_roles_settings' );
+                submit_button();
+                echo '</form>';
+                echo '</div>';
+        }
 
 	/**
 	 * Log when an auction is suspended or cancelled via status changes.
