@@ -589,16 +589,16 @@ class WPAM_Auction {
        }
 
         public function schedule_cron() {
-                if ( ! wp_next_scheduled( 'wpam_check_ended_auctions' ) ) {
-                        wp_schedule_event( current_datetime()->getTimestamp(), 'hourly', 'wpam_check_ended_auctions' );
-                }
-                if ( ! wp_next_scheduled( 'wpam_update_auction_states' ) ) {
-                        wp_schedule_event( current_datetime()->getTimestamp(), 'hourly', 'wpam_update_auction_states' );
-                }
-                if ( ! wp_next_scheduled( 'wpam_send_auction_reminders' ) ) {
-                        wp_schedule_event( current_datetime()->getTimestamp(), 'wpam_quarter_hour', 'wpam_send_auction_reminders' );
-                }
-        }
+               if ( ! wp_next_scheduled( 'wpam_check_ended_auctions' ) ) {
+                       wp_schedule_event( time(), 'hourly', 'wpam_check_ended_auctions' );
+               }
+               if ( ! wp_next_scheduled( 'wpam_update_auction_states' ) ) {
+                       wp_schedule_event( time(), 'hourly', 'wpam_update_auction_states' );
+               }
+               if ( ! wp_next_scheduled( 'wpam_send_auction_reminders' ) ) {
+                       wp_schedule_event( time(), 'wpam_quarter_hour', 'wpam_send_auction_reminders' );
+               }
+       }
 
 	public function check_ended_auctions() {
 		$args = array(
