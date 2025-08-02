@@ -49,8 +49,8 @@ class WPAM_Bid {
             [
                 'bid_id'     => $bid_id,
                 'user_id'    => $user_id,
-                'ip'         => isset( $_SERVER['REMOTE_ADDR'] ) ? $_SERVER['REMOTE_ADDR'] : '',
-                'user_agent' => isset( $_SERVER['HTTP_USER_AGENT'] ) ? $_SERVER['HTTP_USER_AGENT'] : '',
+                'ip'         => isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '',
+                'user_agent' => isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '',
                 'logged_at'  => wp_date( 'Y-m-d H:i:s', null, wp_timezone() ),
             ],
             [ '%d', '%d', '%s', '%s', '%s' ]
