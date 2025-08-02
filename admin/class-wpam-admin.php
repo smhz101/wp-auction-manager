@@ -312,11 +312,11 @@ class WPAM_Admin {
 					array(
 						'nonce'             => wp_create_nonce( 'wp_rest' ),
 						'auctions_endpoint' => rest_url( 'wpam/v1/auctions' ),
-						'bids_endpoint'     => rest_url('wpam/v1/bids'),
-						'messages_endpoint' => rest_url('wpam/v1/messages'),
-						'logs_endpoint'     => rest_url('wpam/v1/logs'),
-						'flagged_endpoint'  => rest_url('wpam/v1/flagged'),
-						'settings_endpoint' => rest_url('wpam/v1/settings'),
+						'bids_endpoint'     => rest_url( 'wpam/v1/bids' ),
+						'messages_endpoint' => rest_url( 'wpam/v1/messages' ),
+						'logs_endpoint'     => rest_url( 'wpam/v1/logs' ),
+						'flagged_endpoint'  => rest_url( 'wpam/v1/flagged' ),
+						'settings_endpoint' => rest_url( 'wpam/v1/settings' ),
 					)
 				);
 		}
@@ -330,10 +330,10 @@ class WPAM_Admin {
 		// 			'nonce'             => wp_create_nonce( 'wp_rest' ),
 
 		// 			'auctions_endpoint' => rest_url( 'wpam/v1/auctions' ),
-		// 			'bids_endpoint'     => 'wpam/v1/bids',
-		// 			'messages_endpoint' => 'wpam/v1/messages',
-		// 			'logs_endpoint'     => 'wpam/v1/logs',
-		// 			'flagged_endpoint'  => 'wpam/v1/flagged',
+		// 			'bids_endpoint'     => rest_url( 'wpam/v1/bids' ),
+		// 			'messages_endpoint' => rest_url( 'wpam/v1/messages' ),
+		// 			'logs_endpoint'     => rest_url( 'wpam/v1/logs' ),
+		// 			'flagged_endpoint'  => rest_url( 'wpam/v1/flagged' ),
 
 		// 			'auction_id'        => isset( $_GET['auction_id'] ) ? absint( $_GET['auction_id'] ) : 0,
 		// 			'i18n'              => array(
