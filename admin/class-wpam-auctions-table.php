@@ -66,19 +66,21 @@ class WPAM_Auctions_Table extends \WP_List_Table {
 		$query = new \WP_Query( $args );
 		$items = array();
 		foreach ( $query->posts as $post ) {
-			$start   = get_post_meta( $post->ID, '_auction_start', true );
-			$end     = get_post_meta( $post->ID, '_auction_end', true );
-			$state   = get_post_meta( $post->ID, '_auction_state', true );
-			$reason  = get_post_meta( $post->ID, '_auction_ending_reason', true );
-			$items[] = array(
-				'ID'     => $post->ID,
-				'title'  => $post->post_title,
-				'start'  => $start,
-				'end'    => $end,
-				'state'  => $state,
-				'reason' => $reason,
-			);
-		}
+                       $start   = get_post_meta( $post->ID, '_auction_start', true );
+                       $end     = get_post_meta( $post->ID, '_auction_end', true );
+                       $state   = get_post_meta( $post->ID, '_auction_state', true );
+                       $status  = get_post_meta( $post->ID, '_auction_status', true );
+                       $reason  = get_post_meta( $post->ID, '_auction_ending_reason', true );
+                       $items[] = array(
+                               'ID'     => $post->ID,
+                               'title'  => $post->post_title,
+                               'start'  => $start,
+                               'end'    => $end,
+                               'state'  => $state,
+                               'status' => $status,
+                               'reason' => $reason,
+                       );
+               }
 		$this->items = $items;
 		$this->set_pagination_args(
 			array(
@@ -106,14 +108,15 @@ class WPAM_Auctions_Table extends \WP_List_Table {
 	}
 
 	public function get_columns() {
-		return array(
-			'title'  => __( 'Auction', 'wpam' ),
-			'start'  => __( 'Start', 'wpam' ),
-			'end'    => __( 'End', 'wpam' ),
-			'state'  => __( 'State', 'wpam' ),
-			'reason' => __( 'Ending Reason', 'wpam' ),
-		);
-	}
+               return array(
+                       'title'  => __( 'Auction', 'wpam' ),
+                       'start'  => __( 'Start', 'wpam' ),
+                       'end'    => __( 'End', 'wpam' ),
+                       'state'  => __( 'State', 'wpam' ),
+                       'status' => __( 'Status', 'wpam' ),
+                       'reason' => __( 'Ending Reason', 'wpam' ),
+               );
+       }
 
 	protected function column_title( $item ) {
 		$edit_link = get_edit_post_link( $item['ID'] );
@@ -132,9 +135,13 @@ class WPAM_Auctions_Table extends \WP_List_Table {
 		return $title . $this->row_actions( $actions );
 	}
 
-	protected function column_state( $item ) {
-		return ucfirst( $item['state'] );
-	}
+       protected function column_state( $item ) {
+               return ucfirst( $item['state'] );
+       }
+
+       protected function column_status( $item ) {
+               return ucfirst( $item['status'] );
+       }
 
 	protected function column_reason( $item ) {
 		return $item['reason'];

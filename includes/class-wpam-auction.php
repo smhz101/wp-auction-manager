@@ -27,14 +27,31 @@ class WPAM_Auction {
                 add_action( 'wpam_update_auction_states', array( $this, 'update_auction_states' ) );
                 add_action( 'wpam_auction_start', array( $this, 'handle_auction_start' ) );
                 add_action( 'wpam_auction_end', array( $this, 'handle_auction_end' ) );
-                add_action( 'wpam_send_auction_reminders', array( $this, 'send_auction_reminders' ) );
-                add_filter( 'cron_schedules', array( $this, 'register_cron_schedules' ) );
-        }
+               add_action( 'wpam_send_auction_reminders', array( $this, 'send_auction_reminders' ) );
+               add_filter( 'cron_schedules', array( $this, 'register_cron_schedules' ) );
+               if ( defined( 'WP_CLI' ) && WP_CLI ) {
+                       \WP_CLI::add_command( 'wpam auction-status', array( $this, 'cli_auction_status' ) );
+               }
+       }
 
 	public function register_meta_fields() {
                register_post_meta(
                        'product',
                        '_auction_state',
+                       array(
+                               'show_in_rest'       => true,
+                               'single'             => true,
+                               'type'               => 'string',
+                               'auth_callback'      => function ( $allowed, $meta_key, $post_id ) {
+                                       return current_user_can( 'edit_product', $post_id );
+                               },
+                               'sanitize_callback' => 'sanitize_text_field',
+                       )
+               );
+
+               register_post_meta(
+                       'product',
+                       '_auction_status',
                        array(
                                'show_in_rest'       => true,
                                'single'             => true,
@@ -467,15 +484,15 @@ class WPAM_Auction {
 		$state = $this->determine_state( $post_id );
 		update_post_meta( $post_id, '_auction_state', $state );
 	}
-        public function handle_auction_start( $auction_id ) {
-                do_action( 'wpam_before_auction_start', $auction_id );
-                update_post_meta( $auction_id, '_auction_status', 'active' );
-                update_post_meta( $auction_id, '_auction_state', WPAM_Auction_State::LIVE );
-                WPAM_Event_Bus::dispatch( 'auction_status', [
-                        'auction_id' => $auction_id,
-                        'status'     => 'started',
-                ] );
-        }
+       public function handle_auction_start( $auction_id ) {
+               do_action( 'wpam_before_auction_start', $auction_id );
+               update_post_meta( $auction_id, '_auction_status', 'live' );
+               update_post_meta( $auction_id, '_auction_state', WPAM_Auction_State::LIVE );
+               WPAM_Event_Bus::dispatch( 'auction_status', [
+                       'auction_id' => $auction_id,
+                       'status'     => 'started',
+               ] );
+       }
 
 	public function handle_auction_end( $auction_id ) {
 		global $wpdb;
@@ -489,25 +506,31 @@ class WPAM_Auction {
 
 		if ( ! $highest ) {
 			$ending_reason = 'no_bids';
-			if ( get_post_meta( $auction_id, '_auction_auto_relist', true ) ) {
-				$timezone = wp_timezone();
-				$duration = strtotime( get_post_meta( $auction_id, '_auction_end', true ) ) - strtotime( get_post_meta( $auction_id, '_auction_start', true ) );
-				$start    = wp_date( 'Y-m-d H:i:s', null, $timezone );
-				$end      = wp_date( 'Y-m-d H:i:s', current_datetime()->getTimestamp() + $duration, $timezone );
-                                update_post_meta( $auction_id, '_auction_start', $start );
-                                update_post_meta( $auction_id, '_auction_end', $end );
-                                delete_post_meta( $auction_id, '_auction_ended' );
-                                delete_post_meta( $auction_id, '_auction_reminder_sent' );
-                               wp_schedule_single_event( (int) get_gmt_from_date( $end, 'U' ), 'wpam_auction_end', array( $auction_id ) );
+                       if ( get_post_meta( $auction_id, '_auction_auto_relist', true ) ) {
+                               $timezone = wp_timezone();
+                               $duration = strtotime( get_post_meta( $auction_id, '_auction_end', true ) ) - strtotime( get_post_meta( $auction_id, '_auction_start', true ) );
+                               $start    = wp_date( 'Y-m-d H:i:s', null, $timezone );
+                               $end      = wp_date( 'Y-m-d H:i:s', current_datetime()->getTimestamp() + $duration, $timezone );
+                               update_post_meta( $auction_id, '_auction_start', $start );
+                               update_post_meta( $auction_id, '_auction_end', $end );
+                               update_post_meta( $auction_id, '_auction_status', 'scheduled' );
+                               update_post_meta( $auction_id, '_auction_state', WPAM_Auction_State::SCHEDULED );
+                               delete_post_meta( $auction_id, '_auction_ended' );
+                               delete_post_meta( $auction_id, '_auction_reminder_sent' );
+                               if ( function_exists( 'as_schedule_single_action' ) ) {
+                                       as_schedule_single_action( time(), 'wpam_auction_start', array( $auction_id ) );
+                                       as_schedule_single_action( (int) get_gmt_from_date( $end, 'U' ), 'wpam_auction_end', array( $auction_id ) );
+                               }
                                WPAM_Admin_Log::log_relist( $auction_id );
                                return;
                        }
-                       update_post_meta( $auction_id, '_auction_state', WPAM_Auction_State::ENDED );
+                       update_post_meta( $auction_id, '_auction_state', WPAM_Auction_State::FAILED );
+                       update_post_meta( $auction_id, '_auction_status', 'failed' );
                        update_post_meta( $auction_id, '_auction_ending_reason', $ending_reason );
                        WPAM_Admin_Log::log_end( $auction_id, $ending_reason );
                        WPAM_Event_Bus::dispatch( 'auction_status', [
                                'auction_id' => $auction_id,
-                               'status'     => 'ended',
+                               'status'     => 'failed',
                                'reason'     => $ending_reason,
                        ] );
                        return;
@@ -519,26 +542,32 @@ class WPAM_Auction {
                $reserve = function_exists( 'wc_format_decimal' ) ? wc_format_decimal( get_post_meta( $auction_id, '_auction_reserve', 0 ) ) : (float) get_post_meta( $auction_id, '_auction_reserve', 0 );
 		if ( $reserve && $amount < $reserve ) {
 			$ending_reason = 'reserve_not_met';
-			if ( get_post_meta( $auction_id, '_auction_auto_relist', true ) ) {
-				$timezone = wp_timezone();
-				$duration = strtotime( get_post_meta( $auction_id, '_auction_end', true ) ) - strtotime( get_post_meta( $auction_id, '_auction_start', true ) );
-				$start    = wp_date( 'Y-m-d H:i:s', null, $timezone );
-				$end      = wp_date( 'Y-m-d H:i:s', current_datetime()->getTimestamp() + $duration, $timezone );
-                                update_post_meta( $auction_id, '_auction_start', $start );
-                                update_post_meta( $auction_id, '_auction_end', $end );
-                                delete_post_meta( $auction_id, '_auction_ended' );
-                                delete_post_meta( $auction_id, '_auction_reminder_sent' );
-                               wp_schedule_single_event( (int) get_gmt_from_date( $end, 'U' ), 'wpam_auction_end', array( $auction_id ) );
+                       if ( get_post_meta( $auction_id, '_auction_auto_relist', true ) ) {
+                               $timezone = wp_timezone();
+                               $duration = strtotime( get_post_meta( $auction_id, '_auction_end', true ) ) - strtotime( get_post_meta( $auction_id, '_auction_start', true ) );
+                               $start    = wp_date( 'Y-m-d H:i:s', null, $timezone );
+                               $end      = wp_date( 'Y-m-d H:i:s', current_datetime()->getTimestamp() + $duration, $timezone );
+                               update_post_meta( $auction_id, '_auction_start', $start );
+                               update_post_meta( $auction_id, '_auction_end', $end );
+                               update_post_meta( $auction_id, '_auction_status', 'scheduled' );
+                               update_post_meta( $auction_id, '_auction_state', WPAM_Auction_State::SCHEDULED );
+                               delete_post_meta( $auction_id, '_auction_ended' );
+                               delete_post_meta( $auction_id, '_auction_reminder_sent' );
+                               if ( function_exists( 'as_schedule_single_action' ) ) {
+                                       as_schedule_single_action( time(), 'wpam_auction_start', array( $auction_id ) );
+                                       as_schedule_single_action( (int) get_gmt_from_date( $end, 'U' ), 'wpam_auction_end', array( $auction_id ) );
+                               }
                                WPAM_Admin_Log::log_relist( $auction_id );
                                return;
                        }
-                       update_post_meta( $auction_id, '_auction_state', WPAM_Auction_State::ENDED );
+                       update_post_meta( $auction_id, '_auction_state', WPAM_Auction_State::FAILED );
+                       update_post_meta( $auction_id, '_auction_status', 'failed' );
                        update_post_meta( $auction_id, '_auction_ending_reason', $ending_reason );
                        WPAM_Admin_Log::log_reserve_not_met( $auction_id );
                        WPAM_Admin_Log::log_end( $auction_id, $ending_reason );
                        WPAM_Event_Bus::dispatch( 'auction_status', [
                                'auction_id' => $auction_id,
-                               'status'     => 'ended',
+                               'status'     => 'failed',
                                'reason'     => $ending_reason,
                        ] );
                        return;
@@ -590,27 +619,47 @@ class WPAM_Auction {
 			$twilio->send( $phone, $sms_msg );
 		}
 
-               update_post_meta( $auction_id, '_auction_state', WPAM_Auction_State::ENDED );
+               update_post_meta( $auction_id, '_auction_state', WPAM_Auction_State::COMPLETED );
+               update_post_meta( $auction_id, '_auction_status', 'completed' );
                update_post_meta( $auction_id, '_auction_ending_reason', $ending_reason );
                WPAM_Admin_Log::log_end( $auction_id, $ending_reason );
                WPAM_Event_Bus::dispatch( 'auction_status', [
                        'auction_id' => $auction_id,
-                       'status'     => 'ended',
+                       'status'     => 'completed',
                        'reason'     => $ending_reason,
                ] );
-
+               
                do_action( 'wpam_after_auction_end', $auction_id, $user_id, $amount );
        }
 
-        public function schedule_cron() {
-               if ( ! wp_next_scheduled( 'wpam_check_ended_auctions' ) ) {
-                       wp_schedule_event( time(), 'hourly', 'wpam_check_ended_auctions' );
+       public function schedule_cron() {
+               if ( ! function_exists( 'as_schedule_single_action' ) ) {
+                       return;
                }
-               if ( ! wp_next_scheduled( 'wpam_update_auction_states' ) ) {
-                       wp_schedule_event( time(), 'hourly', 'wpam_update_auction_states' );
-               }
-               if ( ! wp_next_scheduled( 'wpam_send_auction_reminders' ) ) {
-                       wp_schedule_event( time(), 'wpam_quarter_hour', 'wpam_send_auction_reminders' );
+
+               $args  = array(
+                       'post_type'   => 'product',
+                       'post_status' => 'publish',
+                       'meta_query'  => array(
+                               array(
+                                       'key'     => '_auction_start',
+                                       'compare' => 'EXISTS',
+                               ),
+                       ),
+               );
+
+               $query = new \WP_Query( $args );
+
+               foreach ( $query->posts as $post ) {
+                       $start = strtotime( get_post_meta( $post->ID, '_auction_start', true ) );
+                       if ( $start && ! as_has_scheduled_action( 'wpam_auction_start', array( $post->ID ) ) ) {
+                               as_schedule_single_action( $start, 'wpam_auction_start', array( $post->ID ) );
+                       }
+
+                       $end = strtotime( get_post_meta( $post->ID, '_auction_end', true ) );
+                       if ( $end && ! as_has_scheduled_action( 'wpam_auction_end', array( $post->ID ) ) ) {
+                               as_schedule_single_action( $end, 'wpam_auction_end', array( $post->ID ) );
+                       }
                }
        }
 
@@ -655,25 +704,41 @@ class WPAM_Auction {
                 } while ( $query->have_posts() );
         }
 
-	protected function determine_state( $auction_id ) {
-		$now      = current_datetime()->getTimestamp();
-		$start_ts = strtotime( get_post_meta( $auction_id, '_auction_start', true ) );
-		$end_ts   = strtotime( get_post_meta( $auction_id, '_auction_end', true ) );
+       protected function determine_state( $auction_id ) {
+               $status = get_post_meta( $auction_id, '_auction_status', true );
+               if ( 'canceled' === $status ) {
+                       return WPAM_Auction_State::CANCELED;
+               }
+               if ( 'suspended' === $status ) {
+                       return WPAM_Auction_State::SUSPENDED;
+               }
 
-		if ( $now >= $end_ts ) {
-			return WPAM_Auction_State::ENDED;
-		}
+               $now      = current_datetime()->getTimestamp();
+               $start_ts = strtotime( get_post_meta( $auction_id, '_auction_start', true ) );
+               $end_ts   = strtotime( get_post_meta( $auction_id, '_auction_end', true ) );
 
-		if ( $start_ts - $now <= self::ABOUT_TO_START_THRESHOLD && $start_ts > $now ) {
-			return WPAM_Auction_State::ABOUT_TO_START;
-		}
+               if ( $now >= $end_ts ) {
+                       if ( get_post_meta( $auction_id, '_auction_winner', true ) ) {
+                               update_post_meta( $auction_id, '_auction_status', 'completed' );
+                               return WPAM_Auction_State::COMPLETED;
+                       }
+                       update_post_meta( $auction_id, '_auction_status', 'failed' );
+                       return WPAM_Auction_State::FAILED;
+               }
 
-		if ( $start_ts <= $now && $now < $end_ts ) {
-			return WPAM_Auction_State::LIVE;
-		}
+               if ( $start_ts <= $now && $now < $end_ts ) {
+                       update_post_meta( $auction_id, '_auction_status', 'live' );
+                       return WPAM_Auction_State::LIVE;
+               }
 
-		return WPAM_Auction_State::SCHEDULED;
-	}
+               if ( $start_ts - $now <= self::ABOUT_TO_START_THRESHOLD && $start_ts > $now ) {
+                       update_post_meta( $auction_id, '_auction_status', 'scheduled' );
+                       return WPAM_Auction_State::ABOUT_TO_START;
+               }
+
+               update_post_meta( $auction_id, '_auction_status', 'scheduled' );
+               return WPAM_Auction_State::SCHEDULED;
+       }
 
         public function update_auction_states() {
                 $args = array(
@@ -818,26 +883,58 @@ class WPAM_Auction {
          * @param float $highest    Current highest bid amount.
          * @return float Increment value.
          */
-        public static function get_bid_increment( $auction_id, $highest ) {
-                if ( get_post_meta( $auction_id, '_auction_variable_increment', true ) ) {
-                        $rules_str = get_post_meta( $auction_id, '_auction_variable_increment_rules', true );
-                        $rules     = self::parse_increment_rules( $rules_str );
-                        if ( ! empty( $rules ) ) {
-                                $increment = end( $rules )['increment'];
-                                foreach ( $rules as $rule ) {
-                                        if ( $highest <= $rule['max'] ) {
-                                                $increment = $rule['increment'];
-                                                break;
-                                        }
-                                }
-                                return (float) $increment;
-                        }
-                }
+       public static function get_bid_increment( $auction_id, $highest ) {
+               if ( get_post_meta( $auction_id, '_auction_variable_increment', true ) ) {
+                       $rules_str = get_post_meta( $auction_id, '_auction_variable_increment_rules', true );
+                       $rules     = self::parse_increment_rules( $rules_str );
+                       if ( ! empty( $rules ) ) {
+                               $increment = end( $rules )['increment'];
+                               foreach ( $rules as $rule ) {
+                                       if ( $highest <= $rule['max'] ) {
+                                               $increment = $rule['increment'];
+                                               break;
+                                       }
+                               }
+                               return (float) $increment;
+                       }
+               }
 
                 $increment = get_post_meta( $auction_id, '_auction_increment', true );
                 if ( '' === $increment ) {
                         $increment = get_option( 'wpam_default_increment', 1 );
                 }
-                return (float) $increment;
-        }
+               return (float) $increment;
+       }
+
+       public function cli_auction_status( $args, $assoc_args ) {
+               $status = isset( $assoc_args['status'] ) ? $assoc_args['status'] : '';
+               $query_args = array(
+                       'post_type'      => 'product',
+                       'post_status'    => 'publish',
+                       'posts_per_page' => -1,
+                       'meta_query'     => array(
+                               array(
+                                       'key'     => '_auction_status',
+                                       'compare' => 'EXISTS',
+                               ),
+                       ),
+               );
+               if ( $status ) {
+                       $query_args['meta_query'][] = array(
+                               'key'   => '_auction_status',
+                               'value' => $status,
+                       );
+               }
+
+               $query = new \WP_Query( $query_args );
+               $items = array();
+               foreach ( $query->posts as $post ) {
+                       $items[] = array(
+                               'ID'     => $post->ID,
+                               'title'  => $post->post_title,
+                               'status' => get_post_meta( $post->ID, '_auction_status', true ),
+                       );
+               }
+               \WP_CLI\Utils\format_items( 'table', $items, array( 'ID', 'title', 'status' ) );
+       }
 }
