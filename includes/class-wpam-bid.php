@@ -100,7 +100,7 @@ class WPAM_Bid {
             $bid = floatval( $row->bid_amount );
             if ( $uid === $lead_user ) {
                 $statuses[ $uid ] = 'max';
-            } elseif ( ( ! $reverse && $bid === $highest ) || ( $reverse && $bid === $highest ) ) {
+            } elseif ( $bid === $highest ) {
                 $statuses[ $uid ] = 'winning';
             } else {
                 $statuses[ $uid ] = 'outbid';
