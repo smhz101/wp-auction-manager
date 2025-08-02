@@ -16,25 +16,24 @@ class WPAM_Notifications {
         $phone   = get_user_meta( $user_id, 'billing_phone', true );
         $token   = get_user_meta( $user_id, 'wpam_firebase_token', true );
 
-        $sms_provider     = new WPAM_Twilio_Provider();
-        $push_provider    = new WPAM_Firebase_Provider();
-        $sendgrid_provider = new WPAM_SendGrid_Provider();
-
         $sent = false;
         if ( $push_enabled && $token ) {
-            $result = $push_provider->send( $token, $message );
-            $sent   = ! is_wp_error( $result );
+            $push_provider = new WPAM_Firebase_Provider();
+            $result        = $push_provider->send( $token, $message );
+            $sent          = ! is_wp_error( $result );
         }
 
         if ( ! $sent && $sms_enabled && $phone ) {
-            $result = $sms_provider->send( $phone, $message );
-            $sent   = ! is_wp_error( $result );
+            $sms_provider = new WPAM_Twilio_Provider();
+            $result       = $sms_provider->send( $phone, $message );
+            $sent         = ! is_wp_error( $result );
         }
 
         if ( ! $sent && $email_enabled ) {
             if ( $sendgrid_key ) {
-                $result = $sendgrid_provider->send( $user->user_email, $message );
-                $sent   = ! is_wp_error( $result );
+                $sendgrid_provider = new WPAM_SendGrid_Provider();
+                $result            = $sendgrid_provider->send( $user->user_email, $message );
+                $sent              = ! is_wp_error( $result );
             }
 
             if ( ! $sent ) {
