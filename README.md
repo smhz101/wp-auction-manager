@@ -32,7 +32,7 @@ When editing an auction product you can configure additional options in the **Au
 - **Minimum Increment** – smallest allowed increase between bids.
 - **Soft Close Threshold** – number of seconds before closing when bids will extend the auction.
 - **Extension Duration** – seconds added to the end time when the threshold is triggered.
-- **Auto Relist** – automatically relist when no winning bid exists.
+- **Auto Relist** – automatically relist when no winning bid exists. Configure a relist limit, delay before relisting and optional price adjustments.
 - **Max Bids Per User** – limit how many bids each user can place.
 - **Auction Fee** – extra fee added to the winning bid.
 - **Proxy Bidding** – automatically outbid others up to a maximum amount.
