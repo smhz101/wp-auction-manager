@@ -199,8 +199,12 @@ class WPAM_Public {
                 }
 
                 $channel   = sanitize_text_field( wp_unslash( $_POST['channel_name'] ) );
-                $socket_id  = sanitize_text_field( wp_unslash( $_POST['socket_id'] ) );
-                $user_id    = get_current_user_id();
+                $socket_id = sanitize_text_field( wp_unslash( $_POST['socket_id'] ) );
+                $user_id   = get_current_user_id();
+
+                if ( 0 === $user_id ) {
+                        wp_send_json_error( [ 'message' => __( 'Please login', 'wpam' ) ] );
+                }
 
                 if ( ! $this->realtime_provider || ! $this->realtime_provider->is_active() || ! function_exists( 'pusher_presence_auth' ) ) {
                         wp_send_json_error( [ 'message' => __( 'Pusher not configured', 'wpam' ) ] );
