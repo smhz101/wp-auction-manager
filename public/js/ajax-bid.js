@@ -2,73 +2,69 @@ jQuery(function ($) {
   const i18n = wpam_ajax.i18n || {};
   toastr.options.positionClass = 'toast-top-right';
   toastr.options.timeOut = 3000;
-  // function updateCountdown() {
-  //   $('.wpam-countdown').each(function () {
-  //     const $el = $(this);
-  //     const start = parseInt($el.data('start'), 10) * 1000;
-  //     const end = parseInt($el.data('end'), 10) * 1000;
-  //     const now = Date.now();
-  //     if (now >= end) {
-  //       $el.text('0:00');
-  //       return;
-  //     }
-  //     const target = now < start ? start : end;
-  //     const diff = countdown(now, new Date(target)).value / 1000;
-  //     const mins = Math.floor(diff / 60);
-  //     const secs = Math.floor(diff % 60);
-  //     $el.text(mins + ':' + ('0' + secs).slice(-2));
-  //   });
-  // }
+  function startCountdowns() {
+    const countdowns = [];
 
-  function updateCountdown() {
     $('.wpam-countdown').each(function () {
       const $el = $(this);
-      const start = parseInt($el.data('start'), 10) * 1000;
-      const end = parseInt($el.data('end'), 10) * 1000;
-      const now = Date.now();
+      countdowns.push({
+        $el,
+        start: parseInt($el.data('start'), 10) * 1000,
+        end: parseInt($el.data('end'), 10) * 1000,
+        last: 0,
+      });
+    });
 
-      if (now >= end) {
-        $el.html('<strong>Ended</strong>');
-        return;
-      }
+    function render(now) {
+      countdowns.forEach((cd) => {
+        if (now - cd.last < 1000) {
+          return;
+        }
+        cd.last = now;
 
-      const from = now < start ? start : now;
-      const to = end;
+        if (now >= cd.end) {
+          cd.$el.html('<strong>Ended</strong>');
+          return;
+        }
 
-      const duration = countdown(new Date(from), new Date(to), countdown.ALL);
+        const from = now < cd.start ? cd.start : now;
+        const duration = countdown(new Date(from), new Date(cd.end), countdown.ALL);
 
-      const units = [
-        { label: 'Years', value: duration.years },
-        { label: 'Months', value: duration.months },
-        { label: 'Days', value: duration.days },
-        { label: 'Hours', value: duration.hours },
-        { label: 'Mins', value: duration.minutes },
-        { label: 'Secs', value: duration.seconds },
-      ];
+        const units = [
+          { label: 'Years', value: duration.years },
+          { label: 'Months', value: duration.months },
+          { label: 'Days', value: duration.days },
+          { label: 'Hours', value: duration.hours },
+          { label: 'Mins', value: duration.minutes },
+          { label: 'Secs', value: duration.seconds },
+        ];
 
-      let content = '';
-
-      units.forEach((unit) => {
-        if (unit.value > 0) {
-          content += `
+        let content = '';
+        units.forEach((unit) => {
+          if (unit.value > 0) {
+            content += `
           <div style="text-align:center;">
             <strong>${unit.value}</strong>
             <div>${unit.label}</div>
           </div>
         `;
-        }
-      });
+          }
+        });
 
-      $el.html(`
+        cd.$el.html(`
       <div class="wpam-countdown-wrapper" style="display:flex; gap:10px; font-family:sans-serif;">
         ${content}
       </div>
     `);
-    });
+      });
+
+      requestAnimationFrame(render);
+    }
+
+    requestAnimationFrame(render);
   }
 
-  setInterval(updateCountdown, 1000);
-  updateCountdown();
+  startCountdowns();
 
   const userBids = {};
   const bidStatus = {};
