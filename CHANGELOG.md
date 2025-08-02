@@ -23,4 +23,5 @@
 - Frontend script now polls for bid updates every 5 seconds.
 - Introduced skeleton WebSocket provider classes for future realtime support.
 - Added admin settings to select a realtime provider and enter Pusher credentials.
+- Bundled Pusher and Countdown scripts and switched enqueues to local assets.
 

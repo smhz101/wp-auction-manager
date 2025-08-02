@@ -65,10 +65,10 @@ class WPAM_Public {
                 $pusher_enabled = ( 'pusher' === $provider );
 
                 if ( $pusher_enabled ) {
-                        wp_enqueue_script( 'pusher-js', 'https://cdnjs.cloudflare.com/ajax/libs/pusher/8.4.0/pusher.min.js', array(), '8.3.0', true );
+                        wp_enqueue_script( 'pusher-js', WPAM_PLUGIN_URL . 'public/vendor/js/pusher.min.js', array(), '8.4.0', true );
                 }
 
-                wp_enqueue_script( 'countdown', 'https://cdn.jsdelivr.net/npm/countdown@2.6.0/countdown.min.js', array(), '2.6.0', true );
+                wp_enqueue_script( 'countdown', WPAM_PLUGIN_URL . 'public/vendor/js/countdown.min.js', array(), '2.6.0', true );
 
                 wp_enqueue_style( 'wpam-frontend', WPAM_PLUGIN_URL . 'public/css/wpam-frontend.css', array( 'woocommerce-general' ), WPAM_PLUGIN_VERSION );
                 wp_enqueue_style( 'toastr', WPAM_PLUGIN_URL . 'public/vendor/css/toastr.min.css', array(), '2.1.4' );
