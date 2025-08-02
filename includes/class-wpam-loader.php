@@ -11,9 +11,11 @@ class WPAM_Loader {
         // Init classes
         // Register event listeners
         WPAM_Event_Bus::register( new WPAM_Notifications() );
-        $pusher_provider = new WPAM_Pusher_Provider();
-        if ( $pusher_provider->is_active() ) {
-            WPAM_Event_Bus::register( $pusher_provider );
+        if ( 'pusher' === get_option( 'wpam_realtime_provider', 'none' ) ) {
+                $pusher_provider = new WPAM_Pusher_Provider();
+                if ( $pusher_provider->is_active() ) {
+                        WPAM_Event_Bus::register( $pusher_provider );
+                }
         }
 
         new WPAM_Auction();
