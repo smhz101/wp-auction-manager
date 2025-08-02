@@ -21,10 +21,9 @@ class WPAM_Auction {
 		add_filter( 'woocommerce_product_data_tabs', array( $this, 'reorder_product_tabs' ), 20 );
 		add_action( 'woocommerce_product_data_panels', array( $this, 'add_product_data_fields' ) );
                 add_action( 'woocommerce_process_product_meta_auction', array( $this, 'save_product_data' ) );
-		add_action( 'wpam_handle_auction_end', array( $this, 'handle_auction_end' ) );
-		add_action( 'init', array( $this, 'schedule_cron' ) );
-		add_action( 'init', array( $this, 'register_meta_fields' ) );
-		add_action( 'wpam_check_ended_auctions', array( $this, 'check_ended_auctions' ) );
+                add_action( 'init', array( $this, 'schedule_cron' ) );
+                add_action( 'init', array( $this, 'register_meta_fields' ) );
+                add_action( 'wpam_check_ended_auctions', array( $this, 'check_ended_auctions' ) );
                 add_action( 'wpam_update_auction_states', array( $this, 'update_auction_states' ) );
                 add_action( 'wpam_auction_start', array( $this, 'handle_auction_start' ) );
                 add_action( 'wpam_auction_end', array( $this, 'handle_auction_end' ) );
@@ -410,8 +409,8 @@ class WPAM_Auction {
 
                         $timestamp = strtotime( $end );
                         if ( $timestamp && $timestamp > time() ) {
-                                wp_clear_scheduled_hook( 'wpam_handle_auction_end', array( $post_id ) );
-                                wp_schedule_single_event( $timestamp, 'wpam_handle_auction_end', array( $post_id ) );
+                                wp_clear_scheduled_hook( 'wpam_auction_end', array( $post_id ) );
+                                wp_schedule_single_event( $timestamp, 'wpam_auction_end', array( $post_id ) );
                         }
                         delete_post_meta( $post_id, '_auction_reminder_sent' );
                 }
