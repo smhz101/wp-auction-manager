@@ -104,11 +104,12 @@ class WPAM_Auction {
 	}
 
 	public function add_product_data_fields() {
-		global $post;
-		$post_id = $post ? $post->ID : 0;
-		echo '<div id="auction_product_data" class="panel woocommerce_options_panel hidden show_if_auction">';
+               global $post;
+               $post_id = $post ? $post->ID : 0;
+               echo '<div id="auction_product_data" class="panel woocommerce_options_panel hidden show_if_auction">';
+               wp_nonce_field( 'wpam_save_product_data', 'wpam_product_nonce' );
 
-		woocommerce_wp_select(
+               woocommerce_wp_select(
 			array(
 				'id'          => '_auction_type',
 				'label'       => __( 'Auction Type', 'wpam' ),
@@ -370,9 +371,23 @@ class WPAM_Auction {
 		echo '</div>';
 	}
 
-	public function save_product_data( $post_id ) {
+       public function save_product_data( $post_id ) {
 
-		// Force product type to auction
+               if ( ! isset( $_POST['wpam_product_nonce'] ) ) {
+                       return;
+               }
+
+               $nonce = sanitize_text_field( wp_unslash( $_POST['wpam_product_nonce'] ) );
+
+               if ( ! wp_verify_nonce( $nonce, 'wpam_save_product_data' ) ) {
+                       return;
+               }
+
+               if ( ! current_user_can( 'edit_post', $post_id ) ) {
+                       return;
+               }
+
+               // Force product type to auction
 		if ( isset( $_POST['product-type'] ) && $_POST['product-type'] === 'auction' ) {
 			wp_set_object_terms( $post_id, 'auction', 'product_type', false );
 			update_post_meta( $post_id, '_product_type', 'auction' );
