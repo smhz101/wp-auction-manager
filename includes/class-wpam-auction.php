@@ -253,15 +253,15 @@ class WPAM_Auction {
 			)
 		);
 
-                woocommerce_wp_checkbox(
-                        array(
-                                'id'          => '_auction_auto_relist',
-                                'label'       => __( 'Auto Relist', 'wpam' ),
-                                'description' => __( 'Relist automatically when there is no winner.', 'wpam' ),
-                                'desc_tip'    => true,
-                                'value'       => get_post_meta( $post_id, '_auction_auto_relist', true ),
-                        )
-                );
+               woocommerce_wp_checkbox(
+                       array(
+                               'id'          => '_auction_auto_relist',
+                               'label'       => __( 'Auto Relist', 'wpam' ),
+                               'description' => __( 'Relist automatically when there is no winner. Additional options appear when enabled.', 'wpam' ),
+                               'desc_tip'    => true,
+                               'value'       => get_post_meta( $post_id, '_auction_auto_relist', true ),
+                       )
+               );
 
                woocommerce_wp_text_input(
                        array(
@@ -276,6 +276,35 @@ class WPAM_Auction {
                                ),
                                'value'             => get_post_meta( $post_id, '_auction_relist_limit', true ),
                                'placeholder'       => get_option( 'wpam_default_relist_limit', 0 ),
+                       )
+               );
+
+               woocommerce_wp_text_input(
+                       array(
+                               'id'                => '_auction_relist_delay',
+                               'label'             => __( 'Relist Delay (minutes)', 'wpam' ),
+                               'description'       => __( 'Minutes to wait before relisting.', 'wpam' ),
+                               'desc_tip'          => true,
+                               'type'              => 'number',
+                               'custom_attributes' => array(
+                                       'step' => '1',
+                                       'min'  => '0',
+                               ),
+                               'value'             => get_post_meta( $post_id, '_auction_relist_delay', true ),
+                       )
+               );
+
+               woocommerce_wp_text_input(
+                       array(
+                               'id'                => '_auction_relist_price_adjustment',
+                               'label'             => __( 'Price Adjustment', 'wpam' ),
+                               'description'       => __( 'Amount to adjust starting price on each relist. Can be negative.', 'wpam' ),
+                               'desc_tip'          => true,
+                               'type'              => 'number',
+                               'custom_attributes' => array(
+                                       'step' => '0.01',
+                               ),
+                               'value'             => get_post_meta( $post_id, '_auction_relist_price_adjustment', true ),
                        )
                );
 
@@ -469,8 +498,10 @@ class WPAM_Auction {
                         '_auction_buy_now',
                         '_auction_increment',
                         '_auction_soft_close',
-                        '_auction_auto_relist',
+                       '_auction_auto_relist',
                        '_auction_relist_limit',
+                       '_auction_relist_delay',
+                       '_auction_relist_price_adjustment',
                        '_auction_relist_count',
                         '_auction_max_bids',
                         '_auction_fee',
@@ -494,6 +525,10 @@ class WPAM_Auction {
                                                $raw_value = get_option( 'wpam_default_relist_limit', 0 );
                                        }
                                        $value = absint( $raw_value );
+                               } elseif ( '_auction_relist_delay' === $key ) {
+                                       $value = absint( $raw_value );
+                               } elseif ( '_auction_relist_price_adjustment' === $key ) {
+                                       $value = wc_format_decimal( $raw_value );
                                } elseif ( '_auction_relist_count' === $key ) {
                                        $value = absint( $raw_value );
                                } else {
@@ -509,6 +544,14 @@ class WPAM_Auction {
 
                if ( '' === get_post_meta( $post_id, '_auction_relist_count', true ) ) {
                        update_post_meta( $post_id, '_auction_relist_count', 0 );
+               }
+
+               if ( '' === get_post_meta( $post_id, '_auction_relist_delay', true ) ) {
+                       update_post_meta( $post_id, '_auction_relist_delay', 0 );
+               }
+
+               if ( '' === get_post_meta( $post_id, '_auction_relist_price_adjustment', true ) ) {
+                       update_post_meta( $post_id, '_auction_relist_price_adjustment', 0 );
                }
 
                 if ( isset( $_POST['_auction_opening_price'] ) ) {
@@ -653,8 +696,10 @@ class WPAM_Auction {
 
                $timezone = wp_timezone();
                $duration = strtotime( get_post_meta( $auction_id, '_auction_end', true ) ) - strtotime( get_post_meta( $auction_id, '_auction_start', true ) );
-               $start    = wp_date( 'Y-m-d H:i:s', null, $timezone );
-               $end      = wp_date( 'Y-m-d H:i:s', current_datetime()->getTimestamp() + $duration, $timezone );
+               $delay    = (int) get_post_meta( $auction_id, '_auction_relist_delay', true ) * MINUTE_IN_SECONDS;
+               $start_ts = current_datetime()->getTimestamp() + $delay;
+               $start    = wp_date( 'Y-m-d H:i:s', $start_ts, $timezone );
+               $end      = wp_date( 'Y-m-d H:i:s', $start_ts + $duration, $timezone );
 
                update_post_meta( $auction_id, '_auction_start', $start );
                update_post_meta( $auction_id, '_auction_end', $end );
@@ -664,9 +709,19 @@ class WPAM_Auction {
                delete_post_meta( $auction_id, '_auction_reminder_sent' );
                update_post_meta( $auction_id, '_auction_relist_count', $count + 1 );
 
+               $price_adj = (float) get_post_meta( $auction_id, '_auction_relist_price_adjustment', true );
+               if ( 0.0 !== $price_adj ) {
+                       $opening = (float) get_post_meta( $auction_id, '_auction_opening_price', true );
+                       update_post_meta( $auction_id, '_auction_opening_price', max( 0, $opening + $price_adj ) );
+                       $buy_now = get_post_meta( $auction_id, '_auction_buy_now', true );
+                       if ( '' !== $buy_now ) {
+                               update_post_meta( $auction_id, '_auction_buy_now', max( 0, (float) $buy_now + $price_adj ) );
+                       }
+               }
+
                if ( function_exists( 'as_schedule_single_action' ) ) {
-                       as_schedule_single_action( time(), 'wpam_auction_start', array( $auction_id ) );
-                       as_schedule_single_action( (int) get_gmt_from_date( $end, 'U' ), 'wpam_auction_end', array( $auction_id ) );
+                       as_schedule_single_action( $start_ts, 'wpam_auction_start', array( $auction_id ) );
+                       as_schedule_single_action( $start_ts + $duration, 'wpam_auction_end', array( $auction_id ) );
                }
 
                WPAM_Admin_Log::log_relist( $auction_id );

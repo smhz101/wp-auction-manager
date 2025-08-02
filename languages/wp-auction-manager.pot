@@ -60,3 +60,34 @@ msgstr ""
 #: includes/class-wpam-auction.php
 msgid "Reserve price not met"
 msgstr ""
+#: includes/class-wpam-auction.php
+msgid "Auto Relist"
+msgstr ""
+
+#: includes/class-wpam-auction.php
+msgid "Relist automatically when there is no winner. Additional options appear when enabled."
+msgstr ""
+
+#: includes/class-wpam-auction.php
+msgid "Relist Limit"
+msgstr ""
+
+#: includes/class-wpam-auction.php
+msgid "Maximum number of times to relist automatically."
+msgstr ""
+
+#: includes/class-wpam-auction.php
+msgid "Relist Delay (minutes)"
+msgstr ""
+
+#: includes/class-wpam-auction.php
+msgid "Minutes to wait before relisting."
+msgstr ""
+
+#: includes/class-wpam-auction.php
+msgid "Price Adjustment"
+msgstr ""
+
+#: includes/class-wpam-auction.php
+msgid "Amount to adjust starting price on each relist. Can be negative."
+msgstr ""
