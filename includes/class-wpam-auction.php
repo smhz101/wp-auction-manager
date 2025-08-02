@@ -498,10 +498,10 @@ class WPAM_Auction {
                        return;
                }
 
-		$user_id = intval( $highest['user_id'] );
-		$amount  = floatval( $highest['bid_amount'] );
+               $user_id = intval( $highest['user_id'] );
+               $amount  = function_exists( 'wc_format_decimal' ) ? wc_format_decimal( $highest['bid_amount'] ) : (float) $highest['bid_amount'];
 
-		$reserve = floatval( get_post_meta( $auction_id, '_auction_reserve', 0 ) );
+               $reserve = function_exists( 'wc_format_decimal' ) ? wc_format_decimal( get_post_meta( $auction_id, '_auction_reserve', 0 ) ) : (float) get_post_meta( $auction_id, '_auction_reserve', 0 );
 		if ( $reserve && $amount < $reserve ) {
 			$ending_reason = 'reserve_not_met';
 			if ( get_post_meta( $auction_id, '_auction_auto_relist', true ) ) {
@@ -541,7 +541,7 @@ class WPAM_Auction {
 			)
 		);
 
-		$fee = floatval( get_post_meta( $auction_id, '_auction_fee', 0 ) );
+               $fee = function_exists( 'wc_format_decimal' ) ? wc_format_decimal( get_post_meta( $auction_id, '_auction_fee', 0 ) ) : (float) get_post_meta( $auction_id, '_auction_fee', 0 );
 		$fee = apply_filters( 'wpam_auction_fee_calculated', $fee, $auction_id, $amount );
 		if ( $fee > 0 ) {
 			$item = new \WC_Order_Item_Fee();

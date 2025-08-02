@@ -97,7 +97,7 @@ class WPAM_Bid {
             if ( isset( $seen[ $uid ] ) ) {
                 continue;
             }
-            $bid = floatval( $row->bid_amount );
+            $bid = function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $row->bid_amount ) : (float) $row->bid_amount;
             if ( $uid === $lead_user ) {
                 $statuses[ $uid ] = 'max';
             } elseif ( $bid === $highest ) {
@@ -119,7 +119,7 @@ class WPAM_Bid {
         }
 
         $auction_id = absint( $_POST['auction_id'] );
-        $bid        = floatval( $_POST['bid'] );
+        $bid        = function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $_POST['bid'] ) : (float) $_POST['bid'];
         $user_id    = get_current_user_id();
 
         if ( 0 === $user_id ) {
@@ -150,7 +150,7 @@ class WPAM_Bid {
 
         $order        = $reverse ? 'ASC' : 'DESC';
         $highest_row  = $wpdb->get_row( $wpdb->prepare( "SELECT user_id, bid_amount FROM $table WHERE auction_id = %d ORDER BY bid_amount {$order}, id DESC LIMIT 1", $auction_id ), ARRAY_A );
-        $highest      = $highest_row ? floatval( $highest_row['bid_amount'] ) : 0;
+        $highest      = $highest_row ? ( function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $highest_row['bid_amount'] ) : (float) $highest_row['bid_amount'] ) : 0;
         $highest_user = $highest_row ? intval( $highest_row['user_id'] ) : 0;
 
         $prev_highest_user = $highest_user;
@@ -159,14 +159,14 @@ class WPAM_Bid {
         $prev_lead_max  = 0;
         if ( $prev_lead_user ) {
             $prev_lead_max = get_user_meta( $prev_lead_user, 'wpam_proxy_max_' . $auction_id, true );
-            $prev_lead_max = $prev_lead_max ? floatval( $prev_lead_max ) : $highest;
+            $prev_lead_max = $prev_lead_max ? ( function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $prev_lead_max ) : (float) $prev_lead_max ) : $highest;
         } else {
             $prev_lead_max = $highest;
         }
 
         $proxy_enabled  = $reverse ? false : self::proxy_enabled( $auction_id );
         $silent_enabled = $sealed ? true : self::silent_enabled( $auction_id );
-        $max_bid        = isset( $_POST['max_bid'] ) ? floatval( $_POST['max_bid'] ) : $bid;
+        $max_bid        = isset( $_POST['max_bid'] ) ? ( function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $_POST['max_bid'] ) : (float) $_POST['max_bid'] ) : $bid;
         if ( $max_bid < $bid ) {
             $max_bid = $bid;
         }
@@ -241,7 +241,7 @@ class WPAM_Bid {
 
             if ( $highest_user && $highest_user !== $user_id ) {
                 $prev_max = get_user_meta( $highest_user, 'wpam_proxy_max_' . $auction_id, true );
-                $prev_max = $prev_max ? floatval( $prev_max ) : $highest;
+                $prev_max = $prev_max ? ( function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $prev_max ) : (float) $prev_max ) : $highest;
                 if ( $prev_max > $place_bid ) {
                     $auto_bid = min( $prev_max, $place_bid + $increment );
                     $wpdb->insert(
@@ -299,7 +299,7 @@ class WPAM_Bid {
         // Determine new highest bid after processing
         $new_highest_row  = $wpdb->get_row( $wpdb->prepare( "SELECT user_id, bid_amount FROM $table WHERE auction_id = %d ORDER BY bid_amount {$order}, id DESC LIMIT 1", $auction_id ), ARRAY_A );
         $new_highest_user = $new_highest_row ? intval( $new_highest_row['user_id'] ) : 0;
-        $new_highest      = $new_highest_row ? floatval( $new_highest_row['bid_amount'] ) : 0;
+        $new_highest      = $new_highest_row ? ( function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $new_highest_row['bid_amount'] ) : (float) $new_highest_row['bid_amount'] ) : 0;
         if ( $new_lead_user !== $prev_lead_user ) {
             update_post_meta( $auction_id, '_auction_lead_user', $new_lead_user );
         }
@@ -379,7 +379,7 @@ class WPAM_Bid {
 
         $query   = $reverse ? "SELECT MIN(bid_amount) FROM $table WHERE auction_id = %d" : "SELECT MAX(bid_amount) FROM $table WHERE auction_id = %d";
         $highest = $wpdb->get_var( $wpdb->prepare( $query, $auction_id ) );
-        $highest = $highest ? floatval( $highest ) : 0;
+        $highest = $highest ? ( function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $highest ) : (float) $highest ) : 0;
         $lead_user = intval( get_post_meta( $auction_id, '_auction_lead_user', true ) );
 
         $lead_user = intval( get_post_meta( $auction_id, '_auction_lead_user', true ) );
@@ -411,10 +411,10 @@ class WPAM_Bid {
      */
     public static function rest_place_bid( \WP_REST_Request $request ) {
         $auction_id = absint( $request['auction_id'] );
-        $bid        = floatval( $request['bid'] );
+        $bid        = function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $request['bid'] ) : (float) $request['bid'];
         $max_bid    = $request->get_param( 'max_bid' );
         if ( null !== $max_bid ) {
-            $max_bid = floatval( $max_bid );
+            $max_bid = function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $max_bid ) : (float) $max_bid;
         }
 
         // Reuse internal logic from place_bid without nonce check.
@@ -440,7 +440,7 @@ class WPAM_Bid {
 
         $order        = $reverse ? 'ASC' : 'DESC';
         $highest_row  = $wpdb->get_row( $wpdb->prepare( "SELECT user_id, bid_amount FROM $table WHERE auction_id = %d ORDER BY bid_amount {$order}, id DESC LIMIT 1", $auction_id ), ARRAY_A );
-        $highest      = $highest_row ? floatval( $highest_row['bid_amount'] ) : 0;
+        $highest      = $highest_row ? ( function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $highest_row['bid_amount'] ) : (float) $highest_row['bid_amount'] ) : 0;
         $highest_user = $highest_row ? intval( $highest_row['user_id'] ) : 0;
 
         $prev_highest_user = $highest_user;
@@ -449,7 +449,7 @@ class WPAM_Bid {
         $prev_lead_max  = 0;
         if ( $prev_lead_user ) {
             $prev_lead_max = get_user_meta( $prev_lead_user, 'wpam_proxy_max_' . $auction_id, true );
-            $prev_lead_max = $prev_lead_max ? floatval( $prev_lead_max ) : $highest;
+            $prev_lead_max = $prev_lead_max ? ( function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $prev_lead_max ) : (float) $prev_lead_max ) : $highest;
         } else {
             $prev_lead_max = $highest;
         }
@@ -521,7 +521,7 @@ class WPAM_Bid {
 
             if ( $highest_user && $highest_user !== $user_id ) {
                 $prev_max = get_user_meta( $highest_user, 'wpam_proxy_max_' . $auction_id, true );
-                $prev_max = $prev_max ? floatval( $prev_max ) : $highest;
+                $prev_max = $prev_max ? ( function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $prev_max ) : (float) $prev_max ) : $highest;
                 if ( $prev_max > $place_bid ) {
                     $auto_bid = min( $prev_max, $place_bid + $increment );
                     $wpdb->insert(
@@ -576,7 +576,7 @@ class WPAM_Bid {
 
         $new_highest_row  = $wpdb->get_row( $wpdb->prepare( "SELECT user_id, bid_amount FROM $table WHERE auction_id = %d ORDER BY bid_amount {$order}, id DESC LIMIT 1", $auction_id ), ARRAY_A );
         $new_highest_user = $new_highest_row ? intval( $new_highest_row['user_id'] ) : 0;
-        $new_highest      = $new_highest_row ? floatval( $new_highest_row['bid_amount'] ) : 0;
+        $new_highest      = $new_highest_row ? ( function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $new_highest_row['bid_amount'] ) : (float) $new_highest_row['bid_amount'] ) : 0;
         if ( $new_lead_user !== $prev_lead_user ) {
             update_post_meta( $auction_id, '_auction_lead_user', $new_lead_user );
         }
@@ -641,7 +641,7 @@ class WPAM_Bid {
 
         $query   = $reverse ? "SELECT MIN(bid_amount) FROM $table WHERE auction_id = %d" : "SELECT MAX(bid_amount) FROM $table WHERE auction_id = %d";
         $highest = $wpdb->get_var( $wpdb->prepare( $query, $auction_id ) );
-        $highest = $highest ? floatval( $highest ) : 0;
+        $highest = $highest ? ( function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $highest ) : (float) $highest ) : 0;
 
         if ( $sealed || self::silent_enabled( $auction_id ) ) {
             $end   = get_post_meta( $auction_id, '_auction_end', true );
@@ -706,7 +706,7 @@ class WPAM_Bid {
                 'id'     => intval( $row['auction_id'] ),
                 'title'  => get_the_title( $row['auction_id'] ),
                 'url'    => get_permalink( $row['auction_id'] ),
-                'amount' => floatval( $row['bid_amount'] ),
+                'amount' => function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $row['bid_amount'] ) : (float) $row['bid_amount'],
                 'time'   => mysql2date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $row['bid_time'] ),
             ];
         }

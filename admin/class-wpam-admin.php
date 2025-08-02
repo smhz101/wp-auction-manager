@@ -36,7 +36,7 @@ class WPAM_Admin {
 	}
 
 	public function register_settings() {
-		register_setting( 'wpam_settings', 'wpam_default_increment', array( 'sanitize_callback' => 'floatval' ) );
+               register_setting( 'wpam_settings', 'wpam_default_increment', array( 'sanitize_callback' => array( $this, 'sanitize_decimal' ) ) );
 		register_setting( 'wpam_settings', 'wpam_soft_close', array( 'sanitize_callback' => 'absint' ) );
 		register_setting( 'wpam_settings', 'wpam_enable_twilio', array( 'sanitize_callback' => 'rest_sanitize_boolean' ) );
 		register_setting( 'wpam_settings', 'wpam_lead_sms_alerts', array( 'sanitize_callback' => 'rest_sanitize_boolean' ) );
@@ -59,8 +59,8 @@ class WPAM_Admin {
 		register_setting( 'wpam_settings', 'wpam_default_auction_type', array( 'sanitize_callback' => 'sanitize_key' ) );
 		register_setting( 'wpam_settings', 'wpam_enable_proxy_bidding', array( 'sanitize_callback' => 'rest_sanitize_boolean' ) );
 		register_setting( 'wpam_settings', 'wpam_enable_silent_bidding', array( 'sanitize_callback' => 'rest_sanitize_boolean' ) );
-		register_setting( 'wpam_settings', 'wpam_buyer_premium', array( 'sanitize_callback' => 'floatval' ) );
-		register_setting( 'wpam_settings', 'wpam_seller_fee', array( 'sanitize_callback' => 'floatval' ) );
+               register_setting( 'wpam_settings', 'wpam_buyer_premium', array( 'sanitize_callback' => array( $this, 'sanitize_decimal' ) ) );
+               register_setting( 'wpam_settings', 'wpam_seller_fee', array( 'sanitize_callback' => array( $this, 'sanitize_decimal' ) ) );
 		register_setting( 'wpam_settings', 'wpam_webhook_url', array( 'sanitize_callback' => 'esc_url_raw' ) );
 
 		add_settings_section( 'wpam_general', __( 'Auction Defaults', 'wpam' ), '__return_false', 'wpam_settings' );
@@ -112,13 +112,17 @@ class WPAM_Admin {
 
 		add_settings_field( 'wpam_pusher_cluster', __( 'Pusher Cluster', 'wpam' ), array( $this, 'field_pusher_cluster' ), 'wpam_settings', 'wpam_realtime' );
 
-		add_settings_field( 'wpam_webhook_url', __( 'Webhook URL', 'wpam' ), array( $this, 'field_webhook_url' ), 'wpam_settings', 'wpam_webhooks' );
-	}
+               add_settings_field( 'wpam_webhook_url', __( 'Webhook URL', 'wpam' ), array( $this, 'field_webhook_url' ), 'wpam_settings', 'wpam_webhooks' );
+       }
 
-	public function field_twilio_sid() {
-		$value = esc_attr( get_option( 'wpam_twilio_sid', '' ) );
-		echo '<input type="text" class="regular-text" name="wpam_twilio_sid" value="' . $value . '" />';
-	}
+       public function sanitize_decimal( $value ) {
+               return function_exists( 'wc_format_decimal' ) ? wc_format_decimal( $value ) : (float) $value;
+       }
+
+       public function field_twilio_sid() {
+               $value = esc_attr( get_option( 'wpam_twilio_sid', '' ) );
+               echo '<input type="text" class="regular-text" name="wpam_twilio_sid" value="' . $value . '" />';
+       }
 
 	public function field_twilio_token() {
 		$value = esc_attr( get_option( 'wpam_twilio_token', '' ) );
@@ -557,10 +561,10 @@ class WPAM_Admin {
 
         private function get_setting_definitions() {
                 return array(
-                        'wpam_default_increment'   => array(
-                                'sanitize' => 'floatval',
-                                'schema'   => array( 'type' => 'number' ),
-                        ),
+                       'wpam_default_increment'   => array(
+                               'sanitize' => array( $this, 'sanitize_decimal' ),
+                               'schema'   => array( 'type' => 'number' ),
+                       ),
                         'wpam_soft_close'          => array(
                                 'sanitize' => 'absint',
                                 'schema'   => array( 'type' => 'integer' ),
@@ -649,14 +653,14 @@ class WPAM_Admin {
                                 'sanitize' => 'rest_sanitize_boolean',
                                 'schema'   => array( 'type' => 'boolean' ),
                         ),
-                        'wpam_buyer_premium'       => array(
-                                'sanitize' => 'floatval',
-                                'schema'   => array( 'type' => 'number' ),
-                        ),
-                        'wpam_seller_fee'          => array(
-                                'sanitize' => 'floatval',
-                                'schema'   => array( 'type' => 'number' ),
-                        ),
+                       'wpam_buyer_premium'       => array(
+                               'sanitize' => array( $this, 'sanitize_decimal' ),
+                               'schema'   => array( 'type' => 'number' ),
+                       ),
+                       'wpam_seller_fee'          => array(
+                               'sanitize' => array( $this, 'sanitize_decimal' ),
+                               'schema'   => array( 'type' => 'number' ),
+                       ),
                         'wpam_webhook_url'         => array(
                                 'sanitize' => 'esc_url_raw',
                                 'schema'   => array(

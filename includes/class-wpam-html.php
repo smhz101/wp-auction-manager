@@ -39,7 +39,7 @@ class WPAM_HTML {
       ? $wpdb->prepare( "SELECT MIN(bid_amount) FROM {$wpdb->prefix}wc_auction_bids WHERE auction_id = %d", $auction_id )
       : $wpdb->prepare( "SELECT MAX(bid_amount) FROM {$wpdb->prefix}wc_auction_bids WHERE auction_id = %d", $auction_id );
     $highest = $wpdb->get_var( $query );
-    $highest = $highest ? floatval( $highest ) : 0;
+    $highest = $highest ? ( function_exists( 'wc_format_decimal' ) ? wc_format_decimal( $highest ) : $highest ) : 0;
 
     $silent          = ( 'sealed' === $type ) || ( get_option( 'wpam_enable_silent_bidding' ) && get_post_meta( $auction_id, '_auction_silent_bidding', true ) );
     $display_highest = ( $silent && $now < $end_ts ) ? __( 'Hidden', 'wpam' ) : wc_price( $highest );
