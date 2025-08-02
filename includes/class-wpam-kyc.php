@@ -57,8 +57,9 @@ class WPAM_KYC {
 
     public function handle_kyc_submission( WP_REST_Request $request ) {
         $user_id = get_current_user_id();
+        $id_document = sanitize_text_field( $request['id_document'] );
         // In a real system, the document would be processed here.
-        do_action( 'wpam_kyc_submitted', $user_id, $request['id_document'] );
+        do_action( 'wpam_kyc_submitted', $user_id, $id_document );
         return rest_ensure_response( [ 'message' => __( 'Document received', 'wpam' ) ] );
     }
 }
