@@ -36,34 +36,32 @@ class WPAM_Admin {
 	}
 
 	public function register_settings() {
-		register_setting( 'wpam_settings', 'wpam_default_increment' );
-		register_setting( 'wpam_settings', 'wpam_soft_close' );
-		register_setting( 'wpam_settings', 'wpam_enable_twilio' );
-		register_setting( 'wpam_settings', 'wpam_lead_sms_alerts' );
-		register_setting( 'wpam_settings', 'wpam_enable_firebase' );
-		register_setting( 'wpam_settings', 'wpam_enable_email' );
-		register_setting( 'wpam_settings', 'wpam_firebase_server_key' );
-		register_setting( 'wpam_settings', 'wpam_sendgrid_key' );
-		register_setting( 'wpam_settings', 'wpam_require_kyc' );
-		register_setting( 'wpam_settings', 'wpam_twilio_sid' );
-		register_setting( 'wpam_settings', 'wpam_twilio_token' );
-		register_setting( 'wpam_settings', 'wpam_twilio_from' );
-
-		register_setting( 'wpam_settings', 'wpam_pusher_app_id' );
-		register_setting( 'wpam_settings', 'wpam_pusher_key' );
-		register_setting( 'wpam_settings', 'wpam_pusher_secret' );
-		register_setting( 'wpam_settings', 'wpam_pusher_cluster' );
-		register_setting( 'wpam_settings', 'wpam_soft_close_threshold' );
-		register_setting( 'wpam_settings', 'wpam_soft_close_extend' );
-		register_setting( 'wpam_settings', 'wpam_max_extensions' );
-		register_setting( 'wpam_settings', 'wpam_realtime_provider' );
-
-		register_setting( 'wpam_settings', 'wpam_default_auction_type' );
-		register_setting( 'wpam_settings', 'wpam_enable_proxy_bidding' );
-		register_setting( 'wpam_settings', 'wpam_enable_silent_bidding' );
-		register_setting( 'wpam_settings', 'wpam_buyer_premium' );
-		register_setting( 'wpam_settings', 'wpam_seller_fee' );
-		register_setting( 'wpam_settings', 'wpam_webhook_url' );
+		register_setting( 'wpam_settings', 'wpam_default_increment', array( 'sanitize_callback' => 'floatval' ) );
+		register_setting( 'wpam_settings', 'wpam_soft_close', array( 'sanitize_callback' => 'absint' ) );
+		register_setting( 'wpam_settings', 'wpam_enable_twilio', array( 'sanitize_callback' => 'rest_sanitize_boolean' ) );
+		register_setting( 'wpam_settings', 'wpam_lead_sms_alerts', array( 'sanitize_callback' => 'rest_sanitize_boolean' ) );
+		register_setting( 'wpam_settings', 'wpam_enable_firebase', array( 'sanitize_callback' => 'rest_sanitize_boolean' ) );
+		register_setting( 'wpam_settings', 'wpam_enable_email', array( 'sanitize_callback' => 'rest_sanitize_boolean' ) );
+		register_setting( 'wpam_settings', 'wpam_firebase_server_key', array( 'sanitize_callback' => 'sanitize_text_field' ) );
+		register_setting( 'wpam_settings', 'wpam_sendgrid_key', array( 'sanitize_callback' => 'sanitize_text_field' ) );
+		register_setting( 'wpam_settings', 'wpam_require_kyc', array( 'sanitize_callback' => 'rest_sanitize_boolean' ) );
+		register_setting( 'wpam_settings', 'wpam_twilio_sid', array( 'sanitize_callback' => 'sanitize_text_field' ) );
+		register_setting( 'wpam_settings', 'wpam_twilio_token', array( 'sanitize_callback' => 'sanitize_text_field' ) );
+		register_setting( 'wpam_settings', 'wpam_twilio_from', array( 'sanitize_callback' => 'sanitize_text_field' ) );
+		register_setting( 'wpam_settings', 'wpam_pusher_app_id', array( 'sanitize_callback' => 'sanitize_text_field' ) );
+		register_setting( 'wpam_settings', 'wpam_pusher_key', array( 'sanitize_callback' => 'sanitize_text_field' ) );
+		register_setting( 'wpam_settings', 'wpam_pusher_secret', array( 'sanitize_callback' => 'sanitize_text_field' ) );
+		register_setting( 'wpam_settings', 'wpam_pusher_cluster', array( 'sanitize_callback' => 'sanitize_text_field' ) );
+		register_setting( 'wpam_settings', 'wpam_soft_close_threshold', array( 'sanitize_callback' => 'absint' ) );
+		register_setting( 'wpam_settings', 'wpam_soft_close_extend', array( 'sanitize_callback' => 'absint' ) );
+		register_setting( 'wpam_settings', 'wpam_max_extensions', array( 'sanitize_callback' => 'absint' ) );
+		register_setting( 'wpam_settings', 'wpam_realtime_provider', array( 'sanitize_callback' => 'sanitize_key' ) );
+		register_setting( 'wpam_settings', 'wpam_default_auction_type', array( 'sanitize_callback' => 'sanitize_key' ) );
+		register_setting( 'wpam_settings', 'wpam_enable_proxy_bidding', array( 'sanitize_callback' => 'rest_sanitize_boolean' ) );
+		register_setting( 'wpam_settings', 'wpam_enable_silent_bidding', array( 'sanitize_callback' => 'rest_sanitize_boolean' ) );
+		register_setting( 'wpam_settings', 'wpam_buyer_premium', array( 'sanitize_callback' => 'floatval' ) );
+		register_setting( 'wpam_settings', 'wpam_seller_fee', array( 'sanitize_callback' => 'floatval' ) );
+		register_setting( 'wpam_settings', 'wpam_webhook_url', array( 'sanitize_callback' => 'esc_url_raw' ) );
 
 		add_settings_section( 'wpam_general', __( 'Auction Defaults', 'wpam' ), '__return_false', 'wpam_settings' );
 		add_settings_section( 'wpam_providers', __( 'Providers', 'wpam' ), '__return_false', 'wpam_settings' );
