@@ -55,8 +55,8 @@ class WPAM_Messages {
             $user = get_user_by( 'id', $row['user_id'] );
             $messages[] = [
                 'id'        => $row['id'],
-                'user'      => $user ? $user->display_name : __( 'Unknown', 'wpam' ),
-                'message'   => $row['message'],
+                'user'      => $user ? esc_html( $user->display_name ) : __( 'Unknown', 'wpam' ),
+                'message'   => esc_html( $row['message'] ),
                 'parent_id' => $row['parent_id'],
                 'date'      => $row['created_at'],
             ];
