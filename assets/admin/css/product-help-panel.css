@@ -1,0 +1,20 @@
+.wpam-fields-help-container {
+    display: flex;
+    gap: 20px;
+}
+.wpam-fields-left {
+    flex: 2;
+}
+.wpam-fields-right {
+    flex: 1;
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    padding: 1em;
+}
+.wpam-fields-right .wpam-help-text {
+    margin: 0;
+}
+.wpam-fields-help-container .woocommerce-help-tip,
+.wpam-fields-help-container .description {
+    display: none;
+}

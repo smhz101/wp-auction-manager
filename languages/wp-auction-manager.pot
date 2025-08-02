@@ -91,3 +91,71 @@ msgstr ""
 #: includes/class-wpam-auction.php
 msgid "Amount to adjust starting price on each relist. Can be negative."
 msgstr ""
+
+#: includes/class-wpam-auction.php
+msgid "Select a field to view help."
+msgstr ""
+
+#: includes/class-wpam-auction.php
+msgid "Select the bidding style for this auction."
+msgstr ""
+
+#: includes/class-wpam-auction.php
+msgid "When bidding opens."
+msgstr ""
+
+#: includes/class-wpam-auction.php
+msgid "When the auction will close."
+msgstr ""
+
+#: includes/class-wpam-auction.php
+msgid "Minimum price required for a valid sale."
+msgstr ""
+
+#: includes/class-wpam-auction.php
+msgid "Allow instant purchase for this auction."
+msgstr ""
+
+#: includes/class-wpam-auction.php
+msgid "Optional instant purchase amount."
+msgstr ""
+
+#: includes/class-wpam-auction.php
+msgid "Lowest amount a new bid must increase by."
+msgstr ""
+
+#: includes/class-wpam-auction.php
+msgid "Number of minutes to extend if a bid is placed near the end."
+msgstr ""
+
+#: includes/class-wpam-auction.php
+msgid "Limit how many bids each user may place."
+msgstr ""
+
+#: includes/class-wpam-auction.php
+msgid "Extra fee added to the winning bid."
+msgstr ""
+
+#: includes/class-wpam-auction.php
+msgid "State of the item being auctioned."
+msgstr ""
+
+#: includes/class-wpam-auction.php
+msgid "Automatically place bids on users' behalf up to their max."
+msgstr ""
+
+#: includes/class-wpam-auction.php
+msgid "Hide bids from other users until the auction ends."
+msgstr ""
+
+#: includes/class-wpam-auction.php
+msgid "Initial price when the auction starts."
+msgstr ""
+
+#: includes/class-wpam-auction.php
+msgid "Lowest acceptable price for reverse auctions."
+msgstr ""
+
+#: includes/class-wpam-auction.php
+msgid "Use different minimum increments based on current bid."
+msgstr ""
