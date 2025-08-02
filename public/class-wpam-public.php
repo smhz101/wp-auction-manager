@@ -227,6 +227,12 @@ class WPAM_Public {
         public function pusher_leave() {
                 check_ajax_referer( 'wpam_pusher_auth', 'nonce' );
 
+                $user_id = get_current_user_id();
+
+                if ( 0 === $user_id ) {
+                        wp_send_json_error( [ 'message' => __( 'Please login', 'wpam' ) ] );
+                }
+
                 if ( empty( $_POST['auction_id'] ) ) {
                         wp_send_json_error( [ 'message' => __( 'Invalid request', 'wpam' ) ] );
                 }
