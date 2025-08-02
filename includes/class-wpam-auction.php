@@ -600,33 +600,46 @@ class WPAM_Auction {
                }
        }
 
-	public function check_ended_auctions() {
-		$args = array(
-			'post_type'      => 'product',
-			'posts_per_page' => -1,
-			'post_status'    => 'publish',
-			'meta_query'     => array(
-				array(
-					'key'     => '_auction_end',
-					'value'   => wp_date( 'Y-m-d H:i:s', null, wp_timezone() ),
-					'compare' => '<=',
-					'type'    => 'DATETIME',
-				),
-				array(
-					'key'     => '_auction_ended',
-					'compare' => 'NOT EXISTS',
-				),
-			),
-		);
+        public function check_ended_auctions() {
+                $args = array(
+                        'post_type'   => 'product',
+                        'post_status' => 'publish',
+                        'meta_query'  => array(
+                                array(
+                                        'key'     => '_auction_end',
+                                        'value'   => wp_date( 'Y-m-d H:i:s', null, wp_timezone() ),
+                                        'compare' => '<=',
+                                        'type'    => 'DATETIME',
+                                ),
+                                array(
+                                        'key'     => '_auction_ended',
+                                        'compare' => 'NOT EXISTS',
+                                ),
+                        ),
+                );
 
-		$query = new \WP_Query( $args );
-		foreach ( $query->posts as $post ) {
-			update_post_meta( $post->ID, '_auction_ended', 1 );
-			update_post_meta( $post->ID, '_auction_state', WPAM_Auction_State::ENDED );
-			WPAM_Notifications::notify_auction_end( $post->ID );
-		}
-		wp_reset_postdata();
-	}
+                $paged = 1;
+                do {
+                        $query = new \WP_Query(
+                                array_merge(
+                                        $args,
+                                        array(
+                                                'posts_per_page' => 50,
+                                                'paged'          => $paged,
+                                        )
+                                )
+                        );
+
+                        foreach ( $query->posts as $post ) {
+                                update_post_meta( $post->ID, '_auction_ended', 1 );
+                                update_post_meta( $post->ID, '_auction_state', WPAM_Auction_State::ENDED );
+                                WPAM_Notifications::notify_auction_end( $post->ID );
+                        }
+
+                        wp_reset_postdata();
+                        $paged++;
+                } while ( $query->have_posts() );
+        }
 
 	protected function determine_state( $auction_id ) {
 		$now      = current_datetime()->getTimestamp();
@@ -650,10 +663,9 @@ class WPAM_Auction {
 
         public function update_auction_states() {
                 $args = array(
-                        'post_type'      => 'product',
-                        'posts_per_page' => -1,
-                        'post_status'    => 'publish',
-                        'meta_query'     => array(
+                        'post_type'   => 'product',
+                        'post_status' => 'publish',
+                        'meta_query'  => array(
                                 array(
                                         'key'     => '_auction_start',
                                         'compare' => 'EXISTS',
@@ -661,22 +673,35 @@ class WPAM_Auction {
                         ),
                 );
 
-		$query = new \WP_Query( $args );
-                foreach ( $query->posts as $post ) {
-                        $state = $this->determine_state( $post->ID );
-                        update_post_meta( $post->ID, '_auction_state', $state );
-                }
-                wp_reset_postdata();
+                $paged = 1;
+                do {
+                        $query = new \WP_Query(
+                                array_merge(
+                                        $args,
+                                        array(
+                                                'posts_per_page' => 50,
+                                                'paged'          => $paged,
+                                        )
+                                )
+                        );
+
+                        foreach ( $query->posts as $post ) {
+                                $state = $this->determine_state( $post->ID );
+                                update_post_meta( $post->ID, '_auction_state', $state );
+                        }
+
+                        wp_reset_postdata();
+                        $paged++;
+                } while ( $query->have_posts() );
         }
 
         public function send_auction_reminders() {
-                $now       = current_datetime()->getTimestamp();
-                $timezone  = wp_timezone();
-                $args = array(
-                        'post_type'      => 'product',
-                        'posts_per_page' => -1,
-                        'post_status'    => 'publish',
-                        'meta_query'     => array(
+                $now      = current_datetime()->getTimestamp();
+                $timezone = wp_timezone();
+                $args     = array(
+                        'post_type'   => 'product',
+                        'post_status' => 'publish',
+                        'meta_query'  => array(
                                 array(
                                         'key'     => '_auction_end',
                                         'value'   => array(
@@ -703,12 +728,26 @@ class WPAM_Auction {
                         ),
                 );
 
-                $query = new \WP_Query( $args );
-                foreach ( $query->posts as $post ) {
-                        WPAM_Notifications::notify_auction_reminder( $post->ID );
-                        update_post_meta( $post->ID, '_auction_reminder_sent', 1 );
-                }
-                wp_reset_postdata();
+                $paged = 1;
+                do {
+                        $query = new \WP_Query(
+                                array_merge(
+                                        $args,
+                                        array(
+                                                'posts_per_page' => 50,
+                                                'paged'          => $paged,
+                                        )
+                                )
+                        );
+
+                        foreach ( $query->posts as $post ) {
+                                WPAM_Notifications::notify_auction_reminder( $post->ID );
+                                update_post_meta( $post->ID, '_auction_reminder_sent', 1 );
+                        }
+
+                        wp_reset_postdata();
+                        $paged++;
+                } while ( $query->have_posts() );
         }
 
         public function register_cron_schedules( $schedules ) {
