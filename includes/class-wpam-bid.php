@@ -3,6 +3,10 @@ namespace WPAM\Includes;
 
 use WPAM\Includes\WPAM_Auction_State;
 use WPAM\Includes\WPAM_Soft_Close;
+use WPAM\Includes\Bidding\StandardStrategy;
+use WPAM\Includes\Bidding\ProxyStrategy;
+use WPAM\Includes\Bidding\SilentStrategy;
+use WPAM\Includes\Bidding\SealedStrategy;
 
 class WPAM_Bid {
     protected $realtime_provider;
@@ -45,7 +49,7 @@ class WPAM_Bid {
         return 'sealed' === get_post_meta( $auction_id, '_auction_type', true );
     }
 
-    private static function log_bid( $bid_id, $user_id ) {
+    public static function log_bid( $bid_id, $user_id ) {
         global $wpdb;
         $table = $wpdb->prefix . 'wc_auction_audit';
         $wpdb->insert(
@@ -159,9 +163,6 @@ class WPAM_Bid {
         $order        = $reverse ? 'ASC' : 'DESC';
         $highest_row  = $wpdb->get_row( $wpdb->prepare( "SELECT user_id, bid_amount FROM $table WHERE auction_id = %d ORDER BY bid_amount {$order}, id DESC LIMIT 1", $auction_id ), ARRAY_A );
         $highest      = $highest_row ? ( function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $highest_row['bid_amount'] ) : (float) $highest_row['bid_amount'] ) : 0;
-        $highest_user = $highest_row ? intval( $highest_row['user_id'] ) : 0;
-
-        $prev_highest_user = $highest_user;
 
         $prev_lead_user = intval( get_post_meta( $auction_id, '_auction_lead_user', true ) );
         $prev_lead_max  = 0;
@@ -199,79 +200,18 @@ class WPAM_Bid {
             }
         }
 
-        $increment = WPAM_Auction::get_bid_increment( $auction_id, $highest );
-
-        if ( ! $proxy_enabled ) {
-            if ( $reverse ) {
-                if ( $highest_row && $bid > $highest - $increment ) {
-                    wp_send_json_error( [ 'message' => __( 'Bid too high', 'wpam' ) ] );
-                }
-            } else {
-                if ( $bid < $highest + $increment ) {
-                    wp_send_json_error( [ 'message' => __( 'Bid too low', 'wpam' ) ] );
-                }
-            }
-
-            $wpdb->insert(
-                $table,
-                [
-                    'auction_id' => $auction_id,
-                    'user_id'    => $user_id,
-                    'bid_amount' => $bid,
-                    'bid_time'   => wp_date( 'Y-m-d H:i:s', null, wp_timezone() ),
-                ],
-                [ '%d', '%d', '%f', '%s' ]
-            );
-            self::log_bid( $wpdb->insert_id, $user_id );
-
-            do_action( 'wpam_bid_placed', $auction_id, $user_id, $bid );
+        if ( $sealed ) {
+            $strategy = new SealedStrategy();
+        } elseif ( $proxy_enabled ) {
+            $strategy = new ProxyStrategy();
+        } elseif ( $silent_enabled ) {
+            $strategy = new SilentStrategy();
         } else {
-            if ( $max_bid < $highest + $increment ) {
-                wp_send_json_error( [ 'message' => __( 'Bid too low', 'wpam' ) ] );
-            }
-
-            $place_bid = ( $highest > 0 ) ? min( $max_bid, $highest + $increment ) : $max_bid;
-            $wpdb->insert(
-                $table,
-                [
-                    'auction_id' => $auction_id,
-                    'user_id'    => $user_id,
-                    'bid_amount' => $place_bid,
-                    'bid_time'   => wp_date( 'Y-m-d H:i:s', null, wp_timezone() ),
-                ],
-                [ '%d', '%d', '%f', '%s' ]
-            );
-            self::log_bid( $wpdb->insert_id, $user_id );
-            do_action( 'wpam_bid_placed', $auction_id, $user_id, $place_bid );
-            update_user_meta( $user_id, 'wpam_proxy_max_' . $auction_id, $max_bid );
-
-            $bid = $place_bid;
-
-            if ( $highest_user && $highest_user !== $user_id ) {
-                $prev_max = get_user_meta( $highest_user, 'wpam_proxy_max_' . $auction_id, true );
-                $prev_max = $prev_max ? ( function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $prev_max ) : (float) $prev_max ) : $highest;
-                if ( $prev_max > $place_bid ) {
-                    $auto_bid = min( $prev_max, $place_bid + $increment );
-                    $wpdb->insert(
-                        $table,
-                        [
-                            'auction_id' => $auction_id,
-                            'user_id'    => $highest_user,
-                            'bid_amount' => $auto_bid,
-                            'bid_time'   => wp_date( 'Y-m-d H:i:s', null, wp_timezone() ),
-                        ],
-                        [ '%d', '%d', '%f', '%s' ]
-                    );
-                    self::log_bid( $wpdb->insert_id, $highest_user );
-                    do_action( 'wpam_bid_placed', $auction_id, $highest_user, $auto_bid );
-                    $bid = $auto_bid;
-                } else {
-                    $highest_user = $user_id;
-                }
-            } else {
-                $highest_user = $user_id;
-            }
+            $strategy = new StandardStrategy();
         }
+
+        $result = $strategy->place_bid( $auction_id, $user_id, $bid, $max_bid );
+        $bid    = isset( $result['bid'] ) ? $result['bid'] : $bid;
 
 
         // Extend auction end time if within soft close window
