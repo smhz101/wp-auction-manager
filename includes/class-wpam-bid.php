@@ -410,7 +410,6 @@ class WPAM_Bid {
      * REST endpoint to place a bid.
      */
     public static function rest_place_bid( \WP_REST_Request $request ) {
-        $_POST = [];
         $auction_id = absint( $request['auction_id'] );
         $bid        = floatval( $request['bid'] );
         $max_bid    = $request->get_param( 'max_bid' );
