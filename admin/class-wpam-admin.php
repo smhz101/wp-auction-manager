@@ -37,7 +37,8 @@ class WPAM_Admin {
 
 	public function register_settings() {
                register_setting( 'wpam_settings', 'wpam_default_increment', array( 'sanitize_callback' => array( $this, 'sanitize_decimal' ) ) );
-		register_setting( 'wpam_settings', 'wpam_soft_close', array( 'sanitize_callback' => 'absint' ) );
+               register_setting( 'wpam_settings', 'wpam_default_relist_limit', array( 'sanitize_callback' => 'absint' ) );
+               register_setting( 'wpam_settings', 'wpam_soft_close', array( 'sanitize_callback' => 'absint' ) );
 		register_setting( 'wpam_settings', 'wpam_enable_twilio', array( 'sanitize_callback' => 'rest_sanitize_boolean' ) );
 		register_setting( 'wpam_settings', 'wpam_lead_sms_alerts', array( 'sanitize_callback' => 'rest_sanitize_boolean' ) );
 		register_setting( 'wpam_settings', 'wpam_enable_firebase', array( 'sanitize_callback' => 'rest_sanitize_boolean' ) );
@@ -84,7 +85,9 @@ class WPAM_Admin {
 
 		add_settings_field( 'wpam_max_extensions', __( 'Maximum Extensions', 'wpam' ), array( $this, 'field_max_extensions' ), 'wpam_settings', 'wpam_general' );
 
-		add_settings_field( 'wpam_default_increment', __( 'Default Bid Increment', 'wpam' ), array( $this, 'field_default_increment' ), 'wpam_settings', 'wpam_general' );
+               add_settings_field( 'wpam_default_increment', __( 'Default Bid Increment', 'wpam' ), array( $this, 'field_default_increment' ), 'wpam_settings', 'wpam_general' );
+
+               add_settings_field( 'wpam_default_relist_limit', __( 'Default Relist Limit', 'wpam' ), array( $this, 'field_default_relist_limit' ), 'wpam_settings', 'wpam_general' );
 
 		add_settings_field( 'wpam_soft_close', __( 'Soft Close Duration (minutes)', 'wpam' ), array( $this, 'field_soft_close' ), 'wpam_settings', 'wpam_general' );
 
@@ -237,10 +240,15 @@ class WPAM_Admin {
 		echo '<input type="number" class="small-text" name="wpam_max_extensions" value="' . $value . '" />';
 	}
 
-	public function field_default_increment() {
-		$value = esc_attr( get_option( 'wpam_default_increment', 1 ) );
-		echo '<input type="number" step="0.01" class="small-text" name="wpam_default_increment" value="' . $value . '" />';
-	}
+       public function field_default_increment() {
+               $value = esc_attr( get_option( 'wpam_default_increment', 1 ) );
+               echo '<input type="number" step="0.01" class="small-text" name="wpam_default_increment" value="' . $value . '" />';
+       }
+
+       public function field_default_relist_limit() {
+               $value = esc_attr( get_option( 'wpam_default_relist_limit', 0 ) );
+               echo '<input type="number" class="small-text" name="wpam_default_relist_limit" value="' . $value . '" />';
+       }
 
 	public function field_soft_close() {
 		$value = esc_attr( get_option( 'wpam_soft_close', 0 ) );
@@ -618,15 +626,19 @@ class WPAM_Admin {
         }
 
         private function get_setting_definitions() {
-                return array(
-                       'wpam_default_increment'   => array(
+               return array(
+                      'wpam_default_increment'   => array(
                                'sanitize' => array( $this, 'sanitize_decimal' ),
                                'schema'   => array( 'type' => 'number' ),
                        ),
-                        'wpam_soft_close'          => array(
-                                'sanitize' => 'absint',
-                                'schema'   => array( 'type' => 'integer' ),
-                        ),
+                       'wpam_default_relist_limit' => array(
+                               'sanitize' => 'absint',
+                               'schema'   => array( 'type' => 'integer' ),
+                       ),
+                       'wpam_soft_close'          => array(
+                               'sanitize' => 'absint',
+                               'schema'   => array( 'type' => 'integer' ),
+                       ),
                         'wpam_enable_twilio'       => array(
                                 'sanitize' => 'rest_sanitize_boolean',
                                 'schema'   => array( 'type' => 'boolean' ),
