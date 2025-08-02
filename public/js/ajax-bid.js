@@ -154,6 +154,27 @@ jQuery(function ($) {
     );
   });
 
+  $('.wpam-buy-now-button').on('click', function (e) {
+    e.preventDefault();
+    const auctionId = $(this).data('auction-id');
+    $.post(
+      wpam_ajax.ajax_url,
+      {
+        action: 'wpam_buy_now',
+        auction_id: auctionId,
+        nonce: wpam_ajax.buy_now_nonce,
+      },
+      function (res) {
+        if (res.success) {
+          toastr.success(res.data.message);
+          window.location.reload();
+        } else {
+          toastr.error(res.data.message);
+        }
+      }
+    );
+  });
+
   function refreshBids() {
     $('.wpam-current-bid').each(function () {
       const bidEl = $(this);

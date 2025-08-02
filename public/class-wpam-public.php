@@ -85,6 +85,7 @@ class WPAM_Public {
                                 'watchlist_nonce'     => wp_create_nonce( 'wpam_toggle_watchlist' ),
                                 'watchlist_get_nonce' => wp_create_nonce( 'wpam_get_watchlist' ),
                                 'highest_nonce'       => wp_create_nonce( 'wpam_get_highest_bid' ),
+                                'buy_now_nonce'       => wp_create_nonce( 'wpam_buy_now' ),
                                 'pusher_enabled'      => $pusher_enabled,
                                 'pusher_key'          => get_option( 'wpam_pusher_key' ),
                                 'pusher_cluster'      => get_option( 'wpam_pusher_cluster' ),
