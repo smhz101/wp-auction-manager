@@ -33,27 +33,33 @@ class WPAM_Auction {
         }
 
 	public function register_meta_fields() {
-		register_post_meta(
-			'product',
-			'_auction_state',
-			array(
-				'show_in_rest'  => true,
-				'single'        => true,
-				'type'          => 'string',
-				'auth_callback' => '__return_true',
-			)
-		);
+               register_post_meta(
+                       'product',
+                       '_auction_state',
+                       array(
+                               'show_in_rest'       => true,
+                               'single'             => true,
+                               'type'               => 'string',
+                               'auth_callback'      => function ( $allowed, $meta_key, $post_id ) {
+                                       return current_user_can( 'edit_product', $post_id );
+                               },
+                               'sanitize_callback' => 'sanitize_text_field',
+                       )
+               );
 
-		register_post_meta(
-			'product',
-			'_auction_ending_reason',
-			array(
-				'show_in_rest'  => true,
-				'single'        => true,
-				'type'          => 'string',
-				'auth_callback' => '__return_true',
-			)
-		);
+               register_post_meta(
+                       'product',
+                       '_auction_ending_reason',
+                       array(
+                               'show_in_rest'       => true,
+                               'single'             => true,
+                               'type'               => 'string',
+                               'auth_callback'      => function ( $allowed, $meta_key, $post_id ) {
+                                       return current_user_can( 'edit_product', $post_id );
+                               },
+                               'sanitize_callback' => 'sanitize_text_field',
+                       )
+               );
 	}
 
 	public function register_product_type() {
