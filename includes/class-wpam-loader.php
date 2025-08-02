@@ -16,6 +16,8 @@ class WPAM_Loader {
                 if ( $pusher_provider->is_active() ) {
                         WPAM_Event_Bus::register( $pusher_provider );
                 }
+        } else {
+                update_option( 'wpam_pusher_status', 'disabled' );
         }
 
         new WPAM_Auction();

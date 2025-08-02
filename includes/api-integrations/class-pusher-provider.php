@@ -52,6 +52,20 @@ class WPAM_Pusher_Provider implements WPAM_Realtime_Provider {
                     'useTLS'  => true,
                 ]
             );
+            try {
+                $this->pusher->get_channels();
+                update_option( 'wpam_pusher_status', 'connected' );
+            } catch ( \Exception $e ) {
+                $this->pusher = null;
+                update_option( 'wpam_pusher_status', 'invalid' );
+                update_option( 'wpam_realtime_provider', 'none' );
+                add_action( 'admin_notices', function() {
+                    echo '<div class="notice notice-error"><p>' . esc_html__( 'Invalid Pusher credentials. Realtime features have been disabled.', 'wpam' ) . '</p></div>';
+                } );
+            }
+        } else {
+            update_option( 'wpam_pusher_status', 'invalid' );
+            update_option( 'wpam_realtime_provider', 'none' );
         }
     }
 
