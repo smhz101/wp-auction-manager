@@ -53,7 +53,7 @@ class Test_WPAM_Auction_Types extends WP_Ajax_UnitTestCase {
         try { $this->_handleAjax( 'wpam_get_highest_bid' ); } catch ( WPAjaxDieContinueException $e ) {
             $resp = json_decode( $this->_last_response, true );
         }
-        $this->assertSame( 90.0, floatval( $resp['data']['highest_bid'] ) );
+        $this->assertSame( 90.0, function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $resp['data']['highest_bid'] ) : (float) $resp['data']['highest_bid'] );
     }
 
     public function test_sealed_bid_hidden_until_end() {
@@ -78,7 +78,7 @@ class Test_WPAM_Auction_Types extends WP_Ajax_UnitTestCase {
         try { $this->_handleAjax( 'wpam_get_highest_bid' ); } catch ( WPAjaxDieContinueException $e ) {
             $resp = json_decode( $this->_last_response, true );
         }
-        $this->assertSame( 0.0, floatval( $resp['data']['highest_bid'] ) );
+        $this->assertSame( 0.0, function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $resp['data']['highest_bid'] ) : (float) $resp['data']['highest_bid'] );
 
         update_post_meta( $auction_id, '_auction_end', date( 'Y-m-d H:i:s', time() - 10 ) );
 
@@ -89,7 +89,7 @@ class Test_WPAM_Auction_Types extends WP_Ajax_UnitTestCase {
         try { $this->_handleAjax( 'wpam_get_highest_bid' ); } catch ( WPAjaxDieContinueException $e ) {
             $resp = json_decode( $this->_last_response, true );
         }
-        $this->assertSame( 50.0, floatval( $resp['data']['highest_bid'] ) );
+        $this->assertSame( 50.0, function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $resp['data']['highest_bid'] ) : (float) $resp['data']['highest_bid'] );
     }
 
     public function test_sealed_second_bid_denied() {
