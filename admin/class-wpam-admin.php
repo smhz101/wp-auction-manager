@@ -514,48 +514,166 @@ class WPAM_Admin {
 		return rest_ensure_response( $options );
 	}
 
-	public function rest_update_settings( \WP_REST_Request $request ) {
-		$params = $request->get_json_params();
-		foreach ( $this->get_option_keys() as $key ) {
-			if ( isset( $params[ $key ] ) ) {
-				update_option( $key, $params[ $key ] );
-			}
-		}
+        public function rest_update_settings( \WP_REST_Request $request ) {
+                $params  = $request->get_json_params();
+                $errors  = array();
+                $defines = $this->get_setting_definitions();
 
-		return $this->rest_get_settings( $request );
-	}
+                foreach ( $defines as $key => $definition ) {
+                        if ( ! isset( $params[ $key ] ) ) {
+                                continue;
+                        }
 
-	private function get_option_keys() {
-		return array(
-			'wpam_default_increment',
-			'wpam_soft_close',
-			'wpam_enable_twilio',
-			'wpam_lead_sms_alerts',
-			'wpam_enable_firebase',
-			'wpam_enable_email',
-			'wpam_firebase_server_key',
-			'wpam_sendgrid_key',
-			'wpam_twilio_sid',
-			'wpam_twilio_token',
-			'wpam_twilio_from',
-			'wpam_pusher_app_id',
-			'wpam_pusher_key',
-			'wpam_pusher_secret',
-			'wpam_pusher_cluster',
-			'wpam_soft_close_threshold',
-			'wpam_soft_close_extend',
-			'wpam_max_extensions',
-			'wpam_realtime_provider',
-			'wpam_require_kyc',
-			'wpam_default_auction_type',
-			'wpam_enable_proxy_bidding',
-			'wpam_enable_silent_bidding',
-			'wpam_buyer_premium',
-			'wpam_seller_fee',
-			'wpam_webhook_url',
-			'wpam_enable_toasts',
-		);
-	}
+                        $raw_value = $params[ $key ];
+                        $schema    = $definition['schema'];
+
+                        $valid = rest_validate_value_from_schema( $raw_value, $schema );
+                        if ( is_wp_error( $valid ) ) {
+                                $errors[ $key ] = $valid->get_error_message();
+                                continue;
+                        }
+
+                        $value = $raw_value;
+                        if ( isset( $definition['sanitize'] ) ) {
+                                $value = call_user_func( $definition['sanitize'], $raw_value );
+                        }
+
+                        update_option( $key, $value );
+                }
+
+                if ( ! empty( $errors ) ) {
+                        return new \WP_Error(
+                                'rest_invalid_param',
+                                __( 'Invalid parameter(s): ', 'wpam' ) . implode( ', ', array_keys( $errors ) ),
+                                array(
+                                        'status' => 400,
+                                        'params' => $errors,
+                                )
+                        );
+                }
+
+                return $this->rest_get_settings( $request );
+        }
+
+        private function get_setting_definitions() {
+                return array(
+                        'wpam_default_increment'   => array(
+                                'sanitize' => 'floatval',
+                                'schema'   => array( 'type' => 'number' ),
+                        ),
+                        'wpam_soft_close'          => array(
+                                'sanitize' => 'absint',
+                                'schema'   => array( 'type' => 'integer' ),
+                        ),
+                        'wpam_enable_twilio'       => array(
+                                'sanitize' => 'rest_sanitize_boolean',
+                                'schema'   => array( 'type' => 'boolean' ),
+                        ),
+                        'wpam_lead_sms_alerts'     => array(
+                                'sanitize' => 'rest_sanitize_boolean',
+                                'schema'   => array( 'type' => 'boolean' ),
+                        ),
+                        'wpam_enable_firebase'     => array(
+                                'sanitize' => 'rest_sanitize_boolean',
+                                'schema'   => array( 'type' => 'boolean' ),
+                        ),
+                        'wpam_enable_email'        => array(
+                                'sanitize' => 'rest_sanitize_boolean',
+                                'schema'   => array( 'type' => 'boolean' ),
+                        ),
+                        'wpam_firebase_server_key' => array(
+                                'sanitize' => 'sanitize_text_field',
+                                'schema'   => array( 'type' => 'string' ),
+                        ),
+                        'wpam_sendgrid_key'        => array(
+                                'sanitize' => 'sanitize_text_field',
+                                'schema'   => array( 'type' => 'string' ),
+                        ),
+                        'wpam_twilio_sid'          => array(
+                                'sanitize' => 'sanitize_text_field',
+                                'schema'   => array( 'type' => 'string' ),
+                        ),
+                        'wpam_twilio_token'        => array(
+                                'sanitize' => 'sanitize_text_field',
+                                'schema'   => array( 'type' => 'string' ),
+                        ),
+                        'wpam_twilio_from'         => array(
+                                'sanitize' => 'sanitize_text_field',
+                                'schema'   => array( 'type' => 'string' ),
+                        ),
+                        'wpam_pusher_app_id'       => array(
+                                'sanitize' => 'sanitize_text_field',
+                                'schema'   => array( 'type' => 'string' ),
+                        ),
+                        'wpam_pusher_key'          => array(
+                                'sanitize' => 'sanitize_text_field',
+                                'schema'   => array( 'type' => 'string' ),
+                        ),
+                        'wpam_pusher_secret'       => array(
+                                'sanitize' => 'sanitize_text_field',
+                                'schema'   => array( 'type' => 'string' ),
+                        ),
+                        'wpam_pusher_cluster'      => array(
+                                'sanitize' => 'sanitize_text_field',
+                                'schema'   => array( 'type' => 'string' ),
+                        ),
+                        'wpam_soft_close_threshold' => array(
+                                'sanitize' => 'absint',
+                                'schema'   => array( 'type' => 'integer' ),
+                        ),
+                        'wpam_soft_close_extend'   => array(
+                                'sanitize' => 'absint',
+                                'schema'   => array( 'type' => 'integer' ),
+                        ),
+                        'wpam_max_extensions'      => array(
+                                'sanitize' => 'absint',
+                                'schema'   => array( 'type' => 'integer' ),
+                        ),
+                        'wpam_realtime_provider'   => array(
+                                'sanitize' => 'sanitize_key',
+                                'schema'   => array( 'type' => 'string' ),
+                        ),
+                        'wpam_require_kyc'         => array(
+                                'sanitize' => 'rest_sanitize_boolean',
+                                'schema'   => array( 'type' => 'boolean' ),
+                        ),
+                        'wpam_default_auction_type' => array(
+                                'sanitize' => 'sanitize_key',
+                                'schema'   => array( 'type' => 'string' ),
+                        ),
+                        'wpam_enable_proxy_bidding' => array(
+                                'sanitize' => 'rest_sanitize_boolean',
+                                'schema'   => array( 'type' => 'boolean' ),
+                        ),
+                        'wpam_enable_silent_bidding' => array(
+                                'sanitize' => 'rest_sanitize_boolean',
+                                'schema'   => array( 'type' => 'boolean' ),
+                        ),
+                        'wpam_buyer_premium'       => array(
+                                'sanitize' => 'floatval',
+                                'schema'   => array( 'type' => 'number' ),
+                        ),
+                        'wpam_seller_fee'          => array(
+                                'sanitize' => 'floatval',
+                                'schema'   => array( 'type' => 'number' ),
+                        ),
+                        'wpam_webhook_url'         => array(
+                                'sanitize' => 'esc_url_raw',
+                                'schema'   => array(
+                                        'type'   => 'string',
+                                        'format' => 'uri',
+                                ),
+                        ),
+                        'wpam_enable_toasts'       => array(
+                                'sanitize' => 'rest_sanitize_boolean',
+                                'schema'   => array( 'type' => 'boolean' ),
+                        ),
+                );
+        }
+
+        private function get_option_keys() {
+                return array_keys( $this->get_setting_definitions() );
+        }
 
 	public function render_settings_page() {
 		echo '<div class="wrap">';
