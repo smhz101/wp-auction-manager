@@ -43,6 +43,7 @@ spl_autoload_register(
         $directories = [
             WPAM_PLUGIN_DIR . 'includes/',
             WPAM_PLUGIN_DIR . 'includes/api-integrations/',
+            WPAM_PLUGIN_DIR . 'includes/auction/',
             WPAM_PLUGIN_DIR . 'admin/',
             WPAM_PLUGIN_DIR . 'public/',
         ];

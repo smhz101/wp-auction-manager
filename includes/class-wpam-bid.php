@@ -2,6 +2,7 @@
 namespace WPAM\Includes;
 
 use WPAM\Includes\WPAM_Auction_State;
+use WPAM\Includes\WPAM_Soft_Close;
 
 class WPAM_Bid {
     protected $realtime_provider;
@@ -274,34 +275,9 @@ class WPAM_Bid {
 
 
         // Extend auction end time if within soft close window
-        $extended   = false;
-        $new_end_ts = $end_ts;
-        $threshold  = absint( get_option( 'wpam_soft_close_threshold', 0 ) );
-        $extension  = absint( get_option( 'wpam_soft_close_extend', 0 ) );
-        $legacy     = absint( get_option( 'wpam_soft_close', 0 ) ) * 60;
-
-        if ( 0 === $threshold ) {
-            $threshold = $legacy;
-        }
-
-        if ( 0 === $extension ) {
-            $extension = $legacy;
-        }
-
-        $extension_count = (int) get_post_meta( $auction_id, '_auction_extension_count', true );
-        $max_extensions  = absint( get_option( 'wpam_max_extensions', 0 ) );
-
-        if ( $threshold > 0 && $end_ts - $now <= $threshold ) {
-            if ( 0 === $max_extensions || $extension_count < $max_extensions ) {
-                $new_end_ts = $end_ts + $extension;
-                $new_end    = wp_date( 'Y-m-d H:i:s', $new_end_ts, wp_timezone() );
-                update_post_meta( $auction_id, '_auction_end', $new_end );
-                update_post_meta( $auction_id, '_auction_extension_count', $extension_count + 1 );
-                wp_clear_scheduled_hook( 'wpam_auction_end', [ $auction_id ] );
-                wp_schedule_single_event( (int) get_gmt_from_date( $new_end, 'U' ), 'wpam_auction_end', [ $auction_id ] );
-                $extended = true;
-            }
-        }
+        $soft_close = WPAM_Soft_Close::maybe_extend_end( $auction_id, $end_ts, $now );
+        $extended   = $soft_close['extended'];
+        $new_end_ts = $soft_close['new_end_ts'];
 
         // Determine new highest bid after processing
         $new_highest_row  = $wpdb->get_row( $wpdb->prepare( "SELECT user_id, bid_amount FROM $table WHERE auction_id = %d ORDER BY bid_amount {$order}, id DESC LIMIT 1", $auction_id ), ARRAY_A );
@@ -630,34 +606,9 @@ class WPAM_Bid {
             }
         }
 
-        $extended   = false;
-        $new_end_ts = $end_ts;
-        $threshold  = absint( get_option( 'wpam_soft_close_threshold', 0 ) );
-        $extension  = absint( get_option( 'wpam_soft_close_extend', 0 ) );
-        $legacy     = absint( get_option( 'wpam_soft_close', 0 ) ) * 60;
-
-        if ( 0 === $threshold ) {
-            $threshold = $legacy;
-        }
-
-        if ( 0 === $extension ) {
-            $extension = $legacy;
-        }
-
-        $extension_count = (int) get_post_meta( $auction_id, '_auction_extension_count', true );
-        $max_extensions  = absint( get_option( 'wpam_max_extensions', 0 ) );
-
-        if ( $threshold > 0 && $end_ts - $now <= $threshold ) {
-            if ( 0 === $max_extensions || $extension_count < $max_extensions ) {
-                $new_end_ts = $end_ts + $extension;
-                $new_end    = wp_date( 'Y-m-d H:i:s', $new_end_ts, wp_timezone() );
-                update_post_meta( $auction_id, '_auction_end', $new_end );
-                update_post_meta( $auction_id, '_auction_extension_count', $extension_count + 1 );
-                wp_clear_scheduled_hook( 'wpam_auction_end', [ $auction_id ] );
-                wp_schedule_single_event( (int) get_gmt_from_date( $new_end, 'U' ), 'wpam_auction_end', [ $auction_id ] );
-                $extended = true;
-            }
-        }
+        $soft_close = WPAM_Soft_Close::maybe_extend_end( $auction_id, $end_ts, $now );
+        $extended   = $soft_close['extended'];
+        $new_end_ts = $soft_close['new_end_ts'];
 
         $new_highest_row  = $wpdb->get_row( $wpdb->prepare( "SELECT user_id, bid_amount FROM $table WHERE auction_id = %d ORDER BY bid_amount {$order}, id DESC LIMIT 1", $auction_id ), ARRAY_A );
         $new_highest_user = $new_highest_row ? intval( $new_highest_row['user_id'] ) : 0;
