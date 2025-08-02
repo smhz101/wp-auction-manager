@@ -38,6 +38,8 @@ When editing an auction product you can configure additional options in the **Au
 - **Proxy Bidding** – automatically outbid others up to a maximum amount.
 - **Silent Bidding** – hides all bids until the auction ends.
 
+The auction panel includes a contextual help column. Hover or focus on any field to see a description in the right-hand panel, replacing WooCommerce's default tooltips.
+
 ### Soft-close settings
 
 Under **Auctions → Settings** you can configure the soft-close threshold and the extension duration. If a bid arrives within the threshold, the end time is extended by the duration. By default both values are 30 seconds.

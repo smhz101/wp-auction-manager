@@ -352,12 +352,14 @@ class WPAM_Admin {
 						wp_enqueue_script( 'wpam-select-auction-type', WPAM_PLUGIN_URL . 'assets/admin/js/select-auction-product-type.js', array( 'jquery' ), WPAM_PLUGIN_VERSION, true );
 		}
 
-		if ( in_array( $hook, array( 'post-new.php', 'post.php' ), true ) && 'product' === $screen->post_type ) {
-			wp_enqueue_style( 'flatpickr', WPAM_PLUGIN_URL . 'assets/admin/css/flatpickr.min.css', array(), WPAM_PLUGIN_VERSION );
-			wp_enqueue_script( 'flatpickr', WPAM_PLUGIN_URL . 'assets/admin/js/flatpickr.min.js', array(), WPAM_PLUGIN_VERSION, true );
-			wp_enqueue_script( 'wpam-date-picker', WPAM_PLUGIN_URL . 'assets/admin/js/auction-date-picker.js', array( 'jquery', 'flatpickr' ), WPAM_PLUGIN_VERSION, true );
+               if ( in_array( $hook, array( 'post-new.php', 'post.php' ), true ) && 'product' === $screen->post_type ) {
+                       wp_enqueue_style( 'flatpickr', WPAM_PLUGIN_URL . 'assets/admin/css/flatpickr.min.css', array(), WPAM_PLUGIN_VERSION );
+                       wp_enqueue_script( 'flatpickr', WPAM_PLUGIN_URL . 'assets/admin/js/flatpickr.min.js', array(), WPAM_PLUGIN_VERSION, true );
+                       wp_enqueue_script( 'wpam-date-picker', WPAM_PLUGIN_URL . 'assets/admin/js/auction-date-picker.js', array( 'jquery', 'flatpickr' ), WPAM_PLUGIN_VERSION, true );
                        wp_enqueue_script( 'wpam-auction-type-toggle', WPAM_PLUGIN_URL . 'assets/admin/js/auction-type-toggle.js', array( 'jquery' ), WPAM_PLUGIN_VERSION, true );
                        wp_enqueue_script( 'wpam-auction-relist-options', WPAM_PLUGIN_URL . 'assets/admin/js/auction-relist-options.js', array( 'jquery' ), WPAM_PLUGIN_VERSION, true );
+                       wp_enqueue_style( 'wpam-product-help-panel', WPAM_PLUGIN_URL . 'assets/admin/css/product-help-panel.css', array(), WPAM_PLUGIN_VERSION );
+                       wp_enqueue_script( 'wpam-product-help-panel', WPAM_PLUGIN_URL . 'assets/admin/js/product-help-panel.js', array( 'jquery' ), WPAM_PLUGIN_VERSION, true );
                }
 
 		$slug        = 'auctions';
