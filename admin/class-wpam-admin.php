@@ -576,17 +576,20 @@ class WPAM_Admin {
 			);
 	}
 
-	public function rest_get_settings( \WP_REST_Request $request ) {
-		$options = array();
-		foreach ( $this->get_option_keys() as $key ) {
-			$options[ $key ] = get_option( $key );
-		}
+        public function rest_get_settings( \WP_REST_Request $request ) {
+                $options = array();
+                foreach ( $this->get_option_keys() as $key ) {
+                        $options[ $key ] = get_option( $key );
+                }
 
-		return rest_ensure_response( $options );
-	}
+                $options['wpam_pusher_status'] = get_option( 'wpam_pusher_status', 'disabled' );
+
+                return rest_ensure_response( $options );
+        }
 
         public function rest_update_settings( \WP_REST_Request $request ) {
                 $params  = $request->get_json_params();
+                unset( $params['wpam_pusher_status'] );
                 $errors  = array();
                 $defines = $this->get_setting_definitions();
 

@@ -269,10 +269,11 @@
       setSaving(true);
       setNotice(''); // Clear previous notices
 
+      const { wpam_pusher_status, ...toSave } = settings;
       apiFetch({
         path: wpamSettings.rest_endpoint,
         method: 'POST',
-        data: settings,
+        data: toSave,
         headers: { 'X-WP-Nonce': wpamSettings.nonce },
       })
         .then((response) => {
@@ -462,9 +463,20 @@
     }
 
     function renderRealtime() {
+      const statusMap = {
+        connected: 'Connected',
+        invalid: 'Invalid credentials',
+        disabled: 'Disabled',
+      };
+      const status = statusMap[settings.wpam_pusher_status] || 'Unknown';
       return createElement(
         'div',
         null,
+        createElement(
+          'p',
+          { className: 'wpam-pusher-status' },
+          'Status: ' + status
+        ),
         createElement(SelectControl, {
           label: 'Realtime Provider',
           help: 'Service used for realtime updates.',
