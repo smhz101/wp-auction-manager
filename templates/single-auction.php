@@ -13,15 +13,15 @@ get_header();
     <form class="wpam-bid-form">
         <input type="number" step="0.01" class="wpam-bid-input" />
         <?php wp_nonce_field( 'wpam_place_bid', 'wpam_bid_nonce', false ); ?>
-        <button class="button wpam-bid-button" data-auction-id="<?php the_ID(); ?>">
+        <button class="button wpam-bid-button" data-auction-id="<?php echo esc_attr( get_the_ID() ); ?>">
             <?php _e( 'Place Bid', 'wpam' ); ?>
         </button>
     </form>
-    <div class="wpam-bid-status" data-auction-id="<?php the_ID(); ?>"></div>
-    <p><?php esc_html_e( 'Viewers:', 'wpam' ); ?> <span class="wpam-viewer-count" data-auction-id="<?php the_ID(); ?>">0</span></p>
-    <p><?php esc_html_e( 'Participants:', 'wpam' ); ?> <span class="wpam-participant-count" data-auction-id="<?php the_ID(); ?>">0</span></p>
+    <div class="wpam-bid-status" data-auction-id="<?php echo esc_attr( get_the_ID() ); ?>"></div>
+    <p><?php esc_html_e( 'Viewers:', 'wpam' ); ?> <span class="wpam-viewer-count" data-auction-id="<?php echo esc_attr( get_the_ID() ); ?>">0</span></p>
+    <p><?php esc_html_e( 'Participants:', 'wpam' ); ?> <span class="wpam-participant-count" data-auction-id="<?php echo esc_attr( get_the_ID() ); ?>">0</span></p>
     <?php wp_nonce_field( 'wpam_toggle_watchlist', 'wpam_watchlist_nonce', false ); ?>
-    <button class="button wpam-watchlist-button" data-auction-id="<?php the_ID(); ?>">
+    <button class="button wpam-watchlist-button" data-auction-id="<?php echo esc_attr( get_the_ID() ); ?>">
         <?php _e( 'Toggle Watchlist', 'wpam' ); ?>
     </button>
 
@@ -31,7 +31,7 @@ get_header();
         <?php if ( is_user_logged_in() ) : ?>
             <textarea class="wpam-message-input" rows="3"></textarea>
             <?php wp_nonce_field( 'wpam_submit_question', 'wpam_message_nonce', false ); ?>
-            <button class="wpam-message-button" data-auction-id="<?php the_ID(); ?>">
+            <button class="wpam-message-button" data-auction-id="<?php echo esc_attr( get_the_ID() ); ?>">
                 <?php esc_html_e( 'Submit Question', 'wpam' ); ?>
             </button>
         <?php else : ?>
