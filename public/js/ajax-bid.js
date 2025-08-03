@@ -12,53 +12,80 @@ jQuery(function ($) {
         $el,
         start: parseInt($el.data('start'), 10) * 1000,
         end: parseInt($el.data('end'), 10) * 1000,
+        status: $el.data('status'),
         last: 0,
       });
     });
 
-    function render(now) {
-      countdowns.forEach((cd) => {
-        if (now - cd.last < 1000) return;
-        cd.last = now;
+    function renderCountdown(cd, fromTime, toTime) {
+      // ✅ Force UTC-safe date parsing to avoid timezone mismatch
+      const fromUTC = new Date(new Date(fromTime).toISOString());
+      const toUTC = new Date(new Date(toTime).toISOString());
+      const duration = countdown(fromUTC, toUTC, countdown.ALL);
 
-        if (now >= cd.end) {
-          cd.$el.html('<strong>Ended</strong>');
-          return;
-        }
+      const units = [
+        { label: 'Years', value: duration.years },
+        { label: 'Months', value: duration.months },
+        { label: 'Days', value: duration.days },
+        { label: 'Hours', value: duration.hours },
+        { label: 'Mins', value: duration.minutes },
+        { label: 'Secs', value: duration.seconds },
+      ];
 
-        const from = now < cd.start ? cd.start : now;
-
-        // ✅ Force UTC-safe date parsing to avoid timezone mismatch
-        const fromUTC = new Date(new Date(from).toISOString());
-        const toUTC = new Date(new Date(cd.end).toISOString());
-        const duration = countdown(fromUTC, toUTC, countdown.ALL);
-
-        const units = [
-          { label: 'Years', value: duration.years },
-          { label: 'Months', value: duration.months },
-          { label: 'Days', value: duration.days },
-          { label: 'Hours', value: duration.hours },
-          { label: 'Mins', value: duration.minutes },
-          { label: 'Secs', value: duration.seconds },
-        ];
-
-        let content = '';
-        units.forEach((unit) => {
-          if (unit.value > 0) {
-            content += `
+      let content = '';
+      units.forEach((unit) => {
+        if (unit.value > 0) {
+          content += `
               <div style="text-align:center;">
                 <strong>${unit.value}</strong>
                 <div>${unit.label}</div>
               </div>
             `;
-          }
-        });
+        }
+      });
 
-        cd.$el.html(`
+      cd.$el.html(`
           <div class="wpam-countdown-wrapper" style="display:flex; gap:10px; font-family:sans-serif;">
             ${content}
           </div>
         `);
+    }
+
+    function render(now) {
+      countdowns.forEach((cd) => {
+        const currentStatus = cd.$el.data('status');
+        if (currentStatus !== cd.status) {
+          cd.status = currentStatus;
+          cd.last = 0;
+        }
+        if (now - cd.last < 1000) return;
+        cd.last = now;
+
+        let status = cd.status;
+
+        if (status === 'scheduled' && now >= cd.start) {
+          status = 'live';
+          cd.$el.data('status', status);
+          cd.status = status;
+        }
+
+        if (status === 'live' && now >= cd.end) {
+          status = 'ended';
+          cd.$el.data('status', status);
+          cd.status = status;
+        }
+
+        if (status === 'scheduled') {
+          renderCountdown(cd, now, cd.start);
+          return;
+        }
+
+        if (status === 'live') {
+          renderCountdown(cd, now, cd.end);
+          return;
+        }
+
+        cd.$el.html(`<strong>${status ? status.charAt(0).toUpperCase() + status.slice(1) : ''}</strong>`);
       });
 
       requestAnimationFrame(render);
