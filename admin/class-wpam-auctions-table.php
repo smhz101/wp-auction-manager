@@ -26,7 +26,7 @@ class WPAM_Auctions_Table extends \WP_List_Table {
 			),
 			'meta_query'     => array(),
 		);
-               $now                = wp_date( 'Y-m-d H:i:s', current_datetime()->getTimestamp(), wp_timezone() );
+               $now                = wp_date( 'Y-m-d H:i:s', current_datetime()->getTimestamp(), new \DateTimeZone( 'UTC' ) );
 		if ( $this->auction_type ) {
 			$args['meta_query'][] = array(
 				'key'   => '_auction_type',
@@ -66,8 +66,10 @@ class WPAM_Auctions_Table extends \WP_List_Table {
 		$query = new \WP_Query( $args );
 		$items = array();
 		foreach ( $query->posts as $post ) {
-                       $start   = get_post_meta( $post->ID, '_auction_start', true );
-                       $end     = get_post_meta( $post->ID, '_auction_end', true );
+                       $start_gmt = get_post_meta( $post->ID, '_auction_start', true );
+                       $end_gmt   = get_post_meta( $post->ID, '_auction_end', true );
+                       $start     = $start_gmt ? get_date_from_gmt( $start_gmt, 'Y-m-d H:i:s' ) : '';
+                       $end       = $end_gmt ? get_date_from_gmt( $end_gmt, 'Y-m-d H:i:s' ) : '';
                        $state   = get_post_meta( $post->ID, '_auction_state', true );
                        $status  = get_post_meta( $post->ID, '_auction_status', true );
                        $reason  = get_post_meta( $post->ID, '_auction_ending_reason', true );

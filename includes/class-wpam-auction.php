@@ -151,6 +151,7 @@ class WPAM_Auction {
                $timezone    = wp_timezone();
                $current_ts  = current_datetime()->getTimestamp();
                $start_value = get_post_meta( $post_id, '_auction_start', true );
+               $start_value = $start_value ? get_date_from_gmt( $start_value, 'Y-m-d H:i:s' ) : '';
 
                if ( ! $start_value ) {
                        $start_value = wp_date( 'Y-m-d H:i:s', $current_ts + HOUR_IN_SECONDS, $timezone );
@@ -160,6 +161,7 @@ class WPAM_Auction {
                $is_past_start   = $start_timestamp < $current_ts;
 
                $end_value = get_post_meta( $post_id, '_auction_end', true );
+               $end_value = $end_value ? get_date_from_gmt( $end_value, 'Y-m-d H:i:s' ) : '';
                if ( ! $end_value ) {
                        $end_value = wp_date( 'Y-m-d H:i:s', $start_timestamp + DAY_IN_SECONDS, $timezone );
                }
@@ -555,28 +557,32 @@ class WPAM_Auction {
 			update_post_meta( $post_id, '_product_type', 'auction' );
 		}
 
-		$start = null;
-		$end   = null;
+               $start = null;
+               $end   = null;
 
-		if ( isset( $_POST['_auction_start'] ) ) {
-			$start = wc_clean( wp_unslash( $_POST['_auction_start'] ) );
-			update_post_meta( $post_id, '_auction_start', $start );
-		} else {
-			$start = get_post_meta( $post_id, '_auction_start', true );
-		}
+               if ( isset( $_POST['_auction_start'] ) ) {
+                       $start_local = wc_clean( wp_unslash( $_POST['_auction_start'] ) );
+                       $start       = get_gmt_from_date( $start_local );
+                       update_post_meta( $post_id, '_auction_start', $start );
+               } else {
+                       $start = get_post_meta( $post_id, '_auction_start', true );
+               }
 
-                if ( isset( $_POST['_auction_end'] ) ) {
+               if ( isset( $_POST['_auction_end'] ) ) {
 
-                        $end = wc_clean( $_POST['_auction_end'] );
-                        update_post_meta( $post_id, '_auction_end', $end );
+                       $end_local = wc_clean( $_POST['_auction_end'] );
+                       $end       = get_gmt_from_date( $end_local );
+                       update_post_meta( $post_id, '_auction_end', $end );
 
-                        $timestamp = strtotime( $end );
-                        if ( $timestamp && $timestamp > time() ) {
-                                wp_clear_scheduled_hook( 'wpam_auction_end', array( $post_id ) );
-                                wp_schedule_single_event( $timestamp, 'wpam_auction_end', array( $post_id ) );
-                        }
-                        delete_post_meta( $post_id, '_auction_reminder_sent' );
-                }
+                       $timestamp = ( new \DateTimeImmutable( $end, new \DateTimeZone( 'UTC' ) ) )->getTimestamp();
+                       if ( $timestamp && $timestamp > time() ) {
+                               wp_clear_scheduled_hook( 'wpam_auction_end', array( $post_id ) );
+                               wp_schedule_single_event( $timestamp, 'wpam_auction_end', array( $post_id ) );
+                       }
+                       delete_post_meta( $post_id, '_auction_reminder_sent' );
+               } else {
+                       $end = get_post_meta( $post_id, '_auction_end', true );
+               }
 
                 $meta_keys = array(
                         '_auction_type',
@@ -781,15 +787,19 @@ class WPAM_Auction {
                        return false;
                }
 
-               $timezone = wp_timezone();
-               $duration = strtotime( get_post_meta( $auction_id, '_auction_end', true ) ) - strtotime( get_post_meta( $auction_id, '_auction_start', true ) );
-               $delay    = (int) get_post_meta( $auction_id, '_auction_relist_delay', true ) * MINUTE_IN_SECONDS;
+               $timezone   = wp_timezone();
+               $start_dt   = new \DateTimeImmutable( get_post_meta( $auction_id, '_auction_start', true ), new \DateTimeZone( 'UTC' ) );
+               $end_dt     = new \DateTimeImmutable( get_post_meta( $auction_id, '_auction_end', true ), new \DateTimeZone( 'UTC' ) );
+               $duration   = $end_dt->getTimestamp() - $start_dt->getTimestamp();
+               $delay      = (int) get_post_meta( $auction_id, '_auction_relist_delay', true ) * MINUTE_IN_SECONDS;
                $start_ts = current_datetime()->getTimestamp() + $delay;
-               $start    = wp_date( 'Y-m-d H:i:s', $start_ts, $timezone );
-               $end      = wp_date( 'Y-m-d H:i:s', $start_ts + $duration, $timezone );
+               $start      = wp_date( 'Y-m-d H:i:s', $start_ts, $timezone );
+               $end        = wp_date( 'Y-m-d H:i:s', $start_ts + $duration, $timezone );
+               $start_gmt  = get_gmt_from_date( $start );
+               $end_gmt    = get_gmt_from_date( $end );
 
-               update_post_meta( $auction_id, '_auction_start', $start );
-               update_post_meta( $auction_id, '_auction_end', $end );
+               update_post_meta( $auction_id, '_auction_start', $start_gmt );
+               update_post_meta( $auction_id, '_auction_end', $end_gmt );
                update_post_meta( $auction_id, '_auction_status', 'scheduled' );
                update_post_meta( $auction_id, '_auction_state', WPAM_Auction_State::SCHEDULED );
                delete_post_meta( $auction_id, '_auction_ended' );
@@ -834,12 +844,14 @@ class WPAM_Auction {
                $query = new \WP_Query( $args );
 
                foreach ( $query->posts as $post ) {
-                       $start = strtotime( get_post_meta( $post->ID, '_auction_start', true ) );
+                       $start_meta = get_post_meta( $post->ID, '_auction_start', true );
+                       $start      = $start_meta ? ( new \DateTimeImmutable( $start_meta, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : false;
                        if ( $start && ! as_has_scheduled_action( 'wpam_auction_start', array( $post->ID ) ) ) {
                                as_schedule_single_action( $start, 'wpam_auction_start', array( $post->ID ) );
                        }
 
-                       $end = strtotime( get_post_meta( $post->ID, '_auction_end', true ) );
+                       $end_meta = get_post_meta( $post->ID, '_auction_end', true );
+                       $end      = $end_meta ? ( new \DateTimeImmutable( $end_meta, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : false;
                        if ( $end && ! as_has_scheduled_action( 'wpam_auction_end', array( $post->ID ) ) ) {
                                as_schedule_single_action( $end, 'wpam_auction_end', array( $post->ID ) );
                        }
@@ -853,7 +865,7 @@ class WPAM_Auction {
                         'meta_query'  => array(
                                 array(
                                         'key'     => '_auction_end',
-                                        'value'   => wp_date( 'Y-m-d H:i:s', null, wp_timezone() ),
+                                        'value'   => wp_date( 'Y-m-d H:i:s', null, new \DateTimeZone( 'UTC' ) ),
                                         'compare' => '<=',
                                         'type'    => 'DATETIME',
                                 ),
@@ -897,8 +909,8 @@ class WPAM_Auction {
                }
 
                $now      = current_datetime()->getTimestamp();
-               $start_ts = strtotime( get_post_meta( $auction_id, '_auction_start', true ) );
-               $end_ts   = strtotime( get_post_meta( $auction_id, '_auction_end', true ) );
+               $start_ts = ( new \DateTimeImmutable( get_post_meta( $auction_id, '_auction_start', true ), new \DateTimeZone( 'UTC' ) ) )->getTimestamp();
+               $end_ts   = ( new \DateTimeImmutable( get_post_meta( $auction_id, '_auction_end', true ), new \DateTimeZone( 'UTC' ) ) )->getTimestamp();
 
                if ( $now >= $end_ts ) {
                        if ( get_post_meta( $auction_id, '_auction_winner', true ) ) {
@@ -958,8 +970,8 @@ class WPAM_Auction {
         }
 
         public function send_auction_reminders() {
-                $now      = current_datetime()->getTimestamp();
-                $timezone = wp_timezone();
+               $now      = current_datetime()->getTimestamp();
+               $timezone = new \DateTimeZone( 'UTC' );
                 $args     = array(
                         'post_type'   => 'product',
                         'post_status' => 'publish',

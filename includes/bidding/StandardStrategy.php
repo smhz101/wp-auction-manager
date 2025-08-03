@@ -32,7 +32,7 @@ class StandardStrategy implements BidStrategyInterface {
                 'auction_id' => $auction_id,
                 'user_id'    => $user_id,
                 'bid_amount' => $bid,
-                'bid_time'   => wp_date( 'Y-m-d H:i:s', null, wp_timezone() ),
+                'bid_time'   => wp_date( 'Y-m-d H:i:s', null, new \DateTimeZone( 'UTC' ) ),
             ],
             [ '%d', '%d', '%f', '%s' ]
         );

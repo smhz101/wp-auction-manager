@@ -27,7 +27,7 @@ class ProxyStrategy implements BidStrategyInterface {
                 'auction_id' => $auction_id,
                 'user_id'    => $user_id,
                 'bid_amount' => $place_bid,
-                'bid_time'   => wp_date( 'Y-m-d H:i:s', null, wp_timezone() ),
+                'bid_time'   => wp_date( 'Y-m-d H:i:s', null, new \DateTimeZone( 'UTC' ) ),
             ],
             [ '%d', '%d', '%f', '%s' ]
         );
@@ -48,7 +48,7 @@ class ProxyStrategy implements BidStrategyInterface {
                         'auction_id' => $auction_id,
                         'user_id'    => $highest_user,
                         'bid_amount' => $auto_bid,
-                        'bid_time'   => wp_date( 'Y-m-d H:i:s', null, wp_timezone() ),
+                        'bid_time'   => wp_date( 'Y-m-d H:i:s', null, new \DateTimeZone( 'UTC' ) ),
                     ],
                     [ '%d', '%d', '%f', '%s' ]
                 );

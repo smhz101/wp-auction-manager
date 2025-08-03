@@ -27,9 +27,9 @@ class WPAM_HTML {
     $atts = wp_parse_args( $atts, $defaults );
 
     $start    = get_post_meta( $auction_id, '_auction_start', true );
-    $start_ts = $start ? ( new \DateTimeImmutable( $start, wp_timezone() ) )->getTimestamp() : 0;
+    $start_ts = $start ? ( new \DateTimeImmutable( $start, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : 0;
     $end      = get_post_meta( $auction_id, '_auction_end', true );
-    $end_ts   = $end ? ( new \DateTimeImmutable( $end, wp_timezone() ) )->getTimestamp() : 0;
+    $end_ts   = $end ? ( new \DateTimeImmutable( $end, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : 0;
     $type   = get_post_meta( $auction_id, '_auction_type', true );
     $status = get_post_meta( $auction_id, '_auction_state', true );
     $now    = current_datetime()->getTimestamp();

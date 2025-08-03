@@ -50,7 +50,7 @@ class WPAM_Admin_Log {
 				'admin_id'   => get_current_user_id(),
 				'action'     => $action,
 				'details'    => maybe_serialize( $details ),
-				'logged_at'  => wp_date( 'Y-m-d H:i:s', null, wp_timezone() ),
+                                'logged_at'  => wp_date( 'Y-m-d H:i:s', null, new \DateTimeZone( 'UTC' ) ),
 			),
 			array( '%d', '%d', '%s', '%s', '%s' )
 		);
