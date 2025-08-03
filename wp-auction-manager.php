@@ -89,6 +89,7 @@ function wpam_activation() {
     }
 
     \WPAM\Includes\WPAM_Install::activate();
+    update_option( 'wpam_version', WPAM_PLUGIN_VERSION );
 }
 
 function wpam_run_plugin() {
@@ -136,6 +137,12 @@ function wpam_plugins_loaded() {
     if ( ! class_exists( 'WooCommerce' ) ) {
         add_action( 'admin_notices', 'wpam_wc_missing_notice' );
         return;
+    }
+
+    $installed = get_option( 'wpam_version' );
+    if ( WPAM_PLUGIN_VERSION !== $installed ) {
+        \WPAM\Includes\WPAM_Install::activate();
+        update_option( 'wpam_version', WPAM_PLUGIN_VERSION );
     }
 
     wpam_run_plugin();
