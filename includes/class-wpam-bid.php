@@ -304,23 +304,31 @@ class WPAM_Bid {
         $highest = $highest ? ( function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $highest ) : (float) $highest ) : 0;
         $lead_user = intval( get_post_meta( $auction_id, '_auction_lead_user', true ) );
 
-        $lead_user = intval( get_post_meta( $auction_id, '_auction_lead_user', true ) );
+        $start    = get_post_meta( $auction_id, '_auction_start', true );
+        $end      = get_post_meta( $auction_id, '_auction_end', true );
+        $start_ts = $start ? ( new \DateTimeImmutable( $start, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : 0;
+        $end_ts   = $end ? ( new \DateTimeImmutable( $end, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : 0;
+        $state    = get_post_meta( $auction_id, '_auction_state', true );
 
         if ( $sealed || self::silent_enabled( $auction_id ) ) {
-            $end    = get_post_meta( $auction_id, '_auction_end', true );
-            $end_ts = $end ? ( new \DateTimeImmutable( $end, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : 0;
             if ( current_datetime()->getTimestamp() < $end_ts ) {
-                $highest  = 0;
+                $highest   = 0;
                 $lead_user = 0;
             }
         }
 
         $ending_reason = '';
-        if ( WPAM_Auction_State::ENDED === get_post_meta( $auction_id, '_auction_state', true ) ) {
+        if ( WPAM_Auction_State::ENDED === $state ) {
             $ending_reason = get_post_meta( $auction_id, '_auction_ending_reason', true );
         }
 
-        $response = [ 'highest_bid' => $highest, 'lead_user' => $lead_user ];
+        $response = [
+            'highest_bid' => $highest,
+            'lead_user'   => $lead_user,
+            'start_ts'    => $start_ts,
+            'end_ts'      => $end_ts,
+            'state'       => $state,
+        ];
         if ( $ending_reason ) {
             $response['ending_reason'] = $ending_reason;
         }

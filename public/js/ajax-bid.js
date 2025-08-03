@@ -287,17 +287,24 @@ jQuery(function ($) {
               showToast(i18n.reserve_not_met || 'Reserve price not met', 'warning');
               bidStatus[auctionId + '_reserve'] = true;
             }
-            if (
-              res.data.new_start_ts ||
-              res.data.new_end_ts ||
-              res.data.new_status
-            ) {
+            if (res.data.start_ts || res.data.end_ts || res.data.state) {
               updateCountdown(
                 auctionId,
-                res.data.new_start_ts,
-                res.data.new_end_ts,
-                res.data.new_status
+                res.data.start_ts,
+                res.data.end_ts,
+                res.data.state
               );
+              const container = bidEl.closest(
+                '.auction-single, .wpam-auction-block'
+              );
+              if (container.length) {
+                if (res.data.state)
+                  container.attr('data-status', res.data.state);
+                if (res.data.start_ts)
+                  container.attr('data-start', res.data.start_ts);
+                if (res.data.end_ts)
+                  container.attr('data-end', res.data.end_ts);
+              }
             }
           }
         }
