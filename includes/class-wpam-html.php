@@ -46,7 +46,7 @@ class WPAM_HTML {
 
     ob_start();
     echo '<div class="wpam-auction-block theme-1">';
-
+    
     if ( $atts['showStatus'] ) {
       echo '<p class="wpam-status auction-status">' . esc_html( ucfirst( $status ) ) . '</p>';
       echo '<p class="wpam-type">' . esc_html( ucfirst( $type ) ) . '</p>';

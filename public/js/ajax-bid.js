@@ -2,6 +2,7 @@ jQuery(function ($) {
   const i18n = wpam_ajax.i18n || {};
   toastr.options.positionClass = 'toast-top-right';
   toastr.options.timeOut = 3000;
+
   function startCountdowns() {
     const countdowns = [];
 
@@ -17,9 +18,7 @@ jQuery(function ($) {
 
     function render(now) {
       countdowns.forEach((cd) => {
-        if (now - cd.last < 1000) {
-          return;
-        }
+        if (now - cd.last < 1000) return;
         cd.last = now;
 
         if (now >= cd.end) {
@@ -28,7 +27,11 @@ jQuery(function ($) {
         }
 
         const from = now < cd.start ? cd.start : now;
-        const duration = countdown(new Date(from), new Date(cd.end), countdown.ALL);
+
+        // ✅ Force UTC-safe date parsing to avoid timezone mismatch
+        const fromUTC = new Date(new Date(from).toISOString());
+        const toUTC = new Date(new Date(cd.end).toISOString());
+        const duration = countdown(fromUTC, toUTC, countdown.ALL);
 
         const units = [
           { label: 'Years', value: duration.years },
@@ -43,19 +46,19 @@ jQuery(function ($) {
         units.forEach((unit) => {
           if (unit.value > 0) {
             content += `
-          <div style="text-align:center;">
-            <strong>${unit.value}</strong>
-            <div>${unit.label}</div>
-          </div>
-        `;
+              <div style="text-align:center;">
+                <strong>${unit.value}</strong>
+                <div>${unit.label}</div>
+              </div>
+            `;
           }
         });
 
         cd.$el.html(`
-      <div class="wpam-countdown-wrapper" style="display:flex; gap:10px; font-family:sans-serif;">
-        ${content}
-      </div>
-    `);
+          <div class="wpam-countdown-wrapper" style="display:flex; gap:10px; font-family:sans-serif;">
+            ${content}
+          </div>
+        `);
       });
 
       requestAnimationFrame(render);
@@ -65,6 +68,8 @@ jQuery(function ($) {
   }
 
   startCountdowns();
+
+  /** ------------------------------------------------- */
 
   const userBids = {};
   const bidStatus = {};
@@ -87,7 +92,7 @@ jQuery(function ($) {
     if (!status) return;
     const msg =
       status === 'max'
-        ? i18n.max_bidder || "Max bid reached"
+        ? i18n.max_bidder || 'Max bid reached'
         : status === 'winning'
         ? i18n.winning || "You're winning"
         : i18n.outbid || "You're losing";
@@ -231,7 +236,9 @@ jQuery(function ($) {
         el.text(data.bid);
 
         if (typeof data.participants !== 'undefined') {
-          $('.wpam-participant-count[data-auction-id="' + data.auction_id + '"]').text(data.participants);
+          $('.wpam-participant-count[data-auction-id="' + data.auction_id + '"]').text(
+            data.participants
+          );
         }
         if (typeof data.viewers !== 'undefined') {
           $('.wpam-viewer-count[data-auction-id="' + data.auction_id + '"]').text(data.viewers);
@@ -247,7 +254,9 @@ jQuery(function ($) {
         const el = $('.wpam-current-bid[data-auction-id="' + data.auction_id + '"]');
         el.text(data.amount);
         if (typeof data.participants !== 'undefined') {
-          $('.wpam-participant-count[data-auction-id="' + data.auction_id + '"]').text(data.participants);
+          $('.wpam-participant-count[data-auction-id="' + data.auction_id + '"]').text(
+            data.participants
+          );
         }
         if (data.statuses) {
           const current = parseInt(wpam_ajax.current_user_id, 10);

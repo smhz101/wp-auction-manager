@@ -42,7 +42,11 @@ document.addEventListener('DOMContentLoaded', function () {
         const from = now < start ? start : now;
         const to = end;
 
-        const duration = countdown(new Date(from), new Date(to), countdown.ALL);
+        // ✅ Force UTC-safe Date objects using ISO strings
+        const fromUTC = new Date(new Date(from).toISOString());
+        const toUTC = new Date(new Date(to).toISOString());
+
+        const duration = countdown(fromUTC, toUTC, countdown.ALL);
 
         const units = [
           { label: 'Years', value: duration.years },
