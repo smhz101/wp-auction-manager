@@ -45,15 +45,15 @@ class WPAM_HTML {
     $display_highest = ( $silent && $now < $end_ts ) ? __( 'Hidden', 'wpam' ) : wc_price( $highest );
 
     ob_start();
-    echo '<div class="wpam-auction-block theme-1">';
+    echo '<div class="wpam-auction-block theme-1" data-status="' . esc_attr( $status ) . '" data-start="' . esc_attr( $start_ts ) . '" data-end="' . esc_attr( $end_ts ) . '">';
     
     if ( $atts['showStatus'] ) {
       echo '<p class="wpam-status auction-status">' . esc_html( ucfirst( $status ) ) . '</p>';
       echo '<p class="wpam-type">' . esc_html( ucfirst( $type ) ) . '</p>';
     }
 
-    if ( $atts['showCountdown'] ) {
-      echo '<p class="wpam-countdown" data-start="' . esc_attr( $start_ts ) . '" data-end="' . esc_attr( $end_ts ) . '"></p>';
+    if ( $atts['showCountdown'] && ! in_array( $status, [ 'ended', 'canceled', 'suspended' ], true ) ) {
+      echo '<p class="wpam-countdown" data-start="' . esc_attr( $start_ts ) . '" data-end="' . esc_attr( $end_ts ) . '" data-status="' . esc_attr( $status ) . '"></p>';
     }
 
     $label = ( 'reverse' === $type ) ? __( 'Lowest Bid:', 'wpam' ) : __( 'Current Bid:', 'wpam' );

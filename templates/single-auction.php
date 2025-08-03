@@ -1,17 +1,18 @@
 <?php
 get_header();
+$start          = get_post_meta( get_the_ID(), '_auction_start', true );
+$start_ts       = $start ? ( new \DateTimeImmutable( $start, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : 0;
+$end            = get_post_meta( get_the_ID(), '_auction_end', true );
+$end_ts         = $end ? ( new \DateTimeImmutable( $end, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : 0;
+$status         = get_post_meta( get_the_ID(), '_auction_state', true );
+$buy_now_enabled = get_post_meta( get_the_ID(), '_auction_enable_buy_now', true );
+$buy_now_price   = get_post_meta( get_the_ID(), '_auction_buy_now', true );
 ?>
-<div class="auction-single">
+<div class="auction-single" data-status="<?php echo esc_attr( $status ); ?>" data-start="<?php echo esc_attr( $start_ts ); ?>" data-end="<?php echo esc_attr( $end_ts ); ?>">
     <h1><?php the_title(); ?></h1>
-    <?php
-    $start    = get_post_meta( get_the_ID(), '_auction_start', true );
-    $start_ts = $start ? ( new \DateTimeImmutable( $start, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : 0;
-    $end      = get_post_meta( get_the_ID(), '_auction_end', true );
-    $end_ts   = $end ? ( new \DateTimeImmutable( $end, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : 0;
-    $buy_now_enabled = get_post_meta( get_the_ID(), '_auction_enable_buy_now', true );
-    $buy_now_price   = get_post_meta( get_the_ID(), '_auction_buy_now', true );
-    ?>
-    <p class="wpam-countdown" data-start="<?php echo esc_attr( $start_ts ); ?>" data-end="<?php echo esc_attr( $end_ts ); ?>"></p>
+    <?php if ( ! in_array( $status, [ 'ended', 'canceled', 'suspended' ], true ) ) : ?>
+        <p class="wpam-countdown" data-start="<?php echo esc_attr( $start_ts ); ?>" data-end="<?php echo esc_attr( $end_ts ); ?>" data-status="<?php echo esc_attr( $status ); ?>"></p>
+    <?php endif; ?>
     <form class="wpam-bid-form">
         <input type="number" step="0.01" class="wpam-bid-input" />
         <?php wp_nonce_field( 'wpam_place_bid', 'wpam_bid_nonce', false ); ?>
