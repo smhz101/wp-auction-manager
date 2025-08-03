@@ -67,6 +67,7 @@ function wpam_load_textdomain() {
     load_plugin_textdomain( 'wpam', false, basename( dirname( __FILE__ ) ) . '/languages' );
 }
 add_action( 'init', 'wpam_load_textdomain' );
+add_action( 'init', [ '\\WPAM\\Includes\\WPAM_Install', 'register_endpoints' ] );
 
 /**
  * Show admin notice when WooCommerce is missing.

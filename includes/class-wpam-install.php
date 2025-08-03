@@ -2,7 +2,7 @@
 namespace WPAM\Includes;
 
 class WPAM_Install {
-	public static function activate() {
+        public static function activate() {
 		global $wpdb;
 		$charset_collate = $wpdb->get_charset_collate();
 		$table_name      = $wpdb->prefix . 'wc_auction_bids';
@@ -115,10 +115,9 @@ class WPAM_Install {
                         $admin->add_cap( 'auction_bidder' );
                 }
 
-                add_rewrite_endpoint( 'watchlist', EP_ROOT | EP_PAGES );
-		add_rewrite_endpoint( 'my-bids', EP_ROOT | EP_PAGES );
-		add_rewrite_endpoint( 'auctions-won', EP_ROOT | EP_PAGES );
-		flush_rewrite_rules();
+                add_action( 'init', [ self::class, 'register_endpoints' ] );
+                self::register_endpoints();
+                flush_rewrite_rules();
 
 		// Schedule cron events for existing auctions
 		$auctions = get_posts(
@@ -135,7 +134,7 @@ class WPAM_Install {
 			)
 		);
 
-		foreach ( $auctions as $auction_id ) {
+                foreach ( $auctions as $auction_id ) {
 			$start = get_post_meta( $auction_id, '_auction_start', true );
 			$end   = get_post_meta( $auction_id, '_auction_end', true );
 
@@ -151,9 +150,16 @@ class WPAM_Install {
                                 wp_schedule_single_event( $start_ts, 'wpam_auction_start', array( $auction_id ) );
                         }
 
-                        if ( $end_ts && $end_ts > $now ) {
+                if ( $end_ts && $end_ts > $now ) {
                                 wp_schedule_single_event( $end_ts, 'wpam_auction_end', array( $auction_id ) );
-                        }
-		}
-	}
+                }
+                }
+                
+        }
+
+        public static function register_endpoints() {
+                add_rewrite_endpoint( 'watchlist', EP_ROOT | EP_PAGES );
+                add_rewrite_endpoint( 'my-bids', EP_ROOT | EP_PAGES );
+                add_rewrite_endpoint( 'auctions-won', EP_ROOT | EP_PAGES );
+        }
 }
