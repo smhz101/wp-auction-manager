@@ -20,6 +20,7 @@ jQuery(function ($) {
       cd.status = status;
       cd.$el.data('status', status).attr('data-status', status);
     }
+    cd.last = 0;
   }
 
   function startCountdowns() {
