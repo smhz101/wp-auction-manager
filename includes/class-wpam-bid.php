@@ -320,7 +320,19 @@ class WPAM_Bid {
             $ending_reason = get_post_meta( $auction_id, '_auction_ending_reason', true );
         }
 
-        $response = [ 'highest_bid' => $highest, 'lead_user' => $lead_user ];
+        $start    = get_post_meta( $auction_id, '_auction_start', true );
+        $end      = get_post_meta( $auction_id, '_auction_end', true );
+        $start_ts = $start ? ( new \DateTimeImmutable( $start, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : 0;
+        $end_ts   = $end ? ( new \DateTimeImmutable( $end, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : 0;
+        $state    = get_post_meta( $auction_id, '_auction_state', true );
+
+        $response = [
+            'highest_bid' => $highest,
+            'lead_user'   => $lead_user,
+            'start_ts'    => $start_ts,
+            'end_ts'      => $end_ts,
+            'state'       => $state,
+        ];
         if ( $ending_reason ) {
             $response['ending_reason'] = $ending_reason;
         }

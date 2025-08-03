@@ -287,16 +287,12 @@ jQuery(function ($) {
               showToast(i18n.reserve_not_met || 'Reserve price not met', 'warning');
               bidStatus[auctionId + '_reserve'] = true;
             }
-            if (
-              res.data.new_start_ts ||
-              res.data.new_end_ts ||
-              res.data.new_status
-            ) {
+            if (res.data.start_ts || res.data.end_ts || res.data.state) {
               updateCountdown(
                 auctionId,
-                res.data.new_start_ts,
-                res.data.new_end_ts,
-                res.data.new_status
+                res.data.start_ts,
+                res.data.end_ts,
+                res.data.state
               );
             }
           }
