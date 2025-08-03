@@ -141,15 +141,19 @@ class WPAM_Install {
 
                        $start_ts = $start ? ( new \DateTimeImmutable( $start, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : false;
                        $end_ts   = $end ? ( new \DateTimeImmutable( $end, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : false;
-                       $now      = current_time( 'timestamp' );
+                       $now      = current_datetime()->getTimestamp();
 
-			if ( $start_ts && $start_ts > $now ) {
-				wp_schedule_single_event( $start_ts, 'wpam_auction_start', array( $auction_id ) );
-			}
+                        // Clear previously scheduled events to ensure accurate timing after upgrades.
+                        wp_clear_scheduled_hook( 'wpam_auction_start', array( $auction_id ) );
+                        wp_clear_scheduled_hook( 'wpam_auction_end', array( $auction_id ) );
 
-			if ( $end_ts && $end_ts > $now ) {
-				wp_schedule_single_event( $end_ts, 'wpam_auction_end', array( $auction_id ) );
-			}
+                        if ( $start_ts && $start_ts > $now ) {
+                                wp_schedule_single_event( $start_ts, 'wpam_auction_start', array( $auction_id ) );
+                        }
+
+                        if ( $end_ts && $end_ts > $now ) {
+                                wp_schedule_single_event( $end_ts, 'wpam_auction_end', array( $auction_id ) );
+                        }
 		}
 	}
 }
