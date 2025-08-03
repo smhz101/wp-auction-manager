@@ -8,7 +8,6 @@ class WPAM_Watchlist {
 
         add_action( 'wp_ajax_wpam_get_watchlist', [ self::class, 'get_watchlist' ] );
 
-        add_action( 'init', [ $this, 'add_account_endpoint' ] );
         add_filter( 'woocommerce_account_menu_items', [ $this, 'add_account_menu_item' ] );
         add_action( 'woocommerce_account_watchlist_endpoint', [ $this, 'render_account_page' ] );
     }
@@ -103,10 +102,6 @@ class WPAM_Watchlist {
         }
 
         return rest_ensure_response( [ 'items' => self::get_user_watchlist_items( $user_id ) ] );
-    }
-
-    public function add_account_endpoint() {
-        add_rewrite_endpoint( 'watchlist', EP_ROOT | EP_PAGES );
     }
 
     public function add_account_menu_item( $items ) {
