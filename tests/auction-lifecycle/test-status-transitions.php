@@ -52,4 +52,20 @@ class Test_Auction_Status_Transitions extends WP_UnitTestCase {
         $state = $this->auction->determine_state( $auction_id );
         $this->assertSame( WPAM_Auction_State::CANCELED, $state );
     }
+
+    public function test_missing_dates_defaults_to_scheduled() {
+        $auction_id = $this->factory->post->create([
+            'post_type' => 'product',
+        ]);
+
+        remove_all_actions( 'admin_notices' );
+
+        $state = $this->auction->determine_state( $auction_id );
+
+        $this->assertSame( WPAM_Auction_State::SCHEDULED, $state );
+        $this->assertSame( 'scheduled', get_post_meta( $auction_id, '_auction_status', true ) );
+        $this->assertNotFalse( has_action( 'admin_notices' ) );
+
+        remove_all_actions( 'admin_notices' );
+    }
 }

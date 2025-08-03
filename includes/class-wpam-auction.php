@@ -922,9 +922,32 @@ class WPAM_Auction {
                        return WPAM_Auction_State::SUSPENDED;
                }
 
-               $now      = current_datetime()->getTimestamp();
-               $start_ts = ( new \DateTimeImmutable( get_post_meta( $auction_id, '_auction_start', true ), new \DateTimeZone( 'UTC' ) ) )->getTimestamp();
-               $end_ts   = ( new \DateTimeImmutable( get_post_meta( $auction_id, '_auction_end', true ), new \DateTimeZone( 'UTC' ) ) )->getTimestamp();
+               $now   = current_datetime()->getTimestamp();
+               $start = get_post_meta( $auction_id, '_auction_start', true );
+               $end   = get_post_meta( $auction_id, '_auction_end', true );
+
+               try {
+                       if ( empty( $start ) || empty( $end ) ) {
+                               throw new \Exception( 'Missing dates.' );
+                       }
+
+                       $start_ts = ( new \DateTimeImmutable( $start, new \DateTimeZone( 'UTC' ) ) )->getTimestamp();
+                       $end_ts   = ( new \DateTimeImmutable( $end, new \DateTimeZone( 'UTC' ) ) )->getTimestamp();
+               } catch ( \Exception $e ) {
+                       add_action(
+                               'admin_notices',
+                               function() use ( $auction_id ) {
+                                       echo '<div class="notice notice-warning"><p>' .
+                                               sprintf(
+                                                       esc_html__( 'Auction #%d is missing or has invalid start/end dates and has been set to scheduled.', 'wpam' ),
+                                                       $auction_id
+                                               ) .
+                                               '</p></div>';
+                               }
+                       );
+                       update_post_meta( $auction_id, '_auction_status', 'scheduled' );
+                       return WPAM_Auction_State::SCHEDULED;
+               }
 
                if ( $now >= $end_ts ) {
                        if ( get_post_meta( $auction_id, '_auction_winner', true ) ) {
