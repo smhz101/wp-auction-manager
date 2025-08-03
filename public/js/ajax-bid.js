@@ -3,18 +3,42 @@ jQuery(function ($) {
   toastr.options.positionClass = 'toast-top-right';
   toastr.options.timeOut = 3000;
 
-  function startCountdowns() {
-    const countdowns = [];
+  const countdowns = {};
 
+  function updateCountdown(id, start, end, status) {
+    const cd = countdowns[id];
+    if (!cd) return;
+    if (start) {
+      cd.start = parseInt(start, 10) * 1000;
+      cd.$el.data('start', start).attr('data-start', start);
+    }
+    if (end) {
+      cd.end = parseInt(end, 10) * 1000;
+      cd.$el.data('end', end).attr('data-end', end);
+    }
+    if (status) {
+      cd.status = status;
+      cd.$el.data('status', status).attr('data-status', status);
+    }
+  }
+
+  function startCountdowns() {
     $('.wpam-countdown').each(function () {
       const $el = $(this);
-      countdowns.push({
+      const id =
+        $el.data('auction-id') ||
+        $el.closest('.auction-single, .wpam-auction-block')
+          .find('[data-auction-id]')
+          .first()
+          .data('auction-id');
+      if (typeof id === 'undefined') return;
+      countdowns[id] = {
         $el,
         start: parseInt($el.data('start'), 10) * 1000,
         end: parseInt($el.data('end'), 10) * 1000,
         status: $el.data('status'),
         last: 0,
-      });
+      };
     });
 
     function renderCountdown(cd, fromTime, toTime) {
@@ -52,7 +76,7 @@ jQuery(function ($) {
     }
 
     function render(now) {
-      countdowns.forEach((cd) => {
+      Object.values(countdowns).forEach((cd) => {
         const currentStatus = cd.$el.data('status');
         if (currentStatus !== cd.status) {
           cd.status = currentStatus;
@@ -153,11 +177,19 @@ jQuery(function ($) {
             applyStatus(auctionId, res.data.status);
           }
           if (res.data.new_end_ts) {
-            $('.wpam-countdown')
-              .data('end', res.data.new_end_ts)
-              .attr('data-end', res.data.new_end_ts);
-            updateCountdown();
             showToast(i18n.auction_extended || 'Auction extended due to soft close');
+          }
+          if (
+            res.data.new_start_ts ||
+            res.data.new_end_ts ||
+            res.data.new_status
+          ) {
+            updateCountdown(
+              auctionId,
+              res.data.new_start_ts,
+              res.data.new_end_ts,
+              res.data.new_status
+            );
           }
         } else {
           toastr.error(res.data.message);
@@ -182,6 +214,17 @@ jQuery(function ($) {
         } else {
           toastr.error(res.data.message);
         }
+        if (
+          res.data &&
+          (res.data.new_start_ts || res.data.new_end_ts || res.data.new_status)
+        ) {
+          updateCountdown(
+            auctionId,
+            res.data.new_start_ts,
+            res.data.new_end_ts,
+            res.data.new_status
+          );
+        }
       }
     );
   });
@@ -202,6 +245,17 @@ jQuery(function ($) {
           window.location.reload();
         } else {
           toastr.error(res.data.message);
+        }
+        if (
+          res.data &&
+          (res.data.new_start_ts || res.data.new_end_ts || res.data.new_status)
+        ) {
+          updateCountdown(
+            auctionId,
+            res.data.new_start_ts,
+            res.data.new_end_ts,
+            res.data.new_status
+          );
         }
       }
     );
@@ -231,6 +285,18 @@ jQuery(function ($) {
             ) {
               showToast(i18n.reserve_not_met || 'Reserve price not met', 'warning');
               bidStatus[auctionId + '_reserve'] = true;
+            }
+            if (
+              res.data.new_start_ts ||
+              res.data.new_end_ts ||
+              res.data.new_status
+            ) {
+              updateCountdown(
+                auctionId,
+                res.data.new_start_ts,
+                res.data.new_end_ts,
+                res.data.new_status
+              );
             }
           }
         }
