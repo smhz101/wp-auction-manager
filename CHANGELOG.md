@@ -25,4 +25,5 @@
 - Added admin settings to select a realtime provider and enter Pusher credentials.
 - Bundled Pusher and Countdown scripts and switched enqueues to local assets.
 - Added relist delay and price adjustment options for automatic relists.
+- Activation now recalculates start and end times in UTC for existing auctions.
 

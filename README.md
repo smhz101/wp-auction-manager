@@ -188,3 +188,7 @@ composer install
 vendor/bin/phpunit
 vendor/bin/phpcs
 ```
+
+## Upgrade Notes
+
+- Activating or updating the plugin now recalculates existing auction start and end times in UTC and reschedules their events.
