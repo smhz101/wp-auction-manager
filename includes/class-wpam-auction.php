@@ -972,6 +972,33 @@ class WPAM_Auction {
                return WPAM_Auction_State::SCHEDULED;
        }
 
+	/**
+	 * Re-evaluate auction status using start/end epochs.
+	 *
+	 * @param int \$auction_id Auction ID.
+	 */
+	public function maybe_transition_status( $auction_id ) {
+		$status = get_post_meta( $auction_id, '_auction_status', true );
+		$start  = get_post_meta( $auction_id, '_auction_start', true );
+		$end    = get_post_meta( $auction_id, '_auction_end', true );
+		if ( empty( $start ) || empty( $end ) ) {
+			return;
+		}
+		try {
+			$start_ts = ( new \DateTimeImmutable( $start, new \DateTimeZone( 'UTC' ) ) )->getTimestamp();
+			$end_ts   = ( new \DateTimeImmutable( $end, new \DateTimeZone( 'UTC' ) ) )->getTimestamp();
+		} catch ( \Exception $e ) {
+			return;
+		}
+		$now = current_datetime()->getTimestamp();
+		if ( 'scheduled' === $status && $now >= $start_ts && $now < $end_ts ) {
+			$this->handle_auction_start( $auction_id );
+		}
+		if ( 'live' === $status && $now >= $end_ts ) {
+			$this->handle_auction_end( $auction_id );
+		}
+	}
+
         public function update_auction_states() {
                 $args = array(
                         'post_type'   => 'product',
@@ -997,6 +1024,7 @@ class WPAM_Auction {
                         );
 
                         foreach ( $query->posts as $post ) {
+                                $this->maybe_transition_status( $post->ID );
                                 $state = $this->determine_state( $post->ID );
                                 update_post_meta( $post->ID, '_auction_state', $state );
                         }
