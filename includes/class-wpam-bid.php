@@ -59,7 +59,7 @@ class WPAM_Bid {
                 'user_id'    => $user_id,
                 'ip'         => isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '',
                 'user_agent' => isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '',
-                'logged_at'  => wp_date( 'Y-m-d H:i:s', null, wp_timezone() ),
+                'logged_at'  => wp_date( 'Y-m-d H:i:s', null, new \DateTimeZone( 'UTC' ) ),
             ],
             [ '%d', '%d', '%s', '%s', '%s' ]
         );
@@ -82,9 +82,9 @@ class WPAM_Bid {
         global $wpdb;
 
         if ( self::is_sealed( $auction_id ) || self::silent_enabled( $auction_id ) ) {
-            $end   = get_post_meta( $auction_id, '_auction_end', true );
-            $end_ts = $end ? ( new \DateTimeImmutable( $end, wp_timezone() ) )->getTimestamp() : 0;
-            if ( ( new \DateTimeImmutable( 'now', wp_timezone() ) )->getTimestamp() < $end_ts ) {
+            $end    = get_post_meta( $auction_id, '_auction_end', true );
+            $end_ts = $end ? ( new \DateTimeImmutable( $end, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : 0;
+            if ( current_datetime()->getTimestamp() < $end_ts ) {
                 return [];
             }
         }
@@ -145,11 +145,10 @@ class WPAM_Bid {
         $start = get_post_meta( $auction_id, '_auction_start', true );
         $end   = get_post_meta( $auction_id, '_auction_end', true );
 
-        $timezone = wp_timezone();
-        $start_ts = $start ? ( new \DateTimeImmutable( $start, $timezone ) )->getTimestamp() : 0;
-        $end_ts   = $end ? ( new \DateTimeImmutable( $end, $timezone ) )->getTimestamp() : 0;
+        $start_ts = $start ? ( new \DateTimeImmutable( $start, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : 0;
+        $end_ts   = $end ? ( new \DateTimeImmutable( $end, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : 0;
 
-        $now = ( new \DateTimeImmutable( 'now', $timezone ) )->getTimestamp();
+        $now = current_datetime()->getTimestamp();
 
         if ( $now < $start_ts || $now > $end_ts ) {
             wp_send_json_error( [ 'message' => __( 'Auction not active', 'wpam' ) ] );
@@ -308,10 +307,10 @@ class WPAM_Bid {
         $lead_user = intval( get_post_meta( $auction_id, '_auction_lead_user', true ) );
 
         if ( $sealed || self::silent_enabled( $auction_id ) ) {
-            $end   = get_post_meta( $auction_id, '_auction_end', true );
-            $end_ts = $end ? ( new \DateTimeImmutable( $end, wp_timezone() ) )->getTimestamp() : 0;
-            if ( ( new \DateTimeImmutable( 'now', wp_timezone() ) )->getTimestamp() < $end_ts ) {
-                $highest = 0;
+            $end    = get_post_meta( $auction_id, '_auction_end', true );
+            $end_ts = $end ? ( new \DateTimeImmutable( $end, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : 0;
+            if ( current_datetime()->getTimestamp() < $end_ts ) {
+                $highest  = 0;
                 $lead_user = 0;
             }
         }
@@ -351,10 +350,9 @@ class WPAM_Bid {
 
         $start    = get_post_meta( $auction_id, '_auction_start', true );
         $end      = get_post_meta( $auction_id, '_auction_end', true );
-        $timezone = wp_timezone();
-        $start_ts = $start ? ( new \DateTimeImmutable( $start, $timezone ) )->getTimestamp() : 0;
-        $end_ts   = $end ? ( new \DateTimeImmutable( $end, $timezone ) )->getTimestamp() : 0;
-        $now      = ( new \DateTimeImmutable( 'now', $timezone ) )->getTimestamp();
+        $start_ts = $start ? ( new \DateTimeImmutable( $start, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : 0;
+        $end_ts   = $end ? ( new \DateTimeImmutable( $end, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : 0;
+        $now      = current_datetime()->getTimestamp();
         if ( $now < $start_ts || $now > $end_ts ) {
             wp_send_json_error( [ 'message' => __( 'Auction not active', 'wpam' ) ] );
         }
@@ -426,10 +424,9 @@ class WPAM_Bid {
 
         $start = get_post_meta( $auction_id, '_auction_start', true );
         $end   = get_post_meta( $auction_id, '_auction_end', true );
-        $timezone = wp_timezone();
-        $start_ts = $start ? ( new \DateTimeImmutable( $start, $timezone ) )->getTimestamp() : 0;
-        $end_ts   = $end ? ( new \DateTimeImmutable( $end, $timezone ) )->getTimestamp() : 0;
-        $now = ( new \DateTimeImmutable( 'now', $timezone ) )->getTimestamp();
+        $start_ts = $start ? ( new \DateTimeImmutable( $start, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : 0;
+        $end_ts   = $end ? ( new \DateTimeImmutable( $end, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : 0;
+        $now      = current_datetime()->getTimestamp();
         if ( $now < $start_ts || $now > $end_ts ) {
             return new \WP_Error( 'wpam_inactive', __( 'Auction not active', 'wpam' ), [ 'status' => 400 ] );
         }
@@ -491,7 +488,7 @@ class WPAM_Bid {
                     'auction_id' => $auction_id,
                     'user_id'    => $user_id,
                     'bid_amount' => $bid,
-                    'bid_time'   => wp_date( 'Y-m-d H:i:s', null, wp_timezone() ),
+                    'bid_time'   => wp_date( 'Y-m-d H:i:s', null, new \DateTimeZone( 'UTC' ) ),
                 ],
                 [ '%d', '%d', '%f', '%s' ]
             );
@@ -510,7 +507,7 @@ class WPAM_Bid {
                     'auction_id' => $auction_id,
                     'user_id'    => $user_id,
                     'bid_amount' => $place_bid,
-                    'bid_time'   => wp_date( 'Y-m-d H:i:s', null, wp_timezone() ),
+                    'bid_time'   => wp_date( 'Y-m-d H:i:s', null, new \DateTimeZone( 'UTC' ) ),
                 ],
                 [ '%d', '%d', '%f', '%s' ]
             );
@@ -531,7 +528,7 @@ class WPAM_Bid {
                             'auction_id' => $auction_id,
                             'user_id'    => $highest_user,
                             'bid_amount' => $auto_bid,
-                            'bid_time'   => wp_date( 'Y-m-d H:i:s', null, wp_timezone() ),
+                            'bid_time'   => wp_date( 'Y-m-d H:i:s', null, new \DateTimeZone( 'UTC' ) ),
                         ],
                         [ '%d', '%d', '%f', '%s' ]
                     );
@@ -620,9 +617,9 @@ class WPAM_Bid {
         $highest = $highest ? ( function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $highest ) : (float) $highest ) : 0;
 
         if ( $sealed || self::silent_enabled( $auction_id ) ) {
-            $end   = get_post_meta( $auction_id, '_auction_end', true );
-            $end_ts = $end ? ( new \DateTimeImmutable( $end, wp_timezone() ) )->getTimestamp() : 0;
-            if ( ( new \DateTimeImmutable( 'now', wp_timezone() ) )->getTimestamp() < $end_ts ) {
+            $end    = get_post_meta( $auction_id, '_auction_end', true );
+            $end_ts = $end ? ( new \DateTimeImmutable( $end, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : 0;
+            if ( current_datetime()->getTimestamp() < $end_ts ) {
                 $highest   = 0;
                 $lead_user = 0;
             }
@@ -702,10 +699,10 @@ class WPAM_Bid {
         );
 
         $won = [];
-        $now = ( new \DateTimeImmutable( 'now', wp_timezone() ) )->getTimestamp();
+        $now = current_datetime()->getTimestamp();
         foreach ( $auction_ids as $auction_id ) {
-            $end   = get_post_meta( $auction_id, '_auction_end', true );
-            $end_ts = $end ? ( new \DateTimeImmutable( $end, wp_timezone() ) )->getTimestamp() : 0;
+            $end    = get_post_meta( $auction_id, '_auction_end', true );
+            $end_ts = $end ? ( new \DateTimeImmutable( $end, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : 0;
             if ( $end_ts && $end_ts <= $now ) {
                 $won[] = [
                     'id'    => intval( $auction_id ),

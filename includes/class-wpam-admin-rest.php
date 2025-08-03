@@ -22,7 +22,7 @@ class WPAM_Admin_Rest {
 			),
 			'meta_query'     => array(),
 		);
-		$now      = wp_date( 'Y-m-d H:i:s', current_datetime()->getTimestamp(), wp_timezone() );
+               $now      = wp_date( 'Y-m-d H:i:s', current_datetime()->getTimestamp(), new \DateTimeZone( 'UTC' ) );
 		if ( $type ) {
 			$args['meta_query'][] = array(
 				'key'   => '_auction_type',

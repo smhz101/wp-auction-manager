@@ -5,9 +5,9 @@ get_header();
     <h1><?php the_title(); ?></h1>
     <?php
     $start    = get_post_meta( get_the_ID(), '_auction_start', true );
-    $start_ts = $start ? strtotime( $start ) : 0;
+    $start_ts = $start ? ( new \DateTimeImmutable( $start, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : 0;
     $end      = get_post_meta( get_the_ID(), '_auction_end', true );
-    $end_ts   = $end ? strtotime( $end ) : 0;
+    $end_ts   = $end ? ( new \DateTimeImmutable( $end, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : 0;
     $buy_now_enabled = get_post_meta( get_the_ID(), '_auction_enable_buy_now', true );
     $buy_now_price   = get_post_meta( get_the_ID(), '_auction_buy_now', true );
     ?>

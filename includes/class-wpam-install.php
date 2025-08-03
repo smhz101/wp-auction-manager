@@ -139,9 +139,9 @@ class WPAM_Install {
 			$start = get_post_meta( $auction_id, '_auction_start', true );
 			$end   = get_post_meta( $auction_id, '_auction_end', true );
 
-			$start_ts = $start ? strtotime( $start ) : false;
-			$end_ts   = $end ? strtotime( $end ) : false;
-			$now      = current_time( 'timestamp' );
+                       $start_ts = $start ? ( new \DateTimeImmutable( $start, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : false;
+                       $end_ts   = $end ? ( new \DateTimeImmutable( $end, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : false;
+                       $now      = current_time( 'timestamp' );
 
 			if ( $start_ts && $start_ts > $now ) {
 				wp_schedule_single_event( $start_ts, 'wpam_auction_start', array( $auction_id ) );

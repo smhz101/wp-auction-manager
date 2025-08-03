@@ -23,11 +23,11 @@ class WPAM_Soft_Close {
         if ( $threshold > 0 && $end_ts - $now <= $threshold ) {
             if ( 0 === $max_extensions || $extension_count < $max_extensions ) {
                 $new_end_ts = $end_ts + $extension;
-                $new_end    = wp_date( 'Y-m-d H:i:s', $new_end_ts, wp_timezone() );
+                $new_end    = wp_date( 'Y-m-d H:i:s', $new_end_ts, new \DateTimeZone( 'UTC' ) );
                 update_post_meta( $auction_id, '_auction_end', $new_end );
                 update_post_meta( $auction_id, '_auction_extension_count', $extension_count + 1 );
                 wp_clear_scheduled_hook( 'wpam_auction_end', [ $auction_id ] );
-                wp_schedule_single_event( (int) get_gmt_from_date( $new_end, 'U' ), 'wpam_auction_end', [ $auction_id ] );
+                wp_schedule_single_event( $new_end_ts, 'wpam_auction_end', [ $auction_id ] );
                 $extended = true;
                 do_action( 'wpam_soft_close_extended', $auction_id, $new_end_ts );
             }
