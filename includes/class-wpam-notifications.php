@@ -92,6 +92,41 @@ class WPAM_Notifications {
     }
 
     /**
+     * Notify watchers and leading bidders when an auction end time is extended.
+     *
+     * @param int $auction_id Auction ID.
+     * @param int $new_end_ts New end timestamp (UTC).
+     */
+    public static function notify_auction_extended( $auction_id, $new_end_ts ) {
+        global $wpdb;
+
+        $watchers = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT user_id FROM {$wpdb->prefix}wc_auction_watchlists WHERE auction_id = %d", $auction_id ) );
+
+        $table   = $wpdb->prefix . 'wc_auction_bids';
+        $reverse = 'reverse' === get_post_meta( $auction_id, '_auction_type', true );
+        $order   = $reverse ? 'ASC' : 'DESC';
+        $lead    = $wpdb->get_var( $wpdb->prepare( "SELECT bid_amount FROM $table WHERE auction_id = %d ORDER BY bid_amount {$order}, id DESC LIMIT 1", $auction_id ) );
+        $leaders = array();
+        if ( null !== $lead ) {
+            $leaders = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT user_id FROM $table WHERE auction_id = %d AND bid_amount = %f", $auction_id, $lead ) );
+        }
+
+        $recipients = array_unique( array_merge( $watchers, $leaders ) );
+        if ( empty( $recipients ) ) {
+            return;
+        }
+
+        $title    = get_the_title( $auction_id );
+        $subject  = sprintf( __( 'Auction extended: %s', 'wpam' ), $title );
+        $datetime = wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $new_end_ts );
+        $message  = sprintf( __( 'The auction "%1$s" has been extended. New end time: %2$s', 'wpam' ), $title, $datetime );
+
+        foreach ( $recipients as $user_id ) {
+            self::send_to_user( $user_id, $subject, $message );
+        }
+    }
+
+    /**
      * Handle events dispatched from WPAM_Event_Bus.
      *
      * @param string $event   Event name.
@@ -119,7 +154,9 @@ class WPAM_Notifications {
                     }
                     break;
             case 'auction_extended':
-                // Currently no notification via SMS/email for extensions.
+                if ( isset( $payload['auction_id'], $payload['new_end_ts'] ) ) {
+                    self::notify_auction_extended( $payload['auction_id'], $payload['new_end_ts'] );
+                }
                 break;
         }
     }
