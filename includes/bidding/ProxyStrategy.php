@@ -17,7 +17,14 @@ class ProxyStrategy implements BidStrategyInterface {
         $increment = WPAM_Auction::get_bid_increment( $auction_id, $highest );
 
         if ( $max_bid < $highest + $increment ) {
-            wp_send_json_error( [ 'message' => __( 'Bid too low', 'wpam' ) ] );
+            $min_bid_allowed = $highest + $increment;
+            $formatted       = function_exists( 'wc_format_decimal' ) ? wc_format_decimal( $min_bid_allowed ) : $min_bid_allowed;
+            wp_send_json_error(
+                [
+                    'message' => sprintf( __( 'Bid too low. Minimum bid is %s', 'wpam' ), $formatted ),
+                    'min_bid' => (float) $min_bid_allowed,
+                ]
+            );
         }
 
         $place_bid = ( $highest > 0 ) ? min( $max_bid, $highest + $increment ) : $max_bid;

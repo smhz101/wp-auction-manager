@@ -30,7 +30,8 @@ class Test_WPAM_Variable_Increment extends WP_Ajax_UnitTestCase {
         } catch ( WPAjaxDieContinueException $e ) {
             $response = json_decode( $this->_last_response, true );
             $this->assertFalse( $response['success'] );
-            $this->assertSame( 'Bid too low', $response['data']['message'] );
+            $this->assertSame( 'Bid too low. Minimum bid is 2', $response['data']['message'] );
+            $this->assertSame( 2.0, $response['data']['min_bid'] );
             return;
         }
         $this->fail( 'Expected low bid rejection' );
@@ -61,7 +62,8 @@ class Test_WPAM_Variable_Increment extends WP_Ajax_UnitTestCase {
         } catch ( WPAjaxDieContinueException $e ) {
             $response = json_decode( $this->_last_response, true );
             $this->assertFalse( $response['success'] );
-            $this->assertSame( 'Bid too low', $response['data']['message'] );
+            $this->assertSame( 'Bid too low. Minimum bid is 65', $response['data']['message'] );
+            $this->assertSame( 65.0, $response['data']['min_bid'] );
             return;
         }
         $this->fail( 'Expected low bid rejection after threshold' );
