@@ -127,6 +127,10 @@ jQuery(function ($) {
   const userBids = {};
   const bidStatus = {};
 
+  function msgNode(msg) {
+    return document.createTextNode(String(msg || ''));
+  }
+
   function setStatusText(id, text) {
     const el = $('.wpam-bid-status[data-auction-id="' + id + '"]');
     if (el.length) {
@@ -138,7 +142,7 @@ jQuery(function ($) {
     if (!wpam_ajax.show_notices) {
       return;
     }
-    toastr[type](msg);
+    toastr[type](msgNode(msg));
   }
 
   function applyStatus(id, status) {
@@ -170,7 +174,7 @@ jQuery(function ($) {
       },
       function (res) {
         if (res.success) {
-          toastr.success(res.data.message);
+          toastr.success(msgNode(res.data.message));
           if (res.data.max_reached) {
             showToast(i18n.max_reached || 'Max bid reached', 'warning');
           }
@@ -194,7 +198,7 @@ jQuery(function ($) {
             );
           }
         } else {
-          toastr.error(res.data.message);
+          toastr.error(msgNode(res.data.message));
           if (res.data && typeof res.data.min_bid !== 'undefined') {
             bidInput.val(res.data.min_bid);
           } else if (res.data && typeof res.data.max_bid !== 'undefined') {
@@ -217,9 +221,9 @@ jQuery(function ($) {
       },
       function (res) {
         if (res.success) {
-          toastr.success(res.data.message);
+          toastr.success(msgNode(res.data.message));
         } else {
-          toastr.error(res.data.message);
+          toastr.error(msgNode(res.data.message));
         }
         if (
           res.data &&
@@ -248,10 +252,10 @@ jQuery(function ($) {
       },
       function (res) {
         if (res.success) {
-          toastr.success(res.data.message);
+          toastr.success(msgNode(res.data.message));
           window.location.reload();
         } else {
-          toastr.error(res.data.message);
+          toastr.error(msgNode(res.data.message));
         }
         if (
           res.data &&
