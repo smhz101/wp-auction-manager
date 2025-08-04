@@ -14,9 +14,9 @@ export default function AdminLayout({ children }) {
     highlightSubmenu(location.pathname);
   }, [location.pathname]);
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-10 border-b bg-background">
-        <nav className="mx-auto flex max-w-6xl gap-4 p-4">
+    <div className="flex min-h-screen flex-col bg-wp-gray-100 font-sans text-wp-gray-900">
+      <header className="sticky top-0 z-10 border-b border-wp-gray-300 bg-wp-gray-100">
+        <nav className="mx-auto flex max-w-6xl gap-wp-2 p-wp-2">
           {navItems.map((item) => (
             <Button
               key={item.path}
@@ -28,7 +28,7 @@ export default function AdminLayout({ children }) {
           ))}
         </nav>
       </header>
-      <main className="flex-1 overflow-y-auto p-4">{children}</main>
+      <main className="flex-1 overflow-y-auto p-wp-2">{children}</main>
     </div>
   );
 }
