@@ -18,7 +18,6 @@ class WPAM_Bid {
         add_action( 'wp_ajax_wpam_buy_now', [ $this, 'buy_now' ] );
         add_action( 'wp_ajax_nopriv_wpam_buy_now', [ $this, 'buy_now' ] );
 
-        add_action( 'init', [ $this, 'add_account_endpoints' ] );
         add_filter( 'woocommerce_account_menu_items', [ $this, 'add_account_menu_items' ] );
         add_action( 'woocommerce_account_my-bids_endpoint', [ $this, 'render_my_bids_page' ] );
         add_action( 'woocommerce_account_auctions-won_endpoint', [ $this, 'render_auctions_won_page' ] );
@@ -644,11 +643,6 @@ class WPAM_Bid {
         }
 
         return rest_ensure_response( $response );
-    }
-
-    public function add_account_endpoints() {
-        add_rewrite_endpoint( 'my-bids', EP_ROOT | EP_PAGES );
-        add_rewrite_endpoint( 'auctions-won', EP_ROOT | EP_PAGES );
     }
 
     public function add_account_menu_items( $items ) {

@@ -76,7 +76,8 @@ jQuery(function ($) {
         `);
     }
 
-    function render(now) {
+    function render() {
+      const now = Date.now();
       Object.values(countdowns).forEach((cd) => {
         const currentStatus = cd.$el.data('status');
         if (currentStatus !== cd.status) {
@@ -113,10 +114,10 @@ jQuery(function ($) {
         cd.$el.html(`<strong>${status ? status.charAt(0).toUpperCase() + status.slice(1) : ''}</strong>`);
       });
 
-      requestAnimationFrame(render);
+      requestAnimationFrame(() => render());
     }
 
-    requestAnimationFrame(render);
+    requestAnimationFrame(() => render());
   }
 
   startCountdowns();

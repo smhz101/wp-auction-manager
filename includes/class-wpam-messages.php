@@ -32,7 +32,7 @@ class WPAM_Messages {
                 'message'    => sanitize_textarea_field( wp_unslash( $_POST['message'] ) ),
                 'parent_id'  => isset( $_POST['parent_id'] ) ? absint( $_POST['parent_id'] ) : 0,
                 'approved'   => 0,
-                'created_at' => current_time( 'mysql' ),
+                'created_at' => current_time( 'mysql', true ),
             ],
             [ '%d', '%d', '%s', '%d', '%d', '%s' ]
         );
@@ -58,7 +58,7 @@ class WPAM_Messages {
                 'user'      => $user ? esc_html( $user->display_name ) : __( 'Unknown', 'wpam' ),
                 'message'   => esc_html( $row['message'] ),
                 'parent_id' => $row['parent_id'],
-                'date'      => $row['created_at'],
+                'date'      => get_date_from_gmt( $row['created_at'], 'Y-m-d H:i:s' ),
             ];
         }
 

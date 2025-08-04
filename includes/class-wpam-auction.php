@@ -151,27 +151,28 @@ class WPAM_Auction {
                $timezone    = wp_timezone();
                $current_ts  = current_datetime()->getTimestamp();
                $start_value = get_post_meta( $post_id, '_auction_start', true );
-               $start_value = $start_value ? get_date_from_gmt( $start_value, 'Y-m-d H:i:s' ) : '';
+               $start_value = $start_value ? get_date_from_gmt( $start_value, 'c' ) : '';
 
                if ( ! $start_value ) {
-                       $start_value = wp_date( 'Y-m-d H:i:s', $current_ts + HOUR_IN_SECONDS, $timezone );
+                       $start_value = wp_date( 'c', $current_ts + HOUR_IN_SECONDS, $timezone );
                }
 
-               $start_timestamp = ( new \DateTimeImmutable( $start_value, $timezone ) )->getTimestamp();
+               $start_timestamp = ( new \DateTimeImmutable( $start_value ) )->getTimestamp();
                $is_past_start   = $start_timestamp < $current_ts;
 
                $end_value = get_post_meta( $post_id, '_auction_end', true );
-               $end_value = $end_value ? get_date_from_gmt( $end_value, 'Y-m-d H:i:s' ) : '';
+               $end_value = $end_value ? get_date_from_gmt( $end_value, 'c' ) : '';
                if ( ! $end_value ) {
-                       $end_value = wp_date( 'Y-m-d H:i:s', $start_timestamp + DAY_IN_SECONDS, $timezone );
+                       $end_value = wp_date( 'c', $start_timestamp + DAY_IN_SECONDS, $timezone );
                }
 
-               $desc = __( 'When bidding opens.', 'wpam' );
+               $tz_label = wp_timezone_string();
+               $desc     = __( 'When bidding opens.', 'wpam' );
                woocommerce_wp_text_input(
                        array(
                                'id'                => '_auction_start',
-                               'label'             => __( 'Start Date', 'wpam' ),
-                               'type'              => 'datetime-local',
+                               'label'             => sprintf( __( 'Start Date (%s)', 'wpam' ), $tz_label ),
+                               'type'              => 'text',
                                'description'       => $desc,
                                'desc_tip'          => true,
                                'value'             => $start_value,
@@ -190,8 +191,8 @@ class WPAM_Auction {
                woocommerce_wp_text_input(
                        array(
                                'id'                => '_auction_end',
-                               'label'             => __( 'End Date', 'wpam' ),
-                               'type'              => 'datetime-local',
+                               'label'             => sprintf( __( 'End Date (%s)', 'wpam' ), $tz_label ),
+                               'type'              => 'text',
                                'description'       => $desc,
                                'desc_tip'          => true,
                                'value'             => $end_value,
@@ -559,27 +560,40 @@ class WPAM_Auction {
 
                $start = null;
                $end   = null;
+               $tz    = wp_timezone();
 
                if ( isset( $_POST['_auction_start'] ) ) {
-                       $start_local = wc_clean( wp_unslash( $_POST['_auction_start'] ) );
-                       $start       = get_gmt_from_date( $start_local );
-                       update_post_meta( $post_id, '_auction_start', $start );
+                       $start_raw = wc_clean( wp_unslash( $_POST['_auction_start'] ) );
+                       try {
+                               $start_dt    = new \DateTimeImmutable( $start_raw );
+                               $start_local = $start_dt->setTimezone( $tz )->format( 'Y-m-d H:i:s' );
+                               $start       = get_gmt_from_date( $start_local );
+                               update_post_meta( $post_id, '_auction_start', $start );
+                       } catch ( \Exception $e ) {
+                               // Ignore invalid date.
+                       }
                } else {
                        $start = get_post_meta( $post_id, '_auction_start', true );
                }
 
                if ( isset( $_POST['_auction_end'] ) ) {
 
-                       $end_local = wc_clean( $_POST['_auction_end'] );
-                       $end       = get_gmt_from_date( $end_local );
-                       update_post_meta( $post_id, '_auction_end', $end );
+                       $end_raw = wc_clean( wp_unslash( $_POST['_auction_end'] ) );
+                       try {
+                               $end_dt    = new \DateTimeImmutable( $end_raw );
+                               $end_local = $end_dt->setTimezone( $tz )->format( 'Y-m-d H:i:s' );
+                               $end       = get_gmt_from_date( $end_local );
+                               update_post_meta( $post_id, '_auction_end', $end );
 
-                       $timestamp = ( new \DateTimeImmutable( $end, new \DateTimeZone( 'UTC' ) ) )->getTimestamp();
-                       if ( $timestamp && $timestamp > time() ) {
-                               wp_clear_scheduled_hook( 'wpam_auction_end', array( $post_id ) );
-                               wp_schedule_single_event( $timestamp, 'wpam_auction_end', array( $post_id ) );
+                               $timestamp = ( new \DateTimeImmutable( $end, new \DateTimeZone( 'UTC' ) ) )->getTimestamp();
+                               if ( $timestamp && $timestamp > time() ) {
+                                       wp_clear_scheduled_hook( 'wpam_auction_end', array( $post_id ) );
+                                       wp_schedule_single_event( $timestamp, 'wpam_auction_end', array( $post_id ) );
+                               }
+                               delete_post_meta( $post_id, '_auction_reminder_sent' );
+                       } catch ( \Exception $e ) {
+                               // Ignore invalid date.
                        }
-                       delete_post_meta( $post_id, '_auction_reminder_sent' );
                } else {
                        $end = get_post_meta( $post_id, '_auction_end', true );
                }
@@ -908,9 +922,32 @@ class WPAM_Auction {
                        return WPAM_Auction_State::SUSPENDED;
                }
 
-               $now      = current_datetime()->getTimestamp();
-               $start_ts = ( new \DateTimeImmutable( get_post_meta( $auction_id, '_auction_start', true ), new \DateTimeZone( 'UTC' ) ) )->getTimestamp();
-               $end_ts   = ( new \DateTimeImmutable( get_post_meta( $auction_id, '_auction_end', true ), new \DateTimeZone( 'UTC' ) ) )->getTimestamp();
+               $now   = current_datetime()->getTimestamp();
+               $start = get_post_meta( $auction_id, '_auction_start', true );
+               $end   = get_post_meta( $auction_id, '_auction_end', true );
+
+               try {
+                       if ( empty( $start ) || empty( $end ) ) {
+                               throw new \Exception( 'Missing dates.' );
+                       }
+
+                       $start_ts = ( new \DateTimeImmutable( $start, new \DateTimeZone( 'UTC' ) ) )->getTimestamp();
+                       $end_ts   = ( new \DateTimeImmutable( $end, new \DateTimeZone( 'UTC' ) ) )->getTimestamp();
+               } catch ( \Exception $e ) {
+                       add_action(
+                               'admin_notices',
+                               function() use ( $auction_id ) {
+                                       echo '<div class="notice notice-warning"><p>' .
+                                               sprintf(
+                                                       esc_html__( 'Auction #%d is missing or has invalid start/end dates and has been set to scheduled.', 'wpam' ),
+                                                       $auction_id
+                                               ) .
+                                               '</p></div>';
+                               }
+                       );
+                       update_post_meta( $auction_id, '_auction_status', 'scheduled' );
+                       return WPAM_Auction_State::SCHEDULED;
+               }
 
                if ( $now >= $end_ts ) {
                        if ( get_post_meta( $auction_id, '_auction_winner', true ) ) {
@@ -934,6 +971,33 @@ class WPAM_Auction {
                update_post_meta( $auction_id, '_auction_status', 'scheduled' );
                return WPAM_Auction_State::SCHEDULED;
        }
+
+	/**
+	 * Re-evaluate auction status using start/end epochs.
+	 *
+	 * @param int \$auction_id Auction ID.
+	 */
+	public function maybe_transition_status( $auction_id ) {
+		$status = get_post_meta( $auction_id, '_auction_status', true );
+		$start  = get_post_meta( $auction_id, '_auction_start', true );
+		$end    = get_post_meta( $auction_id, '_auction_end', true );
+		if ( empty( $start ) || empty( $end ) ) {
+			return;
+		}
+		try {
+			$start_ts = ( new \DateTimeImmutable( $start, new \DateTimeZone( 'UTC' ) ) )->getTimestamp();
+			$end_ts   = ( new \DateTimeImmutable( $end, new \DateTimeZone( 'UTC' ) ) )->getTimestamp();
+		} catch ( \Exception $e ) {
+			return;
+		}
+		$now = current_datetime()->getTimestamp();
+		if ( 'scheduled' === $status && $now >= $start_ts && $now < $end_ts ) {
+			$this->handle_auction_start( $auction_id );
+		}
+		if ( 'live' === $status && $now >= $end_ts ) {
+			$this->handle_auction_end( $auction_id );
+		}
+	}
 
         public function update_auction_states() {
                 $args = array(
@@ -960,6 +1024,7 @@ class WPAM_Auction {
                         );
 
                         foreach ( $query->posts as $post ) {
+                                $this->maybe_transition_status( $post->ID );
                                 $state = $this->determine_state( $post->ID );
                                 update_post_meta( $post->ID, '_auction_state', $state );
                         }

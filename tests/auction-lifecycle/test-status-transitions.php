@@ -52,4 +52,46 @@ class Test_Auction_Status_Transitions extends WP_UnitTestCase {
         $state = $this->auction->determine_state( $auction_id );
         $this->assertSame( WPAM_Auction_State::CANCELED, $state );
     }
+
+    public function test_missing_dates_defaults_to_scheduled() {
+        $auction_id = $this->factory->post->create([
+            'post_type' => 'product',
+        ]);
+
+        remove_all_actions( 'admin_notices' );
+
+        $state = $this->auction->determine_state( $auction_id );
+
+        $this->assertSame( WPAM_Auction_State::SCHEDULED, $state );
+        $this->assertSame( 'scheduled', get_post_meta( $auction_id, '_auction_status', true ) );
+        $this->assertNotFalse( has_action( 'admin_notices' ) );
+
+        remove_all_actions( 'admin_notices' );
+    }
+
+    public function test_scheduled_to_live_boundary() {
+        $auction_id = $this->factory->post->create([
+            'post_type' => 'product',
+        ]);
+        $now = current_datetime()->getTimestamp();
+        update_post_meta( $auction_id, '_auction_start', gmdate( 'Y-m-d H:i:s', $now ) );
+        update_post_meta( $auction_id, '_auction_end', gmdate( 'Y-m-d H:i:s', $now + 3600 ) );
+        update_post_meta( $auction_id, '_auction_status', 'scheduled' );
+        $this->auction->maybe_transition_status( $auction_id );
+        $this->assertSame( 'live', get_post_meta( $auction_id, '_auction_status', true ) );
+        $this->assertSame( WPAM_Auction_State::LIVE, get_post_meta( $auction_id, '_auction_state', true ) );
+    }
+
+    public function test_live_to_failed_boundary() {
+        $auction_id = $this->factory->post->create([
+            'post_type' => 'product',
+        ]);
+        $now = current_datetime()->getTimestamp();
+        update_post_meta( $auction_id, '_auction_start', gmdate( 'Y-m-d H:i:s', $now - 3600 ) );
+        update_post_meta( $auction_id, '_auction_end', gmdate( 'Y-m-d H:i:s', $now ) );
+        update_post_meta( $auction_id, '_auction_status', 'live' );
+        $this->auction->maybe_transition_status( $auction_id );
+        $this->assertSame( 'failed', get_post_meta( $auction_id, '_auction_status', true ) );
+        $this->assertSame( WPAM_Auction_State::FAILED, get_post_meta( $auction_id, '_auction_state', true ) );
+    }
 }

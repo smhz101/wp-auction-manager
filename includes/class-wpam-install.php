@@ -60,11 +60,11 @@ class WPAM_Install {
             KEY bid_id (bid_id),
             KEY user_id (user_id)
         ) $charset_collate;";
-        dbDelta( $audit_sql );
+		dbDelta( $audit_sql );
 
-                // Flagged users table
-                $flag_table = $wpdb->prefix . 'wpam_flagged_users';
-                $flag_sql   = "CREATE TABLE IF NOT EXISTS $flag_table (
+			// Flagged users table
+			$flag_table = $wpdb->prefix . 'wpam_flagged_users';
+			$flag_sql   = "CREATE TABLE IF NOT EXISTS $flag_table (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
             user_id bigint(20) unsigned NOT NULL,
             reason varchar(255) NOT NULL,
@@ -72,7 +72,7 @@ class WPAM_Install {
             PRIMARY KEY  (id),
             KEY user_id (user_id)
         ) $charset_collate;";
-                dbDelta( $flag_sql );
+			dbDelta( $flag_sql );
 
 		// Admin logs table
 		$logs_table = $wpdb->prefix . 'wc_auction_logs';
@@ -87,40 +87,104 @@ class WPAM_Install {
             KEY auction_id (auction_id),
             KEY admin_id (admin_id)
         ) $charset_collate;";
-                dbDelta( $logs_sql );
+			dbDelta( $logs_sql );
 
-                // Register custom roles.
-                add_role(
-                        'auction_seller',
-                        __( 'Auction Seller', 'wpam' ),
-                        array(
-                                'read'           => true,
-                                'auction_seller' => true,
-                        )
-                );
+			// Ensure administrators retain full access.
+			$admin = get_role( 'administrator' );
+		if ( $admin ) {
+				$admin->add_cap( 'auction_seller' );
+				$admin->add_cap( 'auction_bidder' );
+		}
 
-                add_role(
-                        'auction_bidder',
-                        __( 'Auction Bidder', 'wpam' ),
-                        array(
-                                'read'           => true,
-                                'auction_bidder' => true,
-                        )
-                );
+			add_action( 'init', array( self::class, 'register_endpoints' ) );
+			// self::register_endpoints();
+			flush_rewrite_rules();
 
-                // Ensure administrators retain full access.
-                $admin = get_role( 'administrator' );
-                if ( $admin ) {
-                        $admin->add_cap( 'auction_seller' );
-                        $admin->add_cap( 'auction_bidder' );
-                }
+			// Schedule cron events for existing auctions
+			$auctions = get_posts(
+				array(
+					'post_type'      => 'product',
+					'posts_per_page' => -1,
+					'meta_query'     => array(
+						array(
+							'key'     => '_auction_start',
+							'compare' => 'EXISTS',
+						),
+					),
+					'fields'         => 'ids',
+				)
+			);
 
-                add_rewrite_endpoint( 'watchlist', EP_ROOT | EP_PAGES );
+		foreach ( $auctions as $auction_id ) {
+			$start = get_post_meta( $auction_id, '_auction_start', true );
+			$end   = get_post_meta( $auction_id, '_auction_end', true );
+
+				$start_ts = $start ? ( new \DateTimeImmutable( $start, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : false;
+				$end_ts   = $end ? ( new \DateTimeImmutable( $end, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : false;
+				$now      = current_datetime()->getTimestamp();
+
+				// Clear previously scheduled events to ensure accurate timing after upgrades.
+				wp_clear_scheduled_hook( 'wpam_auction_start', array( $auction_id ) );
+				wp_clear_scheduled_hook( 'wpam_auction_end', array( $auction_id ) );
+
+			if ( $start_ts && $start_ts > $now ) {
+				wp_schedule_single_event( $start_ts, 'wpam_auction_start', array( $auction_id ) );
+			}
+
+			if ( $end_ts && $end_ts > $now ) {
+							wp_schedule_single_event( $end_ts, 'wpam_auction_end', array( $auction_id ) );
+			}
+		}
+
+			// Only flush rewrite rules on activation
+			flush_rewrite_rules();
+
+			// Schedule auction events
+			self::schedule_auction_events();
+	}
+
+	public static function init_hooks() {
+		// Register rewrite endpoints properly
+		add_action( 'init', array( self::class, 'register_endpoints' ) );
+		add_action( 'init', array( self::class, 'add_roles' ) );
+	}
+
+	public static function add_roles() {
+		add_role(
+			'auction_seller',
+			__( 'Auction Seller', 'wpam' ),
+			array(
+				'read'           => true,
+				'auction_seller' => true,
+			)
+		);
+
+		add_role(
+			'auction_bidder',
+			__( 'Auction Bidder', 'wpam' ),
+			array(
+				'read'           => true,
+				'auction_bidder' => true,
+			)
+		);
+
+		$admin = get_role( 'administrator' );
+		if ( $admin ) {
+				$admin->add_cap( 'auction_seller' );
+				$admin->add_cap( 'auction_bidder' );
+		}
+	}
+
+
+
+
+	public static function register_endpoints() {
+		add_rewrite_endpoint( 'watchlist', EP_ROOT | EP_PAGES );
 		add_rewrite_endpoint( 'my-bids', EP_ROOT | EP_PAGES );
 		add_rewrite_endpoint( 'auctions-won', EP_ROOT | EP_PAGES );
-		flush_rewrite_rules();
+	}
 
-		// Schedule cron events for existing auctions
+	private static function schedule_auction_events() {
 		$auctions = get_posts(
 			array(
 				'post_type'      => 'product',
@@ -139,14 +203,16 @@ class WPAM_Install {
 			$start = get_post_meta( $auction_id, '_auction_start', true );
 			$end   = get_post_meta( $auction_id, '_auction_end', true );
 
-                       $start_ts = $start ? ( new \DateTimeImmutable( $start, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : false;
-                       $end_ts   = $end ? ( new \DateTimeImmutable( $end, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : false;
-                       $now      = current_time( 'timestamp' );
+			$start_ts = $start ? ( new \DateTimeImmutable( $start, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : false;
+			$end_ts   = $end ? ( new \DateTimeImmutable( $end, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : false;
+			$now      = current_datetime()->getTimestamp();
+
+			wp_clear_scheduled_hook( 'wpam_auction_start', array( $auction_id ) );
+			wp_clear_scheduled_hook( 'wpam_auction_end', array( $auction_id ) );
 
 			if ( $start_ts && $start_ts > $now ) {
 				wp_schedule_single_event( $start_ts, 'wpam_auction_start', array( $auction_id ) );
 			}
-
 			if ( $end_ts && $end_ts > $now ) {
 				wp_schedule_single_event( $end_ts, 'wpam_auction_end', array( $auction_id ) );
 			}
