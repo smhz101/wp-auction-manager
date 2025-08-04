@@ -35,8 +35,8 @@ When editing an auction product you can configure additional options in the **Au
 - **Auto Relist** – automatically relist when no winning bid exists. Configure a relist limit, delay before relisting and optional price adjustments.
 - **Max Bids Per User** – limit how many bids each user can place.
 - **Auction Fee** – extra fee added to the winning bid.
-- **Proxy Bidding** – automatically outbid others up to a maximum amount.
-- **Silent Bidding** – hides all bids until the auction ends.
+- **Proxy Bidding** – automatically outbid others up to a maximum amount. Available for standard auctions when enabled in settings; not supported for reverse auctions.
+- **Silent Bidding** – hides all bids until the auction ends. Sealed auctions are always silent, and standard auctions can enable this when allowed in settings; reverse auctions do not support it.
 
 The auction panel includes a contextual help column. Hover or focus on any field to see a description in the right-hand panel, replacing WooCommerce's default tooltips.
 
