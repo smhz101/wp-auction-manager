@@ -195,6 +195,11 @@ jQuery(function ($) {
           }
         } else {
           toastr.error(res.data.message);
+          if (res.data && typeof res.data.min_bid !== 'undefined') {
+            bidInput.val(res.data.min_bid);
+          } else if (res.data && typeof res.data.max_bid !== 'undefined') {
+            bidInput.val(res.data.max_bid);
+          }
         }
       }
     );

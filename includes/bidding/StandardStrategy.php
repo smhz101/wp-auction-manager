@@ -18,11 +18,25 @@ class StandardStrategy implements BidStrategyInterface {
 
         if ( $reverse ) {
             if ( $highest_row && $bid > $highest - $increment ) {
-                wp_send_json_error( [ 'message' => __( 'Bid too high', 'wpam' ) ] );
+                $max_bid_allowed = $highest - $increment;
+                $formatted       = function_exists( 'wc_format_decimal' ) ? wc_format_decimal( $max_bid_allowed ) : $max_bid_allowed;
+                wp_send_json_error(
+                    [
+                        'message' => sprintf( __( 'Bid too high. Maximum bid is %s', 'wpam' ), $formatted ),
+                        'max_bid' => (float) $max_bid_allowed,
+                    ]
+                );
             }
         } else {
             if ( $bid < $highest + $increment ) {
-                wp_send_json_error( [ 'message' => __( 'Bid too low', 'wpam' ) ] );
+                $min_bid_allowed = $highest + $increment;
+                $formatted       = function_exists( 'wc_format_decimal' ) ? wc_format_decimal( $min_bid_allowed ) : $min_bid_allowed;
+                wp_send_json_error(
+                    [
+                        'message' => sprintf( __( 'Bid too low. Minimum bid is %s', 'wpam' ), $formatted ),
+                        'min_bid' => (float) $min_bid_allowed,
+                    ]
+                );
             }
         }
 

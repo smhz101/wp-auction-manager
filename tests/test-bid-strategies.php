@@ -38,7 +38,8 @@ class Test_WPAM_Bid_Strategies extends WP_Ajax_UnitTestCase {
         } catch ( WPAjaxDieContinueException $e ) {
             $response = json_decode( $this->_last_response, true );
             $this->assertFalse( $response['success'] );
-            $this->assertSame( 'Bid too low', $response['data']['message'] );
+            $this->assertSame( 'Bid too low. Minimum bid is 11', $response['data']['message'] );
+            $this->assertSame( 11.0, $response['data']['min_bid'] );
             return;
         }
         $this->fail( 'Expected AJAX die.' );
