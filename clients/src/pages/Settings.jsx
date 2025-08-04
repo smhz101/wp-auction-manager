@@ -220,7 +220,7 @@ export default function Settings() {
                 <label className="capitalize">{key.replace(/_/g, ' ')}</label>
                 <Toggle
                   checked={boolVal}
-                  onCheckedChange={(v) => updateField(key, v ? 1 : 0)}
+                  onCheckedChange={(v) => updateField(key, v)}
                 />
                 {errors[key] && (
                   <p className="text-destructive text-sm">{errors[key]}</p>
