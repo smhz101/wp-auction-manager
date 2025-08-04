@@ -71,117 +71,118 @@ export default function AllAuctions() {
   });
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>All Auctions</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="mb-4 flex flex-wrap items-end gap-2">
-          <div className="w-full sm:w-40">
-            <Input
-              placeholder="Search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+    <main>
+      <Card className={'rounded-none shadow-none border-none'}>
+        <CardHeader>
+          <CardTitle>All Auctions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className='mb-4 flex flex-wrap items-end gap-2'>
+            <div className='w-full sm:w-40'>
+              <Input
+                placeholder='Search'
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <div className='w-full sm:w-40'>
+              <Select
+                value={status}
+                onChange={setStatus}
+                options={[
+                  { value: '', label: 'All Statuses' },
+                  { value: 'active', label: 'Active' },
+                  { value: 'upcoming', label: 'Upcoming' },
+                  { value: 'ended', label: 'Ended' },
+                ]}
+              />
+            </div>
+            <div className='w-full sm:w-40'>
+              <Select
+                value={type}
+                onChange={setType}
+                options={[
+                  { value: '', label: 'All Types' },
+                  { value: 'standard', label: 'Standard' },
+                  { value: 'sealed', label: 'Sealed' },
+                  { value: 'reverse', label: 'Reverse' },
+                ]}
+              />
+            </div>
+            <Button
+              onClick={() => setPagination((p) => ({ ...p, pageIndex: 0 }))}
+              variant='secondary'
+            >
+              Apply
+            </Button>
           </div>
-          <div className="w-full sm:w-40">
-            <Select
-              value={status}
-              onChange={setStatus}
-              options={[
-                { value: '', label: 'All Statuses' },
-                { value: 'active', label: 'Active' },
-                { value: 'upcoming', label: 'Upcoming' },
-                { value: 'ended', label: 'Ended' },
-              ]}
-            />
-          </div>
-          <div className="w-full sm:w-40">
-            <Select
-              value={type}
-              onChange={setType}
-              options={[
-                { value: '', label: 'All Types' },
-                { value: 'standard', label: 'Standard' },
-                { value: 'sealed', label: 'Sealed' },
-                { value: 'reverse', label: 'Reverse' },
-              ]}
-            />
-          </div>
-          <Button
-            onClick={() =>
-              setPagination((p) => ({ ...p, pageIndex: 0 }))
-            }
-            variant="secondary"
-          >
-            Apply
-          </Button>
-        </div>
-        {loading ? (
-          <p>Loading...</p>
-        ) : (
-          <>
-          <table className="min-w-full text-sm">
-            <thead>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <tr
-                  key={headerGroup.id}
-                  className="border-b font-semibold text-left"
-                >
-                  {headerGroup.headers.map((header) => (
-                    <th
-                      key={header.id}
-                      className="cursor-pointer select-none px-2 py-1"
-                      onClick={header.column.getToggleSortingHandler()}
+          {loading ? (
+            <p>Loading...</p>
+          ) : (
+            <>
+              <table className='min-w-full text-sm'>
+                <thead>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <tr
+                      key={headerGroup.id}
+                      className='border-b font-semibold text-left'
                     >
-                      {flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
-                      {header.column.getIsSorted() === 'asc' && ' \u25B2'}
-                      {header.column.getIsSorted() === 'desc' && ' \u25BC'}
-                    </th>
+                      {headerGroup.headers.map((header) => (
+                        <th
+                          key={header.id}
+                          className='cursor-pointer select-none px-2 py-1'
+                          onClick={header.column.getToggleSortingHandler()}
+                        >
+                          {flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                          {header.column.getIsSorted() === 'asc' && ' \u25B2'}
+                          {header.column.getIsSorted() === 'desc' && ' \u25BC'}
+                        </th>
+                      ))}
+                    </tr>
                   ))}
-                </tr>
-              ))}
-            </thead>
-            <tbody>
-              {table.getRowModel().rows.map((row) => (
-                <tr key={row.id} className="border-b last:border-b-0">
-                  {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="px-2 py-1">
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </td>
+                </thead>
+                <tbody>
+                  {table.getRowModel().rows.map((row) => (
+                    <tr key={row.id} className='border-b last:border-b-0'>
+                      {row.getVisibleCells().map((cell) => (
+                        <td key={cell.id} className='px-2 py-1'>
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </td>
+                      ))}
+                    </tr>
                   ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className="mt-4 flex items-center justify-between gap-2">
-            <Button
-              variant="outline"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-            >
-              Previous
-            </Button>
-            <span>
-              Page {table.getState().pagination.pageIndex + 1} of {pageCount}
-            </span>
-            <Button
-              variant="outline"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-            >
-              Next
-            </Button>
-          </div>
-          </>
-        )}
-      </CardContent>
-    </Card>
+                </tbody>
+              </table>
+              <div className='mt-4 flex items-center justify-between gap-2'>
+                <Button
+                  variant='outline'
+                  onClick={() => table.previousPage()}
+                  disabled={!table.getCanPreviousPage()}
+                >
+                  Previous
+                </Button>
+                <span>
+                  Page {table.getState().pagination.pageIndex + 1} of{' '}
+                  {pageCount}
+                </span>
+                <Button
+                  variant='outline'
+                  onClick={() => table.nextPage()}
+                  disabled={!table.getCanNextPage()}
+                >
+                  Next
+                </Button>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </main>
   );
 }

@@ -94,16 +94,16 @@ function AppRoutes() {
   return (
     <div className='flex flex-col min-h-screen'>
       <Header />
-      <main className='flex-1 container mx-auto px-4 py-6'>
-        <Routes>
-          <Route path='/all-auctions' element={<AllAuctions />} />
-          <Route path='/bids' element={<Bids />} />
-          <Route path='/messages' element={<Messages />} />
-          <Route path='/logs' element={<Logs />} />
-          <Route path='/flagged-users' element={<FlaggedUsers />} />
-          <Route path='/settings' element={<Settings />} />
-        </Routes>
-      </main>
+
+      <Routes>
+        <Route path='/all-auctions' element={<AllAuctions />} />
+        <Route path='/bids' element={<Bids />} />
+        <Route path='/messages' element={<Messages />} />
+        <Route path='/logs' element={<Logs />} />
+        <Route path='/flagged-users' element={<FlaggedUsers />} />
+        <Route path='/settings' element={<Settings />} />
+      </Routes>
+
       <Footer />
     </div>
   );

@@ -61,6 +61,11 @@ export default function Header() {
   const path = location.pathname;
   const pageTitle = routeTitles[path] || 'Dashboard';
 
+  const navItems = [
+    { label: 'All Auctions', path: '/all-auctions' },
+    { label: 'Settings', path: '/settings' },
+  ];
+
   return (
     <header className='bg-white border-b shadow-sm dark:bg-gray-900 dark:border-gray-700'>
       <div className='container mx-auto px-4 py-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between'>
@@ -71,6 +76,20 @@ export default function Header() {
           <nav className='text-sm text-gray-500 dark:text-gray-400'>
             <span className='mr-1'>Admin /</span>
             <span>{pageTitle}</span>
+          </nav>
+
+          <nav className='mx-auto flex max-w-6xl gap-wp-2 p-wp-2'>
+            {navItems.map((item) => (
+              <Button
+                key={item.path}
+                variant={
+                  location.pathname === item.path ? 'secondary' : 'ghost'
+                }
+                asChild
+              >
+                <Link to={item.path}>{item.label}</Link>
+              </Button>
+            ))}
           </nav>
         </div>
         <div className='flex items-center'>
