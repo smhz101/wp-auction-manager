@@ -89,25 +89,6 @@ class WPAM_Install {
         ) $charset_collate;";
 			dbDelta( $logs_sql );
 
-			// Register custom roles.
-			add_role(
-				'auction_seller',
-				__( 'Auction Seller', 'wpam' ),
-				array(
-					'read'           => true,
-					'auction_seller' => true,
-				)
-			);
-
-			add_role(
-				'auction_bidder',
-				__( 'Auction Bidder', 'wpam' ),
-				array(
-					'read'           => true,
-					'auction_bidder' => true,
-				)
-			);
-
 			// Ensure administrators retain full access.
 			$admin = get_role( 'administrator' );
 		if ( $admin ) {
@@ -162,11 +143,40 @@ class WPAM_Install {
 			self::schedule_auction_events();
 	}
 
-
 	public static function init_hooks() {
 		// Register rewrite endpoints properly
 		add_action( 'init', array( self::class, 'register_endpoints' ) );
+		add_action( 'init', array( self::class, 'add_roles' ) );
 	}
+
+	public static function add_roles() {
+		add_role(
+			'auction_seller',
+			__( 'Auction Seller', 'wpam' ),
+			array(
+				'read'           => true,
+				'auction_seller' => true,
+			)
+		);
+
+		add_role(
+			'auction_bidder',
+			__( 'Auction Bidder', 'wpam' ),
+			array(
+				'read'           => true,
+				'auction_bidder' => true,
+			)
+		);
+
+		$admin = get_role( 'administrator' );
+		if ( $admin ) {
+				$admin->add_cap( 'auction_seller' );
+				$admin->add_cap( 'auction_bidder' );
+		}
+	}
+
+
+
 
 	public static function register_endpoints() {
 		add_rewrite_endpoint( 'watchlist', EP_ROOT | EP_PAGES );
