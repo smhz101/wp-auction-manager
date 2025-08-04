@@ -272,13 +272,13 @@ class WPAM_Bid {
 			'statuses' => $statuses,
 		);
 		if ( $extended ) {
-			$response['new_end_ts'] = $new_end_ts;
+			$response['new_end_ts'] = (int) $new_end_ts;
 			$response['extended']   = true;
 			WPAM_Event_Bus::dispatch(
 				'auction_extended',
 				array(
 					'auction_id' => $auction_id,
-					'new_end_ts' => $new_end_ts,
+					'new_end_ts' => (int) $new_end_ts,
 				)
 			);
 		}
@@ -622,13 +622,13 @@ class WPAM_Bid {
 			'statuses' => $statuses,
 		);
 		if ( $extended ) {
-			$response['new_end_ts'] = $new_end_ts;
+			$response['new_end_ts'] = (int) $new_end_ts;
 			$response['extended']   = true;
 			WPAM_Event_Bus::dispatch(
 				'auction_extended',
 				array(
 					'auction_id' => $auction_id,
-					'new_end_ts' => $new_end_ts,
+					'new_end_ts' => (int) $new_end_ts,
 				)
 			);
 		}
