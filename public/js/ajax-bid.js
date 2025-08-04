@@ -295,6 +295,17 @@ jQuery(function ($) {
                 res.data.end_ts,
                 res.data.state
               );
+              const container = bidEl.closest(
+                '.auction-single, .wpam-auction-block'
+              );
+              if (container.length) {
+                if (res.data.state)
+                  container.attr('data-status', res.data.state);
+                if (res.data.start_ts)
+                  container.attr('data-start', res.data.start_ts);
+                if (res.data.end_ts)
+                  container.attr('data-end', res.data.end_ts);
+              }
             }
           }
         }
