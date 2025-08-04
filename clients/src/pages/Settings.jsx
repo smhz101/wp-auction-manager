@@ -155,11 +155,18 @@ export default function Settings() {
         setToast({ open: true, type: 'success', message: 'Settings saved.' });
         setSaving(false);
       })
-      .catch(() => {
+      .catch((error) => {
+        const params = error.response?.data?.params;
+        if (params) {
+          setErrors((prev) => ({ ...prev, ...params }));
+        }
+        const summary =
+          error.response?.data?.message ||
+          'Failed to save settings. Please review the highlighted fields.';
         setToast({
           open: true,
           type: 'error',
-          message: 'Failed to save settings.',
+          message: summary,
         });
         setSaving(false);
       });
