@@ -63,8 +63,7 @@ export default function Settings() {
   }, []);
 
   useEffect(() => {
-    if (options) validateRequired(options);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (options) setErrors(validateRequired(options));
   }, [options]);
 
   function updateField(key, value) {
@@ -72,50 +71,31 @@ export default function Settings() {
   }
 
   function validateRequired(opts) {
-    const newErrors = { ...errors };
+    const newErrors = {};
     if (opts.wpam_enable_twilio) {
       if (!opts.wpam_twilio_sid)
         newErrors.wpam_twilio_sid = 'Required when Twilio is enabled.';
-      else delete newErrors.wpam_twilio_sid;
       if (!opts.wpam_twilio_token)
         newErrors.wpam_twilio_token = 'Required when Twilio is enabled.';
-      else delete newErrors.wpam_twilio_token;
       if (!opts.wpam_twilio_from)
         newErrors.wpam_twilio_from = 'Required when Twilio is enabled.';
-      else delete newErrors.wpam_twilio_from;
-    } else {
-      delete newErrors.wpam_twilio_sid;
-      delete newErrors.wpam_twilio_token;
-      delete newErrors.wpam_twilio_from;
     }
     if (opts.wpam_enable_firebase) {
       if (!opts.wpam_firebase_server_key)
         newErrors.wpam_firebase_server_key =
           'Server key required when Firebase is enabled.';
-      else delete newErrors.wpam_firebase_server_key;
-    } else {
-      delete newErrors.wpam_firebase_server_key;
     }
     if (opts.wpam_realtime_provider === 'pusher') {
       if (!opts.wpam_pusher_app_id)
         newErrors.wpam_pusher_app_id = 'Required when using Pusher.';
-      else delete newErrors.wpam_pusher_app_id;
       if (!opts.wpam_pusher_key)
         newErrors.wpam_pusher_key = 'Required when using Pusher.';
-      else delete newErrors.wpam_pusher_key;
       if (!opts.wpam_pusher_secret)
         newErrors.wpam_pusher_secret = 'Required when using Pusher.';
-      else delete newErrors.wpam_pusher_secret;
       if (!opts.wpam_pusher_cluster)
         newErrors.wpam_pusher_cluster = 'Required when using Pusher.';
-      else delete newErrors.wpam_pusher_cluster;
-    } else {
-      delete newErrors.wpam_pusher_app_id;
-      delete newErrors.wpam_pusher_key;
-      delete newErrors.wpam_pusher_secret;
-      delete newErrors.wpam_pusher_cluster;
     }
-    setErrors(newErrors);
+    return newErrors;
   }
 
   function save() {
@@ -165,8 +145,8 @@ export default function Settings() {
       (v) => v >= 0,
       'Should be zero or more.'
     );
-
-    setErrors((prev) => ({ ...prev, ...warns }));
+    const requiredErrors = validateRequired(options);
+    setErrors({ ...requiredErrors, ...warns });
     setSaving(true);
     axios
       .post(endpoint, options, { headers: { 'X-WP-Nonce': nonce } })
