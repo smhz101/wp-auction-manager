@@ -1,11 +1,8 @@
-/* eslint-env node */
-/* eslint-disable no-undef */
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { resolve } from 'path';
 import tailwindcss from '@tailwindcss/vite';
+import { resolve } from 'path';
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
