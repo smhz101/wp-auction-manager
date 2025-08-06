@@ -324,6 +324,9 @@ class WPAM_Bid {
 			}
 		}
 
+		$statuses = self::calculate_statuses( $auction_id, $highest, $lead_user, $reverse );
+		$user_id  = get_current_user_id();
+
 		$ending_reason = '';
 		if ( WPAM_Auction_State::ENDED === $state ) {
 			$ending_reason = get_post_meta( $auction_id, '_auction_ending_reason', true );
@@ -335,6 +338,8 @@ class WPAM_Bid {
 			'start_ts'    => $start_ts,
 			'end_ts'      => $end_ts,
 			'state'       => $state,
+			'status'      => isset( $statuses[ $user_id ] ) ? $statuses[ $user_id ] : '',
+			'statuses'    => $statuses,
 		);
 		if ( $ending_reason ) {
 			$response['ending_reason'] = $ending_reason;
