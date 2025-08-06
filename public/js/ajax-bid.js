@@ -462,6 +462,7 @@ jQuery(function ($) {
       });
     });
   } else {
-    setInterval(refreshBids, 5000);
+    const pollInterval = parseInt(wpam_ajax.poll_interval, 10) || 5000;
+    setInterval(refreshBids, pollInterval);
   }
 });
