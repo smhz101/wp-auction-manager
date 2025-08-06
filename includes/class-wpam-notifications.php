@@ -66,15 +66,20 @@ class WPAM_Notifications {
 
     public static function notify_auction_end( $auction_id ) {
         global $wpdb;
+
         $highest = $wpdb->get_var( $wpdb->prepare( "SELECT MAX(bid_amount) FROM {$wpdb->prefix}wc_auction_bids WHERE auction_id = %d", $auction_id ) );
+        $winner  = (int) get_post_meta( $auction_id, '_auction_winner', true );
+
+        if ( ! $winner ) {
+            return;
+        }
+
         $title   = get_the_title( $auction_id );
         $subject = sprintf( __( 'Auction ended for %s', 'wpam' ), $title );
         $price   = $highest ? ( function_exists( 'wc_price' ) ? wc_price( $highest ) : $highest ) : __( 'No bids', 'wpam' );
         $message = sprintf( __( 'Auction "%1$s" has ended. Final price: %2$s', 'wpam' ), $title, $price );
-        $recipients = self::get_recipients( $auction_id );
-        foreach ( $recipients as $user_id ) {
-            self::send_to_user( $user_id, $subject, $message );
-        }
+
+        self::send_to_user( $winner, $subject, $message );
     }
 
     public static function notify_auction_reminder( $auction_id ) {

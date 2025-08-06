@@ -760,21 +760,9 @@ class WPAM_Auction {
 		update_post_meta( $auction_id, '_auction_sold', '1' );
 		update_post_meta( $auction_id, '_stock_status', 'outofstock' );
 
-		$user    = get_user_by( 'id', $user_id );
-		$subject = sprintf( __( 'You won the auction: %s', 'wpam' ), get_the_title( $auction_id ) );
-		$message = sprintf( __( 'Congratulations! You won with a bid of %1$s. Order #%2$d has been created.', 'wpam' ), wc_price( $amount ), $order->get_id() );
-		wp_mail( $user->user_email, $subject, $message );
-
-		$sid   = get_option( 'wpam_twilio_sid' );
-		$token = get_option( 'wpam_twilio_token' );
-		$from  = get_option( 'wpam_twilio_from' );
-		$phone = get_user_meta( $user_id, 'billing_phone', true );
-
-		if ( $sid && $token && $from && $phone && class_exists( 'WPAM_Twilio_Provider' ) ) {
-			$twilio  = new WPAM_Twilio_Provider();
-			$sms_msg = sprintf( __( 'You won auction %1$s for %2$s', 'wpam' ), get_the_title( $auction_id ), wc_price( $amount ) );
-			$twilio->send( $phone, $sms_msg );
-		}
+                $subject = sprintf( __( 'You won the auction: %s', 'wpam' ), get_the_title( $auction_id ) );
+                $message = sprintf( __( 'Congratulations! You won with a bid of %1$s. Order #%2$d has been created.', 'wpam' ), wc_price( $amount ), $order->get_id() );
+                WPAM_Notifications::send_to_user( $user_id, $subject, $message );
 
                update_post_meta( $auction_id, '_auction_state', WPAM_Auction_State::COMPLETED );
                update_post_meta( $auction_id, '_auction_status', 'completed' );
@@ -905,7 +893,6 @@ class WPAM_Auction {
                         foreach ( $query->posts as $post ) {
                                 update_post_meta( $post->ID, '_auction_ended', 1 );
                                 update_post_meta( $post->ID, '_auction_state', WPAM_Auction_State::ENDED );
-                                WPAM_Notifications::notify_auction_end( $post->ID );
                         }
 
                         wp_reset_postdata();
