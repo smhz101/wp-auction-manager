@@ -296,6 +296,24 @@ jQuery(function ($) {
             ) {
               showToast(i18n.reserve_not_met || 'Reserve price not met', 'warning');
               bidStatus[auctionId + '_reserve'] = true;
+            } else if (
+              res.data.ending_reason === 'sold' &&
+              !bidStatus[auctionId + '_sold']
+            ) {
+              showToast(
+                i18n.auction_completed || 'Auction completed',
+                'info'
+              );
+              bidStatus[auctionId + '_sold'] = true;
+            } else if (
+              res.data.ending_reason === 'no_bids' &&
+              !bidStatus[auctionId + '_no_bids']
+            ) {
+              showToast(
+                i18n.auction_no_bids || 'Auction ended with no bids',
+                'warning'
+              );
+              bidStatus[auctionId + '_no_bids'] = true;
             }
             if (res.data.start_ts || res.data.end_ts || res.data.state) {
               updateCountdown(
