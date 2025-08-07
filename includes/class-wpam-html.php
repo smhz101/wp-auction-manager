@@ -58,13 +58,15 @@ class WPAM_HTML {
       echo '<p class="wpam-countdown" data-start="' . esc_attr( $start_ts ) . '" data-end="' . esc_attr( $end_ts ) . '" data-status="' . esc_attr( $status ) . '"></p>';
     }
 
-    $label = ( 'reverse' === $type ) ? __( 'Lowest Bid:', 'wpam' ) : __( 'Current Bid:', 'wpam' );
-    echo '<p class="wpam-current-price">' . esc_html( $label ) .
-         ' <span class="wpam-current-bid" data-auction-id="' . esc_attr( $auction_id ) . '">' .
-         esc_html( $display_highest ) . '</span></p>';
-    echo '<div class="wpam-bid-status" data-auction-id="' . esc_attr( $auction_id ) . '"></div>';
-    echo '<p>' . esc_html__( 'Viewers:', 'wpam' ) . ' <span class="wpam-viewer-count" data-auction-id="' . esc_attr( $auction_id ) . '">0</span></p>';
-    echo '<p>' . esc_html__( 'Participants:', 'wpam' ) . ' <span class="wpam-participant-count" data-auction-id="' . esc_attr( $auction_id ) . '">0</span></p>';
+    if ( 'live' === $status ) {
+      $label = ( 'reverse' === $type ) ? __( 'Lowest Bid:', 'wpam' ) : __( 'Current Bid:', 'wpam' );
+      echo '<p class="wpam-current-price">' . esc_html( $label ) .
+          ' <span class="wpam-current-bid" data-auction-id="' . esc_attr( $auction_id ) . '">' .
+          esc_html( $display_highest ) . '</span></p>';
+      echo '<div class="wpam-bid-status" data-auction-id="' . esc_attr( $auction_id ) . '"></div>';
+      echo '<p>' . esc_html__( 'Viewers:', 'wpam' ) . ' <span class="wpam-viewer-count" data-auction-id="' . esc_attr( $auction_id ) . '">0</span></p>';
+      echo '<p>' . esc_html__( 'Participants:', 'wpam' ) . ' <span class="wpam-participant-count" data-auction-id="' . esc_attr( $auction_id ) . '">0</span></p>';
+    }
 
     $winner_id = (int) get_post_meta( $auction_id, '_auction_winner', true );
     if ( $atts['showWinner'] ) {
