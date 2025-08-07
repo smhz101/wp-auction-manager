@@ -1,16 +1,26 @@
-import { useEffect, useState, useMemo } from 'react';
+'use client';
+
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 import {
   useReactTable,
   getCoreRowModel,
   getSortedRowModel,
   flexRender,
-  createColumnHelper,
 } from '@tanstack/react-table';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ArrowUpDown} from 'lucide-react';
+
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 export default function AllAuctions() {
   const [auctions, setAuctions] = useState([]);
@@ -44,19 +54,103 @@ export default function AllAuctions() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [pagination.pageIndex, pagination.pageSize, search, status, type]);
+  }, [pagination, search, status, type]);
 
-  const columnHelper = createColumnHelper();
-  const columns = useMemo(
-    () => [
-      columnHelper.accessor('id', { header: 'ID', enableSorting: true }),
-      columnHelper.accessor('title', { header: 'Title', enableSorting: true }),
-      columnHelper.accessor('start', { header: 'Start', enableSorting: true }),
-      columnHelper.accessor('end', { header: 'End', enableSorting: true }),
-      columnHelper.accessor('state', { header: 'State', enableSorting: true }),
-    ],
-    [columnHelper]
-  );
+  const columns = [
+    {
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && 'indeterminate')
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label='Select all'
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label='Select row'
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: 'id',
+      header: 'ID',
+      cell: ({ row }) => <div className='capitalize'>{row.getValue('id')}</div>,
+    },
+    {
+      accessorKey: 'title',
+      header: ({ column }) => {
+        return (
+          <Button
+            variant='ghost'
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          >
+            Title
+            <ArrowUpDown />
+          </Button>
+        );
+      },
+      cell: ({ row }) => (
+        <div className='lowercase'>{row.getValue('title')}</div>
+      ),
+    },
+    {
+      accessorKey: 'start',
+      header: ({ column }) => {
+        return (
+          <Button
+            variant='ghost'
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          >
+            Start
+            <ArrowUpDown />
+          </Button>
+        );
+      },
+      cell: ({ row }) => (
+        <div className='lowercase'>{row.getValue('start')}</div>
+      ),
+    },
+    {
+      accessorKey: 'end',
+      header: ({ column }) => {
+        return (
+          <Button
+            variant='ghost'
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          >
+            End
+            <ArrowUpDown />
+          </Button>
+        );
+      },
+      cell: ({ row }) => <div className='lowercase'>{row.getValue('end')}</div>,
+    },
+    {
+      accessorKey: 'state',
+      header: ({ column }) => {
+        return (
+          <Button
+            variant='ghost'
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          >
+            State
+            <ArrowUpDown />
+          </Button>
+        );
+      },
+      cell: ({ row }) => (
+        <div className='lowercase'>{row.getValue('state')}</div>
+      ),
+    },
+  ];
 
   const table = useReactTable({
     data: auctions,
@@ -71,118 +165,95 @@ export default function AllAuctions() {
   });
 
   return (
-    <main>
-      <Card className={'rounded-none shadow-none border-none'}>
-        <CardHeader>
-          <CardTitle>All Auctions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className='mb-4 flex flex-wrap items-end gap-2'>
-            <div className='w-full sm:w-40'>
-              <Input
-                placeholder='Search'
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-            <div className='w-full sm:w-40'>
-              <Select
-                value={status}
-                onChange={setStatus}
-                options={[
-                  { value: '', label: 'All Statuses' },
-                  { value: 'active', label: 'Active' },
-                  { value: 'upcoming', label: 'Upcoming' },
-                  { value: 'ended', label: 'Ended' },
-                ]}
-              />
-            </div>
-            <div className='w-full sm:w-40'>
-              <Select
-                value={type}
-                onChange={setType}
-                options={[
-                  { value: '', label: 'All Types' },
-                  { value: 'standard', label: 'Standard' },
-                  { value: 'sealed', label: 'Sealed' },
-                  { value: 'reverse', label: 'Reverse' },
-                ]}
-              />
-            </div>
+    <div className='px-6'>
+      <div className='flex items-center py-4'>
+        <Input
+          placeholder='Filter state...'
+          value={table.getColumn('state')?.getFilterValue() ?? ''}
+          onChange={(event) =>
+            table.getColumn('state')?.setFilterValue(event.target.value)
+          }
+          className='max-w-sm'
+        />
+      </div>
+      <div className=''>
+        <div className='overflow-hidden border'>
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    return (
+                      <TableHead key={header.id}>
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                      </TableHead>
+                    );
+                  })}
+                </TableRow>
+              ))}
+            </TableHeader>
+
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && 'selected'}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className='h-24 text-center'
+                  >
+                    No results.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        <div className='flex items-center justify-end space-x-2 py-4'>
+          <div className='text-muted-foreground flex-1 text-sm'>
+            {table.getFilteredSelectedRowModel().rows.length} of{' '}
+            {table.getFilteredRowModel().rows.length} row(s) selected.
+          </div>
+          <div className='space-x-2'>
             <Button
-              onClick={() => setPagination((p) => ({ ...p, pageIndex: 0 }))}
-              variant='secondary'
+              variant='outline'
+              size='sm'
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
             >
-              Apply
+              Previous
+            </Button>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
+              Next
             </Button>
           </div>
-          {loading ? (
-            <p>Loading...</p>
-          ) : (
-            <>
-              <table className='min-w-full text-sm'>
-                <thead>
-                  {table.getHeaderGroups().map((headerGroup) => (
-                    <tr
-                      key={headerGroup.id}
-                      className='border-b font-semibold text-left'
-                    >
-                      {headerGroup.headers.map((header) => (
-                        <th
-                          key={header.id}
-                          className='cursor-pointer select-none px-2 py-1'
-                          onClick={header.column.getToggleSortingHandler()}
-                        >
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                          {header.column.getIsSorted() === 'asc' && ' \u25B2'}
-                          {header.column.getIsSorted() === 'desc' && ' \u25BC'}
-                        </th>
-                      ))}
-                    </tr>
-                  ))}
-                </thead>
-                <tbody>
-                  {table.getRowModel().rows.map((row) => (
-                    <tr key={row.id} className='border-b last:border-b-0'>
-                      {row.getVisibleCells().map((cell) => (
-                        <td key={cell.id} className='px-2 py-1'>
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <div className='mt-4 flex items-center justify-between gap-2'>
-                <Button
-                  variant='outline'
-                  onClick={() => table.previousPage()}
-                  disabled={!table.getCanPreviousPage()}
-                >
-                  Previous
-                </Button>
-                <span>
-                  Page {table.getState().pagination.pageIndex + 1} of{' '}
-                  {pageCount}
-                </span>
-                <Button
-                  variant='outline'
-                  onClick={() => table.nextPage()}
-                  disabled={!table.getCanNextPage()}
-                >
-                  Next
-                </Button>
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
-    </main>
+        </div>
+      </div>
+    </div>
   );
 }
