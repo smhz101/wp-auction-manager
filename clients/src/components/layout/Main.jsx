@@ -1,5 +1,5 @@
-import React from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils'
+import PropTypes from 'prop-types'
 
 export const Main = ({ fixed, className, ...props }) => {
   return (
@@ -12,7 +12,12 @@ export const Main = ({ fixed, className, ...props }) => {
       )}
       {...props}
     />
-  );
-};
+  )
+}
 
-Main.displayName = 'Main';
+Main.displayName = 'Main'
+
+Main.propTypes = {
+  fixed: PropTypes.bool,
+  className: PropTypes.string,
+}
