@@ -950,8 +950,8 @@ class WPAM_Auction {
                         );
 
                         foreach ( $query->posts as $post ) {
+                                $this->handle_auction_end( $post->ID );
                                 update_post_meta( $post->ID, '_auction_ended', 1 );
-                                update_post_meta( $post->ID, '_auction_state', WPAM_Auction_State::ENDED );
                         }
 
                         wp_reset_postdata();
