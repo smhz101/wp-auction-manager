@@ -53,7 +53,7 @@ const defaultValues = {
 	],
 };
 
-export default function ProfileForm() {
+export default function GeneralForm() {
 	const form = useForm({
 		resolver: zodResolver(profileFormSchema),
 		defaultValues,

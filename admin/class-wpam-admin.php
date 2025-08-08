@@ -36,9 +36,9 @@ class WPAM_Admin {
 	}
 
 	public function register_settings() {
-               register_setting( 'wpam_settings', 'wpam_default_increment', array( 'sanitize_callback' => array( $this, 'sanitize_decimal' ) ) );
-               register_setting( 'wpam_settings', 'wpam_default_relist_limit', array( 'sanitize_callback' => 'absint' ) );
-               register_setting( 'wpam_settings', 'wpam_soft_close', array( 'sanitize_callback' => 'absint' ) );
+		register_setting( 'wpam_settings', 'wpam_default_increment', array( 'sanitize_callback' => array( $this, 'sanitize_decimal' ) ) );
+		register_setting( 'wpam_settings', 'wpam_default_relist_limit', array( 'sanitize_callback' => 'absint' ) );
+		register_setting( 'wpam_settings', 'wpam_soft_close', array( 'sanitize_callback' => 'absint' ) );
 		register_setting( 'wpam_settings', 'wpam_enable_twilio', array( 'sanitize_callback' => 'rest_sanitize_boolean' ) );
 		register_setting( 'wpam_settings', 'wpam_lead_sms_alerts', array( 'sanitize_callback' => 'rest_sanitize_boolean' ) );
 		register_setting( 'wpam_settings', 'wpam_enable_firebase', array( 'sanitize_callback' => 'rest_sanitize_boolean' ) );
@@ -60,34 +60,33 @@ class WPAM_Admin {
 		register_setting( 'wpam_settings', 'wpam_default_auction_type', array( 'sanitize_callback' => 'sanitize_key' ) );
 		register_setting( 'wpam_settings', 'wpam_enable_proxy_bidding', array( 'sanitize_callback' => 'rest_sanitize_boolean' ) );
 		register_setting( 'wpam_settings', 'wpam_enable_silent_bidding', array( 'sanitize_callback' => 'rest_sanitize_boolean' ) );
-               register_setting( 'wpam_settings', 'wpam_buyer_premium', array( 'sanitize_callback' => array( $this, 'sanitize_decimal' ) ) );
-               register_setting( 'wpam_settings', 'wpam_seller_fee', array( 'sanitize_callback' => array( $this, 'sanitize_decimal' ) ) );
-                register_setting( 'wpam_settings', 'wpam_webhook_url', array( 'sanitize_callback' => 'esc_url_raw' ) );
+		register_setting( 'wpam_settings', 'wpam_buyer_premium', array( 'sanitize_callback' => array( $this, 'sanitize_decimal' ) ) );
+		register_setting( 'wpam_settings', 'wpam_seller_fee', array( 'sanitize_callback' => array( $this, 'sanitize_decimal' ) ) );
+		register_setting( 'wpam_settings', 'wpam_webhook_url', array( 'sanitize_callback' => 'esc_url_raw' ) );
 
-                // Role assignment settings.
-                register_setting( 'wpam_roles_settings', 'wpam_sellers', array( 'sanitize_callback' => array( $this, 'sanitize_sellers' ) ) );
-                register_setting( 'wpam_roles_settings', 'wpam_bidders', array( 'sanitize_callback' => array( $this, 'sanitize_bidders' ) ) );
+		// Role assignment settings.
+		register_setting( 'wpam_roles_settings', 'wpam_sellers', array( 'sanitize_callback' => array( $this, 'sanitize_sellers' ) ) );
+		register_setting( 'wpam_roles_settings', 'wpam_bidders', array( 'sanitize_callback' => array( $this, 'sanitize_bidders' ) ) );
 
-                add_settings_section( 'wpam_general', __( 'Auction Defaults', 'wpam' ), '__return_false', 'wpam_settings' );
+		add_settings_section( 'wpam_general', __( 'Auction Defaults', 'wpam' ), '__return_false', 'wpam_settings' );
 		add_settings_section( 'wpam_providers', __( 'Providers', 'wpam' ), '__return_false', 'wpam_settings' );
 		add_settings_section( 'wpam_twilio', __( 'Twilio Integration', 'wpam' ), '__return_false', 'wpam_settings' );
 		add_settings_section( 'wpam_firebase', __( 'Firebase Integration', 'wpam' ), '__return_false', 'wpam_settings' );
 		add_settings_section( 'wpam_realtime', __( 'Realtime Integration', 'wpam' ), '__return_false', 'wpam_settings' );
 
-                add_settings_section( 'wpam_pusher', __( 'Pusher Realtime', 'wpam' ), '__return_false', 'wpam_settings' );
-                add_settings_section( 'wpam_webhooks', __( 'Webhooks', 'wpam' ), '__return_false', 'wpam_settings' );
+		add_settings_section( 'wpam_pusher', __( 'Pusher Realtime', 'wpam' ), '__return_false', 'wpam_settings' );
+		add_settings_section( 'wpam_webhooks', __( 'Webhooks', 'wpam' ), '__return_false', 'wpam_settings' );
 
-                add_settings_section( 'wpam_roles', __( 'Auction Roles', 'wpam' ), '__return_false', 'wpam_roles_settings' );
-
+		add_settings_section( 'wpam_roles', __( 'Auction Roles', 'wpam' ), '__return_false', 'wpam_roles_settings' );
 		add_settings_field( 'wpam_soft_close_threshold', __( 'Soft Close Threshold (seconds)', 'wpam' ), array( $this, 'field_soft_close_threshold' ), 'wpam_settings', 'wpam_general' );
 
 		add_settings_field( 'wpam_soft_close_extend', __( 'Extension Duration (seconds)', 'wpam' ), array( $this, 'field_soft_close_extend' ), 'wpam_settings', 'wpam_general' );
 
 		add_settings_field( 'wpam_max_extensions', __( 'Maximum Extensions', 'wpam' ), array( $this, 'field_max_extensions' ), 'wpam_settings', 'wpam_general' );
 
-               add_settings_field( 'wpam_default_increment', __( 'Default Bid Increment', 'wpam' ), array( $this, 'field_default_increment' ), 'wpam_settings', 'wpam_general' );
+		add_settings_field( 'wpam_default_increment', __( 'Default Bid Increment', 'wpam' ), array( $this, 'field_default_increment' ), 'wpam_settings', 'wpam_general' );
 
-               add_settings_field( 'wpam_default_relist_limit', __( 'Default Relist Limit', 'wpam' ), array( $this, 'field_default_relist_limit' ), 'wpam_settings', 'wpam_general' );
+		add_settings_field( 'wpam_default_relist_limit', __( 'Default Relist Limit', 'wpam' ), array( $this, 'field_default_relist_limit' ), 'wpam_settings', 'wpam_general' );
 
 		add_settings_field( 'wpam_soft_close', __( 'Soft Close Duration (minutes)', 'wpam' ), array( $this, 'field_soft_close' ), 'wpam_settings', 'wpam_general' );
 
@@ -121,69 +120,69 @@ class WPAM_Admin {
 
 		add_settings_field( 'wpam_pusher_cluster', __( 'Pusher Cluster', 'wpam' ), array( $this, 'field_pusher_cluster' ), 'wpam_settings', 'wpam_realtime' );
 
-               add_settings_field( 'wpam_webhook_url', __( 'Webhook URL', 'wpam' ), array( $this, 'field_webhook_url' ), 'wpam_settings', 'wpam_webhooks' );
+		add_settings_field( 'wpam_webhook_url', __( 'Webhook URL', 'wpam' ), array( $this, 'field_webhook_url' ), 'wpam_settings', 'wpam_webhooks' );
 
-               add_settings_field( 'wpam_sellers', __( 'Auction Sellers', 'wpam' ), array( $this, 'field_sellers' ), 'wpam_roles_settings', 'wpam_roles' );
-               add_settings_field( 'wpam_bidders', __( 'Auction Bidders', 'wpam' ), array( $this, 'field_bidders' ), 'wpam_roles_settings', 'wpam_roles' );
-       }
+		add_settings_field( 'wpam_sellers', __( 'Auction Sellers', 'wpam' ), array( $this, 'field_sellers' ), 'wpam_roles_settings', 'wpam_roles' );
+		add_settings_field( 'wpam_bidders', __( 'Auction Bidders', 'wpam' ), array( $this, 'field_bidders' ), 'wpam_roles_settings', 'wpam_roles' );
+	}
 
-       public function sanitize_decimal( $value ) {
-               return function_exists( 'wc_format_decimal' ) ? wc_format_decimal( $value ) : (float) $value;
-       }
+	public function sanitize_decimal( $value ) {
+			return function_exists( 'wc_format_decimal' ) ? wc_format_decimal( $value ) : (float) $value;
+	}
 
-       private function sanitize_role_users( $user_ids, $role, $option ) {
-               $user_ids = array_map( 'intval', (array) $user_ids );
-               $previous = (array) get_option( $option, array() );
+	private function sanitize_role_users( $user_ids, $role, $option ) {
+			$user_ids = array_map( 'intval', (array) $user_ids );
+			$previous = (array) get_option( $option, array() );
 
-               foreach ( array_diff( $previous, $user_ids ) as $id ) {
-                       $user = get_userdata( $id );
-                       if ( $user ) {
-                               $user->remove_role( $role );
-                       }
-               }
+		foreach ( array_diff( $previous, $user_ids ) as $id ) {
+				$user = get_userdata( $id );
+			if ( $user ) {
+					$user->remove_role( $role );
+			}
+		}
 
-               foreach ( $user_ids as $id ) {
-                       $user = get_userdata( $id );
-                       if ( $user ) {
-                               $user->add_role( $role );
-                       }
-               }
+		foreach ( $user_ids as $id ) {
+					$user = get_userdata( $id );
+			if ( $user ) {
+				$user->add_role( $role );
+			}
+		}
 
-               return $user_ids;
-       }
+			return $user_ids;
+	}
 
-       public function sanitize_sellers( $value ) {
-               return $this->sanitize_role_users( $value, 'auction_seller', 'wpam_sellers' );
-       }
+	public function sanitize_sellers( $value ) {
+			return $this->sanitize_role_users( $value, 'auction_seller', 'wpam_sellers' );
+	}
 
-       public function sanitize_bidders( $value ) {
-               return $this->sanitize_role_users( $value, 'auction_bidder', 'wpam_bidders' );
-       }
+	public function sanitize_bidders( $value ) {
+			return $this->sanitize_role_users( $value, 'auction_bidder', 'wpam_bidders' );
+	}
 
-       private function render_user_select( $option_name ) {
-               $selected = (array) get_option( $option_name, array() );
-               $users    = get_users();
-               echo '<select multiple="multiple" name="' . esc_attr( $option_name ) . '[]" style="height:150px;">';
-               foreach ( $users as $user ) {
-                       $is_selected = in_array( $user->ID, $selected, true ) ? 'selected="selected"' : '';
-                       echo '<option value="' . esc_attr( $user->ID ) . '" ' . $is_selected . '>' . esc_html( $user->display_name ) . '</option>';
-               }
-               echo '</select>';
-               echo '<p class="description">' . esc_html__( 'Hold Ctrl (Windows) or Command (Mac) to select multiple users.', 'wpam' ) . '</p>';
-       }
+	private function render_user_select( $option_name ) {
+			$selected = (array) get_option( $option_name, array() );
+			$users    = get_users();
+			echo '<select multiple="multiple" name="' . esc_attr( $option_name ) . '[]" style="height:150px;">';
+		foreach ( $users as $user ) {
+				$is_selected = in_array( $user->ID, $selected, true ) ? 'selected="selected"' : '';
+				echo '<option value="' . esc_attr( $user->ID ) . '" ' . $is_selected . '>' . esc_html( $user->display_name ) . '</option>';
+		}
+			echo '</select>';
+			echo '<p class="description">' . esc_html__( 'Hold Ctrl (Windows) or Command (Mac) to select multiple users.', 'wpam' ) . '</p>';
+	}
 
-       public function field_sellers() {
-               $this->render_user_select( 'wpam_sellers' );
-       }
+	public function field_sellers() {
+			$this->render_user_select( 'wpam_sellers' );
+	}
 
-       public function field_bidders() {
-               $this->render_user_select( 'wpam_bidders' );
-       }
+	public function field_bidders() {
+			$this->render_user_select( 'wpam_bidders' );
+	}
 
-       public function field_twilio_sid() {
-               $value = esc_attr( get_option( 'wpam_twilio_sid', '' ) );
-               echo '<input type="text" class="regular-text" name="wpam_twilio_sid" value="' . $value . '" />';
-       }
+	public function field_twilio_sid() {
+			$value = esc_attr( get_option( 'wpam_twilio_sid', '' ) );
+			echo '<input type="text" class="regular-text" name="wpam_twilio_sid" value="' . $value . '" />';
+	}
 
 	public function field_twilio_token() {
 		$value = esc_attr( get_option( 'wpam_twilio_token', '' ) );
@@ -240,15 +239,15 @@ class WPAM_Admin {
 		echo '<input type="number" class="small-text" name="wpam_max_extensions" value="' . $value . '" />';
 	}
 
-       public function field_default_increment() {
-               $value = esc_attr( get_option( 'wpam_default_increment', 1 ) );
-               echo '<input type="number" step="0.01" class="small-text" name="wpam_default_increment" value="' . $value . '" />';
-       }
+	public function field_default_increment() {
+			$value = esc_attr( get_option( 'wpam_default_increment', 1 ) );
+			echo '<input type="number" step="0.01" class="small-text" name="wpam_default_increment" value="' . $value . '" />';
+	}
 
-       public function field_default_relist_limit() {
-               $value = esc_attr( get_option( 'wpam_default_relist_limit', 0 ) );
-               echo '<input type="number" class="small-text" name="wpam_default_relist_limit" value="' . $value . '" />';
-       }
+	public function field_default_relist_limit() {
+			$value = esc_attr( get_option( 'wpam_default_relist_limit', 0 ) );
+			echo '<input type="number" class="small-text" name="wpam_default_relist_limit" value="' . $value . '" />';
+	}
 
 	public function field_soft_close() {
 		$value = esc_attr( get_option( 'wpam_soft_close', 0 ) );
@@ -352,22 +351,22 @@ class WPAM_Admin {
 						wp_enqueue_script( 'wpam-select-auction-type', WPAM_PLUGIN_URL . 'assets/admin/js/select-auction-product-type.js', array( 'jquery' ), WPAM_PLUGIN_VERSION, true );
 		}
 
-               if ( in_array( $hook, array( 'post-new.php', 'post.php' ), true ) && 'product' === $screen->post_type ) {
-                       wp_enqueue_style( 'flatpickr', WPAM_PLUGIN_URL . 'assets/admin/css/flatpickr.min.css', array(), WPAM_PLUGIN_VERSION );
-                       wp_enqueue_script( 'flatpickr', WPAM_PLUGIN_URL . 'assets/admin/js/flatpickr.min.js', array(), WPAM_PLUGIN_VERSION, true );
-                       wp_enqueue_script( 'wpam-date-picker', WPAM_PLUGIN_URL . 'assets/admin/js/auction-date-picker.js', array( 'jquery', 'flatpickr' ), WPAM_PLUGIN_VERSION, true );
-                       wp_localize_script(
-                               'wpam-date-picker',
-                               'wpamDatePicker',
-                               array(
-                                       'timezone' => wp_timezone_string(),
-                               )
-                       );
-                       wp_enqueue_script( 'wpam-auction-type-toggle', WPAM_PLUGIN_URL . 'assets/admin/js/auction-type-toggle.js', array( 'jquery' ), WPAM_PLUGIN_VERSION, true );
-                       wp_enqueue_script( 'wpam-auction-relist-options', WPAM_PLUGIN_URL . 'assets/admin/js/auction-relist-options.js', array( 'jquery' ), WPAM_PLUGIN_VERSION, true );
-                       wp_enqueue_style( 'wpam-product-help-panel', WPAM_PLUGIN_URL . 'assets/admin/css/product-help-panel.css', array(), WPAM_PLUGIN_VERSION );
-                       wp_enqueue_script( 'wpam-product-help-panel', WPAM_PLUGIN_URL . 'assets/admin/js/product-help-panel.js', array( 'jquery' ), WPAM_PLUGIN_VERSION, true );
-               }
+		if ( in_array( $hook, array( 'post-new.php', 'post.php' ), true ) && 'product' === $screen->post_type ) {
+				wp_enqueue_style( 'flatpickr', WPAM_PLUGIN_URL . 'assets/admin/css/flatpickr.min.css', array(), WPAM_PLUGIN_VERSION );
+				wp_enqueue_script( 'flatpickr', WPAM_PLUGIN_URL . 'assets/admin/js/flatpickr.min.js', array(), WPAM_PLUGIN_VERSION, true );
+				wp_enqueue_script( 'wpam-date-picker', WPAM_PLUGIN_URL . 'assets/admin/js/auction-date-picker.js', array( 'jquery', 'flatpickr' ), WPAM_PLUGIN_VERSION, true );
+				wp_localize_script(
+					'wpam-date-picker',
+					'wpamDatePicker',
+					array(
+						'timezone' => wp_timezone_string(),
+					)
+				);
+				wp_enqueue_script( 'wpam-auction-type-toggle', WPAM_PLUGIN_URL . 'assets/admin/js/auction-type-toggle.js', array( 'jquery' ), WPAM_PLUGIN_VERSION, true );
+				wp_enqueue_script( 'wpam-auction-relist-options', WPAM_PLUGIN_URL . 'assets/admin/js/auction-relist-options.js', array( 'jquery' ), WPAM_PLUGIN_VERSION, true );
+				wp_enqueue_style( 'wpam-product-help-panel', WPAM_PLUGIN_URL . 'assets/admin/css/product-help-panel.css', array(), WPAM_PLUGIN_VERSION );
+				wp_enqueue_script( 'wpam-product-help-panel', WPAM_PLUGIN_URL . 'assets/admin/js/product-help-panel.js', array( 'jquery' ), WPAM_PLUGIN_VERSION, true );
+		}
 
 		$slug        = 'auctions';
 		$admin_pages = array(
@@ -403,53 +402,53 @@ class WPAM_Admin {
 
 		// if ( in_array( $hook, $admin_pages, true ) ) {
 
-		// 	wp_localize_script(
-		// 		'wpam-admin-tables',
-		// 		'wpamTables',
-		// 		array(
-		// 			'nonce'             => wp_create_nonce( 'wp_rest' ),
+		// wp_localize_script(
+		// 'wpam-admin-tables',
+		// 'wpamTables',
+		// array(
+		// 'nonce'             => wp_create_nonce( 'wp_rest' ),
 
-		// 			'auctions_endpoint' => rest_url( 'wpam/v1/auctions' ),
-		// 			'bids_endpoint'     => rest_url( 'wpam/v1/bids' ),
-		// 			'messages_endpoint' => rest_url( 'wpam/v1/messages' ),
-		// 			'logs_endpoint'     => rest_url( 'wpam/v1/logs' ),
-		// 			'flagged_endpoint'  => rest_url( 'wpam/v1/flagged' ),
+		// 'auctions_endpoint' => rest_url( 'wpam/v1/auctions' ),
+		// 'bids_endpoint'     => rest_url( 'wpam/v1/bids' ),
+		// 'messages_endpoint' => rest_url( 'wpam/v1/messages' ),
+		// 'logs_endpoint'     => rest_url( 'wpam/v1/logs' ),
+		// 'flagged_endpoint'  => rest_url( 'wpam/v1/flagged' ),
 
-		// 			'auction_id'        => isset( $_GET['auction_id'] ) ? absint( $_GET['auction_id'] ) : 0,
-		// 			'i18n'              => array(
-		// 				'auction'     => __( 'Auction', 'wpam' ),
-		// 				'start'       => __( 'Start', 'wpam' ),
-		// 				'end'         => __( 'End', 'wpam' ),
-		// 				'state'       => __( 'State', 'wpam' ),
-		// 				'reason'      => __( 'Ending Reason', 'wpam' ),
-		// 				'user'        => __( 'User', 'wpam' ),
-		// 				'amount'      => __( 'Amount', 'wpam' ),
-		// 				'bid_time'    => __( 'Bid Time', 'wpam' ),
-		// 				'message'     => __( 'Message', 'wpam' ),
-		// 				'status'      => __( 'Status', 'wpam' ),
-		// 				'date'        => __( 'Date', 'wpam' ),
-		// 				'admin'       => __( 'Admin', 'wpam' ),
-		// 				'action'      => __( 'Action', 'wpam' ),
-		// 				'details'     => __( 'Details', 'wpam' ),
-		// 				'reason_user' => __( 'Reason', 'wpam' ),
-		// 			),
-		// 		)
-		// 	);
+		// 'auction_id'        => isset( $_GET['auction_id'] ) ? absint( $_GET['auction_id'] ) : 0,
+		// 'i18n'              => array(
+		// 'auction'     => __( 'Auction', 'wpam' ),
+		// 'start'       => __( 'Start', 'wpam' ),
+		// 'end'         => __( 'End', 'wpam' ),
+		// 'state'       => __( 'State', 'wpam' ),
+		// 'reason'      => __( 'Ending Reason', 'wpam' ),
+		// 'user'        => __( 'User', 'wpam' ),
+		// 'amount'      => __( 'Amount', 'wpam' ),
+		// 'bid_time'    => __( 'Bid Time', 'wpam' ),
+		// 'message'     => __( 'Message', 'wpam' ),
+		// 'status'      => __( 'Status', 'wpam' ),
+		// 'date'        => __( 'Date', 'wpam' ),
+		// 'admin'       => __( 'Admin', 'wpam' ),
+		// 'action'      => __( 'Action', 'wpam' ),
+		// 'details'     => __( 'Details', 'wpam' ),
+		// 'reason_user' => __( 'Reason', 'wpam' ),
+		// ),
+		// )
+		// );
 		// }
 
 		// if ( $slug . '_page_wpam-settings' !== $hook ) {
-		// 	return;
+		// return;
 		// }
 
 		// wp_enqueue_script( 'wpam-settings-app', WPAM_PLUGIN_URL . 'assets/admin/js/settings-app.js', array( 'wp-element', 'wp-components', 'wp-api-fetch' ), WPAM_PLUGIN_VERSION, true );
 
 		// wp_localize_script(
-		// 	'wpam-settings-app',
-		// 	'wpamSettings',
-		// 	array(
-		// 		'nonce'         => wp_create_nonce( 'wp_rest' ),
-		// 		'rest_endpoint' => 'wpam/v1/settings',
-		// 	)
+		// 'wpam-settings-app',
+		// 'wpamSettings',
+		// array(
+		// 'nonce'         => wp_create_nonce( 'wp_rest' ),
+		// 'rest_endpoint' => 'wpam/v1/settings',
+		// )
 		// );
 	}
 
@@ -484,11 +483,11 @@ class WPAM_Admin {
 				array(
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => array( '\\WPAM\\Includes\\WPAM_Bid', 'rest_place_bid' ),
-                                'permission_callback' => function () {
-                                                return current_user_can( 'auction_bidder' );
-                                        },
-                                )
-                        );
+					'permission_callback' => function () {
+									return current_user_can( 'auction_bidder' );
+					},
+				)
+			);
 
 			register_rest_route(
 				'wpam/v1',
@@ -585,194 +584,194 @@ class WPAM_Admin {
 			);
 	}
 
-        public function rest_get_settings( \WP_REST_Request $request ) {
-                $options = array();
-                foreach ( $this->get_option_keys() as $key ) {
-                        $options[ $key ] = get_option( $key );
-                }
+	public function rest_get_settings( \WP_REST_Request $request ) {
+			$options = array();
+		foreach ( $this->get_option_keys() as $key ) {
+				$options[ $key ] = get_option( $key );
+		}
 
-                $options['wpam_pusher_status'] = get_option( 'wpam_pusher_status', 'disabled' );
+			$options['wpam_pusher_status'] = get_option( 'wpam_pusher_status', 'disabled' );
 
-                return rest_ensure_response( $options );
-        }
+			return rest_ensure_response( $options );
+	}
 
-        public function rest_update_settings( \WP_REST_Request $request ) {
-                $params  = $request->get_json_params();
-                unset( $params['wpam_pusher_status'] );
-                $errors  = array();
-                $defines = $this->get_setting_definitions();
+	public function rest_update_settings( \WP_REST_Request $request ) {
+			$params = $request->get_json_params();
+			unset( $params['wpam_pusher_status'] );
+			$errors  = array();
+			$defines = $this->get_setting_definitions();
 
-                foreach ( $defines as $key => $definition ) {
-                        if ( ! isset( $params[ $key ] ) ) {
-                                continue;
-                        }
+		foreach ( $defines as $key => $definition ) {
+			if ( ! isset( $params[ $key ] ) ) {
+				continue;
+			}
 
-                        $raw_value = $params[ $key ];
-                        $schema    = $definition['schema'];
+				$raw_value = $params[ $key ];
+				$schema    = $definition['schema'];
 
-                        $valid = rest_validate_value_from_schema( $raw_value, $schema );
-                        if ( is_wp_error( $valid ) ) {
-                                $errors[ $key ] = $valid->get_error_message();
-                                continue;
-                        }
+				$valid = rest_validate_value_from_schema( $raw_value, $schema );
+			if ( is_wp_error( $valid ) ) {
+					$errors[ $key ] = $valid->get_error_message();
+					continue;
+			}
 
-                        $value = $raw_value;
-                        if ( isset( $definition['sanitize'] ) ) {
-                                $value = call_user_func( $definition['sanitize'], $raw_value );
-                        }
+				$value = $raw_value;
+			if ( isset( $definition['sanitize'] ) ) {
+					$value = call_user_func( $definition['sanitize'], $raw_value );
+			}
 
-                        update_option( $key, $value );
-                }
+				update_option( $key, $value );
+		}
 
-                if ( ! empty( $errors ) ) {
-                        return new \WP_Error(
-                                'rest_invalid_param',
-                                __( 'Invalid parameter(s): ', 'wpam' ) . implode( ', ', array_keys( $errors ) ),
-                                array(
-                                        'status' => 400,
-                                        'params' => $errors,
-                                )
-                        );
-                }
+		if ( ! empty( $errors ) ) {
+				return new \WP_Error(
+					'rest_invalid_param',
+					__( 'Invalid parameter(s): ', 'wpam' ) . implode( ', ', array_keys( $errors ) ),
+					array(
+						'status' => 400,
+						'params' => $errors,
+					)
+				);
+		}
 
-                return $this->rest_get_settings( $request );
-        }
+			return $this->rest_get_settings( $request );
+	}
 
-        private function get_setting_definitions() {
-               return array(
-                      'wpam_default_increment'   => array(
-                               'sanitize' => array( $this, 'sanitize_decimal' ),
-                               'schema'   => array( 'type' => 'number' ),
-                       ),
-                       'wpam_default_relist_limit' => array(
-                               'sanitize' => 'absint',
-                               'schema'   => array( 'type' => 'integer' ),
-                       ),
-                       'wpam_soft_close'          => array(
-                               'sanitize' => 'absint',
-                               'schema'   => array( 'type' => 'integer' ),
-                       ),
-                        'wpam_enable_twilio'       => array(
-                                'sanitize' => 'rest_sanitize_boolean',
-                                'schema'   => array( 'type' => 'boolean' ),
-                        ),
-                        'wpam_lead_sms_alerts'     => array(
-                                'sanitize' => 'rest_sanitize_boolean',
-                                'schema'   => array( 'type' => 'boolean' ),
-                        ),
-                        'wpam_enable_firebase'     => array(
-                                'sanitize' => 'rest_sanitize_boolean',
-                                'schema'   => array( 'type' => 'boolean' ),
-                        ),
-                        'wpam_enable_email'        => array(
-                                'sanitize' => 'rest_sanitize_boolean',
-                                'schema'   => array( 'type' => 'boolean' ),
-                        ),
-                        'wpam_firebase_server_key' => array(
-                                'sanitize' => 'sanitize_text_field',
-                                'schema'   => array( 'type' => 'string' ),
-                        ),
-                        'wpam_sendgrid_key'        => array(
-                                'sanitize' => 'sanitize_text_field',
-                                'schema'   => array( 'type' => 'string' ),
-                        ),
-                        'wpam_twilio_sid'          => array(
-                                'sanitize' => 'sanitize_text_field',
-                                'schema'   => array( 'type' => 'string' ),
-                        ),
-                        'wpam_twilio_token'        => array(
-                                'sanitize' => 'sanitize_text_field',
-                                'schema'   => array( 'type' => 'string' ),
-                        ),
-                        'wpam_twilio_from'         => array(
-                                'sanitize' => 'sanitize_text_field',
-                                'schema'   => array( 'type' => 'string' ),
-                        ),
-                        'wpam_pusher_app_id'       => array(
-                                'sanitize' => 'sanitize_text_field',
-                                'schema'   => array( 'type' => 'string' ),
-                        ),
-                        'wpam_pusher_key'          => array(
-                                'sanitize' => 'sanitize_text_field',
-                                'schema'   => array( 'type' => 'string' ),
-                        ),
-                        'wpam_pusher_secret'       => array(
-                                'sanitize' => 'sanitize_text_field',
-                                'schema'   => array( 'type' => 'string' ),
-                        ),
-                        'wpam_pusher_cluster'      => array(
-                                'sanitize' => 'sanitize_text_field',
-                                'schema'   => array( 'type' => 'string' ),
-                        ),
-                        'wpam_soft_close_threshold' => array(
-                                'sanitize' => 'absint',
-                                'schema'   => array( 'type' => 'integer' ),
-                        ),
-                        'wpam_soft_close_extend'   => array(
-                                'sanitize' => 'absint',
-                                'schema'   => array( 'type' => 'integer' ),
-                        ),
-                        'wpam_max_extensions'      => array(
-                                'sanitize' => 'absint',
-                                'schema'   => array( 'type' => 'integer' ),
-                        ),
-                        'wpam_realtime_provider'   => array(
-                                'sanitize' => 'sanitize_key',
-                                'schema'   => array( 'type' => 'string' ),
-                        ),
-                        'wpam_require_kyc'         => array(
-                                'sanitize' => 'rest_sanitize_boolean',
-                                'schema'   => array( 'type' => 'boolean' ),
-                        ),
-                        'wpam_default_auction_type' => array(
-                                'sanitize' => 'sanitize_key',
-                                'schema'   => array( 'type' => 'string' ),
-                        ),
-                        'wpam_enable_proxy_bidding' => array(
-                                'sanitize' => 'rest_sanitize_boolean',
-                                'schema'   => array( 'type' => 'boolean' ),
-                        ),
-                        'wpam_enable_silent_bidding' => array(
-                                'sanitize' => 'rest_sanitize_boolean',
-                                'schema'   => array( 'type' => 'boolean' ),
-                        ),
-                       'wpam_buyer_premium'       => array(
-                               'sanitize' => array( $this, 'sanitize_decimal' ),
-                               'schema'   => array( 'type' => 'number' ),
-                       ),
-                       'wpam_seller_fee'          => array(
-                               'sanitize' => array( $this, 'sanitize_decimal' ),
-                               'schema'   => array( 'type' => 'number' ),
-                       ),
-                        'wpam_webhook_url'         => array(
-                                'sanitize' => 'esc_url_raw',
-                                'schema'   => array(
-                                        'type'   => 'string',
-                                        'format' => 'uri',
-                                ),
-                        ),
-                        'wpam_enable_toasts'       => array(
-                                'sanitize' => 'rest_sanitize_boolean',
-                                'schema'   => array( 'type' => 'boolean' ),
-                        ),
-                );
-        }
+	private function get_setting_definitions() {
+			return array(
+				'wpam_default_increment'     => array(
+					'sanitize' => array( $this, 'sanitize_decimal' ),
+					'schema'   => array( 'type' => 'number' ),
+				),
+				'wpam_default_relist_limit'  => array(
+					'sanitize' => 'absint',
+					'schema'   => array( 'type' => 'integer' ),
+				),
+				'wpam_soft_close'            => array(
+					'sanitize' => 'absint',
+					'schema'   => array( 'type' => 'integer' ),
+				),
+				'wpam_enable_twilio'         => array(
+					'sanitize' => 'rest_sanitize_boolean',
+					'schema'   => array( 'type' => 'boolean' ),
+				),
+				'wpam_lead_sms_alerts'       => array(
+					'sanitize' => 'rest_sanitize_boolean',
+					'schema'   => array( 'type' => 'boolean' ),
+				),
+				'wpam_enable_firebase'       => array(
+					'sanitize' => 'rest_sanitize_boolean',
+					'schema'   => array( 'type' => 'boolean' ),
+				),
+				'wpam_enable_email'          => array(
+					'sanitize' => 'rest_sanitize_boolean',
+					'schema'   => array( 'type' => 'boolean' ),
+				),
+				'wpam_firebase_server_key'   => array(
+					'sanitize' => 'sanitize_text_field',
+					'schema'   => array( 'type' => 'string' ),
+				),
+				'wpam_sendgrid_key'          => array(
+					'sanitize' => 'sanitize_text_field',
+					'schema'   => array( 'type' => 'string' ),
+				),
+				'wpam_twilio_sid'            => array(
+					'sanitize' => 'sanitize_text_field',
+					'schema'   => array( 'type' => 'string' ),
+				),
+				'wpam_twilio_token'          => array(
+					'sanitize' => 'sanitize_text_field',
+					'schema'   => array( 'type' => 'string' ),
+				),
+				'wpam_twilio_from'           => array(
+					'sanitize' => 'sanitize_text_field',
+					'schema'   => array( 'type' => 'string' ),
+				),
+				'wpam_pusher_app_id'         => array(
+					'sanitize' => 'sanitize_text_field',
+					'schema'   => array( 'type' => 'string' ),
+				),
+				'wpam_pusher_key'            => array(
+					'sanitize' => 'sanitize_text_field',
+					'schema'   => array( 'type' => 'string' ),
+				),
+				'wpam_pusher_secret'         => array(
+					'sanitize' => 'sanitize_text_field',
+					'schema'   => array( 'type' => 'string' ),
+				),
+				'wpam_pusher_cluster'        => array(
+					'sanitize' => 'sanitize_text_field',
+					'schema'   => array( 'type' => 'string' ),
+				),
+				'wpam_soft_close_threshold'  => array(
+					'sanitize' => 'absint',
+					'schema'   => array( 'type' => 'integer' ),
+				),
+				'wpam_soft_close_extend'     => array(
+					'sanitize' => 'absint',
+					'schema'   => array( 'type' => 'integer' ),
+				),
+				'wpam_max_extensions'        => array(
+					'sanitize' => 'absint',
+					'schema'   => array( 'type' => 'integer' ),
+				),
+				'wpam_realtime_provider'     => array(
+					'sanitize' => 'sanitize_key',
+					'schema'   => array( 'type' => 'string' ),
+				),
+				'wpam_require_kyc'           => array(
+					'sanitize' => 'rest_sanitize_boolean',
+					'schema'   => array( 'type' => 'boolean' ),
+				),
+				'wpam_default_auction_type'  => array(
+					'sanitize' => 'sanitize_key',
+					'schema'   => array( 'type' => 'string' ),
+				),
+				'wpam_enable_proxy_bidding'  => array(
+					'sanitize' => 'rest_sanitize_boolean',
+					'schema'   => array( 'type' => 'boolean' ),
+				),
+				'wpam_enable_silent_bidding' => array(
+					'sanitize' => 'rest_sanitize_boolean',
+					'schema'   => array( 'type' => 'boolean' ),
+				),
+				'wpam_buyer_premium'         => array(
+					'sanitize' => array( $this, 'sanitize_decimal' ),
+					'schema'   => array( 'type' => 'number' ),
+				),
+				'wpam_seller_fee'            => array(
+					'sanitize' => array( $this, 'sanitize_decimal' ),
+					'schema'   => array( 'type' => 'number' ),
+				),
+				'wpam_webhook_url'           => array(
+					'sanitize' => 'esc_url_raw',
+					'schema'   => array(
+						'type'   => 'string',
+						'format' => 'uri',
+					),
+				),
+				'wpam_enable_toasts'         => array(
+					'sanitize' => 'rest_sanitize_boolean',
+					'schema'   => array( 'type' => 'boolean' ),
+				),
+			);
+	}
 
-        private function get_option_keys() {
-                return array_keys( $this->get_setting_definitions() );
-        }
+	private function get_option_keys() {
+			return array_keys( $this->get_setting_definitions() );
+	}
 
 	public function render_settings_page() {
 		echo '<div class="wrap">';
 		echo '<h1>' . esc_html__( 'Settings', 'wpam' ) . '</h1>';
-                echo '<div id="wpam-settings-root"></div>';
-                echo '<form method="post" action="options.php">';
-                settings_fields( 'wpam_roles_settings' );
-                do_settings_sections( 'wpam_roles_settings' );
-                submit_button();
-                echo '</form>';
-                echo '</div>';
-        }
+				echo '<div id="wpam-settings-root"></div>';
+				echo '<form method="post" action="options.php">';
+				settings_fields( 'wpam_roles_settings' );
+				do_settings_sections( 'wpam_roles_settings' );
+				submit_button();
+				echo '</form>';
+				echo '</div>';
+	}
 
 	/**
 	 * Log when an auction is suspended or cancelled via status changes.

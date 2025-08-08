@@ -1,7 +1,7 @@
 import ContentSection from '../components/content-section';
 // import { AccountForm } from './account-form';
 
-export default function SettingsAccount() {
+export default function AuctionSettingPage() {
 	return (
 		<ContentSection
 			title="Account"

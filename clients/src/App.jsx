@@ -20,8 +20,9 @@ import Users from './pages/users/index';
 import Settings from './pages/settings/index';
 import NotFound from './pages/errors/not-found';
 
-import Profile from './pages/settings/profile/index';
-import Account from './pages/settings/account/index';
+import GeneralSettingPage from './pages/settings/general/index';
+import AuctionSettingPage from './pages/settings/auction/index';
+import AddonsSettingsPage from './pages/settings/addons/index';
 
 const submenuItems = [
 	{ label: 'All Auctions', path: '/all-auctions' },
@@ -77,9 +78,10 @@ function AppRoutes() {
 			<Route path="/logs" element={<Logs />} />
 			<Route path="/users" element={<Users />} />
 			<Route path="/settings" element={<Settings />}>
-				<Route index element={<Profile />} />
-				<Route path="account" element={<Account />} />
-				{/* <Route path="appearance" element={<Appearance />} />
+				<Route index element={<GeneralSettingPage />} />
+				<Route path="auction" element={<AuctionSettingPage />} />
+				<Route path="addons" element={<AddonsSettingsPage />} />
+				{/* 
 				<Route path="notifications" element={<Notifications />} />
 				<Route path="display" element={<Display />} /> */}
 			</Route>
