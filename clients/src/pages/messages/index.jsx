@@ -1,12 +1,101 @@
-import { useEffect } from 'react'
-import { useSubmenu } from '@/context/submenu-context'
+import { useEffect, useState } from 'react';
+import { useSubmenu } from '@/context/submenu-context';
+import { Header } from '@/components/layout/header';
+import { Main } from '@/components/layout/main';
+import { Search } from '@/components/search';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+} from '@/components/ui/pagination';
 
 export default function Messages() {
-  const { highlightSubmenu } = useSubmenu()
+  const { highlightSubmenu } = useSubmenu();
+  const [messages, setMessages] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
-    highlightSubmenu('/messages')
-  }, [highlightSubmenu])
+    highlightSubmenu('/messages');
+  }, [highlightSubmenu]);
 
-  return <div>Messages page content</div>
+  useEffect(() => {
+    const controller = new AbortController();
+
+    fetch(`/wp-json/wpam/v1/messages?page=${page}`, { signal: controller.signal })
+      .then((res) => res.json())
+      .then((data) => {
+        setMessages(data.items || data || []);
+        setTotalPages(data.totalPages || 1);
+      })
+      .catch(() => {});
+
+    return () => controller.abort();
+  }, [page]);
+
+  return (
+    <>
+      <Header>
+        <Search placeholder="Search messages" />
+      </Header>
+      <Main fixed>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>ID</TableHead>
+              <TableHead>From</TableHead>
+              <TableHead>Message</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {messages.map((message) => (
+              <TableRow key={message.id}>
+                <TableCell>{message.id}</TableCell>
+                <TableCell>{message.from}</TableCell>
+                <TableCell>{message.message || message.content}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+        <Pagination className="mt-4">
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                href="#"
+                onClick={() => setPage((p) => Math.max(p - 1, 1))}
+              />
+            </PaginationItem>
+            {Array.from({ length: totalPages }, (_, i) => (
+              <PaginationItem key={i}>
+                <PaginationLink
+                  href="#"
+                  isActive={page === i + 1}
+                  onClick={() => setPage(i + 1)}
+                >
+                  {i + 1}
+                </PaginationLink>
+              </PaginationItem>
+            ))}
+            <PaginationItem>
+              <PaginationNext
+                href="#"
+                onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </Main>
+    </>
+  );
 }
