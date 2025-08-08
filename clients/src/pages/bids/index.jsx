@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import api from '@/lib/api';
 import { useSubmenu } from '@/context/submenu-context';
 import { Header } from '@/components/layout/header';
 import { Main } from '@/components/layout/main';
@@ -33,13 +34,18 @@ export default function Bids() {
   useEffect(() => {
     const controller = new AbortController();
 
-    fetch(`/wp-json/wpam/v1/bids?page=${page}`, { signal: controller.signal })
-      .then((res) => res.json())
-      .then((data) => {
-        setBids(data.items || data || []);
-        setTotalPages(data.totalPages || 1);
-      })
-      .catch(() => {});
+      api
+        .get(window.wpamData.bids_endpoint, {
+          params: { page },
+          signal: controller.signal,
+        })
+        .then((res) => {
+          const { data } = res;
+          const items = Array.isArray(data) ? data : data?.items;
+          setBids(items || []);
+          setTotalPages(data?.totalPages ?? 1);
+        })
+        .catch(() => {});
 
     return () => controller.abort();
   }, [page]);
