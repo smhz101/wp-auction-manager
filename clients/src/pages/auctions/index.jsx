@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import api from '@/lib/api';
 import { useSubmenu } from '@/context/submenu-context';
 import { Header } from '@/components/layout/header';
 import { Main } from '@/components/layout/main';
@@ -33,9 +34,13 @@ export default function Auctions() {
   useEffect(() => {
     const controller = new AbortController();
 
-    fetch(`/wp-json/wpam/v1/auctions?page=${page}`, { signal: controller.signal })
-      .then((res) => res.json())
-      .then((data) => {
+    api
+      .get(window.wpamData.auctions_endpoint, {
+        params: { page },
+        signal: controller.signal,
+      })
+      .then((res) => {
+        const data = res.data;
         setAuctions(data.items || data || []);
         setTotalPages(data.totalPages || 1);
       })
