@@ -34,17 +34,18 @@ export default function Bids() {
   useEffect(() => {
     const controller = new AbortController();
 
-    api
-      .get(window.wpamData.bids_endpoint, {
-        params: { page },
-        signal: controller.signal,
-      })
-      .then((res) => {
-        const data = res.data;
-        setBids(data.items || data || []);
-        setTotalPages(data.totalPages || 1);
-      })
-      .catch(() => {});
+      api
+        .get(window.wpamData.bids_endpoint, {
+          params: { page },
+          signal: controller.signal,
+        })
+        .then((res) => {
+          const { data } = res;
+          const items = Array.isArray(data) ? data : data?.items;
+          setBids(items || []);
+          setTotalPages(data?.totalPages ?? 1);
+        })
+        .catch(() => {});
 
     return () => controller.abort();
   }, [page]);

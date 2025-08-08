@@ -34,17 +34,18 @@ export default function Auctions() {
   useEffect(() => {
     const controller = new AbortController();
 
-    api
-      .get(window.wpamData.auctions_endpoint, {
-        params: { page },
-        signal: controller.signal,
-      })
-      .then((res) => {
-        const data = res.data;
-        setAuctions(data.items || data || []);
-        setTotalPages(data.totalPages || 1);
-      })
-      .catch(() => {});
+      api
+        .get(window.wpamData.auctions_endpoint, {
+          params: { page },
+          signal: controller.signal,
+        })
+        .then((res) => {
+          const { data } = res;
+          const items = Array.isArray(data) ? data : data?.items;
+          setAuctions(items || []);
+          setTotalPages(data?.totalPages ?? 1);
+        })
+        .catch(() => {});
 
     return () => controller.abort();
   }, [page]);

@@ -34,17 +34,18 @@ export default function Users() {
   useEffect(() => {
     const controller = new AbortController();
 
-    api
-      .get(window.wpamData.users_endpoint, {
-        params: { page },
-        signal: controller.signal,
-      })
-      .then((res) => {
-        const data = res.data;
-        setUsers(data.items || data || []);
-        setTotalPages(data.totalPages || 1);
-      })
-      .catch(() => {});
+      api
+        .get(window.wpamData.users_endpoint, {
+          params: { page },
+          signal: controller.signal,
+        })
+        .then((res) => {
+          const { data } = res;
+          const items = Array.isArray(data) ? data : data?.items;
+          setUsers(items || []);
+          setTotalPages(data?.totalPages ?? 1);
+        })
+        .catch(() => {});
 
     return () => controller.abort();
   }, [page]);
