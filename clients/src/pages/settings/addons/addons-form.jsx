@@ -86,19 +86,19 @@ export default function AddonsForm() {
 
 	return (
 		<Form {...form}>
-			<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="tw-space-y-6">
 				{/* TWILIO */}
 				<Collapsible open={watchTwilio}>
-					<div className="border rounded-lg shadow-sm p-4 space-y-4">
-						<div className="flex items-center justify-between">
-							<h3 className="text-base font-medium">
+                                        <div className="tw-border tw-rounded-lg tw-shadow-sm tw-p-4 tw-space-y-4">
+                                                <div className="tw-flex tw-items-center tw-justify-between">
+                                                        <h3 className="tw-text-base tw-font-medium">
 								Twilio Integration
 							</h3>
 							<FormField
 								control={form.control}
 								name="enable_twilio"
 								render={({ field }) => (
-									<FormItem className="flex items-center gap-2">
+                                                                        <FormItem className="tw-flex tw-items-center tw-gap-2">
 										<FormLabel>Enable</FormLabel>
 										<FormControl>
 											<Switch
@@ -111,7 +111,7 @@ export default function AddonsForm() {
 							/>
 						</div>
 
-						<CollapsibleContent className="space-y-4 mt-4">
+                                            <CollapsibleContent className="tw-space-y-4 tw-mt-4">
 							<FormField
 								control={form.control}
 								name="twilio_sid"
@@ -179,7 +179,7 @@ export default function AddonsForm() {
 								control={form.control}
 								name="lead_sms_alerts"
 								render={({ field }) => (
-									<FormItem className="flex items-center justify-between">
+                                                                    <FormItem className="tw-flex tw-items-center tw-justify-between">
 										<FormLabel>
 											Enable Bid SMS Alerts
 										</FormLabel>
@@ -198,16 +198,16 @@ export default function AddonsForm() {
 
 				{/* SENDGRID EMAIL */}
 				<Collapsible open={watchEmail}>
-					<div className="border rounded-lg shadow-sm p-4 space-y-4">
-						<div className="flex items-center justify-between">
-							<h3 className="text-base font-medium">
+                                    <div className="tw-border tw-rounded-lg tw-shadow-sm tw-p-4 tw-space-y-4">
+                                            <div className="tw-flex tw-items-center tw-justify-between">
+                                                    <h3 className="tw-text-base tw-font-medium">
 								Email Integration (SendGrid)
 							</h3>
 							<FormField
 								control={form.control}
 								name="enable_email"
 								render={({ field }) => (
-									<FormItem className="flex items-center gap-2">
+                                                                    <FormItem className="tw-flex tw-items-center tw-gap-2">
 										<FormLabel>Enable</FormLabel>
 										<FormControl>
 											<Switch
@@ -220,7 +220,7 @@ export default function AddonsForm() {
 							/>
 						</div>
 
-						<CollapsibleContent className="space-y-4 mt-4">
+                                            <CollapsibleContent className="tw-space-y-4 tw-mt-4">
 							<FormField
 								control={form.control}
 								name="sendgrid_key"
@@ -248,16 +248,16 @@ export default function AddonsForm() {
 
 				{/* FIREBASE */}
 				<Collapsible open={watchFirebase}>
-					<div className="border rounded-lg shadow-sm p-4 space-y-4">
-						<div className="flex items-center justify-between">
-							<h3 className="text-base font-medium">
+                                    <div className="tw-border tw-rounded-lg tw-shadow-sm tw-p-4 tw-space-y-4">
+                                            <div className="tw-flex tw-items-center tw-justify-between">
+                                                    <h3 className="tw-text-base tw-font-medium">
 								Firebase Integration
 							</h3>
 							<FormField
 								control={form.control}
 								name="enable_firebase"
 								render={({ field }) => (
-									<FormItem className="flex items-center gap-2">
+                                                                    <FormItem className="tw-flex tw-items-center tw-gap-2">
 										<FormLabel>Enable</FormLabel>
 										<FormControl>
 											<Switch
@@ -270,7 +270,7 @@ export default function AddonsForm() {
 							/>
 						</div>
 
-						<CollapsibleContent className="space-y-4 mt-4">
+                                            <CollapsibleContent className="tw-space-y-4 tw-mt-4">
 							<FormField
 								control={form.control}
 								name="firebase_server_key"
@@ -298,8 +298,8 @@ export default function AddonsForm() {
 				</Collapsible>
 
 				{/* REALTIME PROVIDER - ALWAYS VISIBLE */}
-				<div className="border rounded-lg shadow-sm p-4 space-y-4">
-					<h3 className="text-base font-medium">
+                            <div className="tw-border tw-rounded-lg tw-shadow-sm tw-p-4 tw-space-y-4">
+                                    <h3 className="tw-text-base tw-font-medium">
 						Realtime Provider (Pusher)
 					</h3>
 					<FormField

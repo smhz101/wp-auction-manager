@@ -17,7 +17,7 @@ function Pagination({
       role="navigation"
       aria-label="pagination"
       data-slot="pagination"
-      className={cn("mx-auto flex w-full justify-center", className)}
+      className={cn("tw-mx-auto tw-flex tw-w-full tw-justify-center", className)}
       {...props} />)
   );
 }
@@ -29,7 +29,7 @@ function PaginationContent({
   return (
     (<ul
       data-slot="pagination-content"
-      className={cn("flex flex-row items-center gap-1", className)}
+      className={cn("tw-flex tw-flex-row tw-items-center tw-gap-1", className)}
       {...props} />)
   );
 }
@@ -67,10 +67,10 @@ function PaginationPrevious({
     (<PaginationLink
       aria-label="Go to previous page"
       size="default"
-      className={cn("gap-1 px-2.5 sm:pl-2.5", className)}
+      className={cn("tw-gap-1 tw-px-2.5 sm:tw-pl-2.5", className)}
       {...props}>
       <ChevronLeftIcon />
-      <span className="hidden sm:block">Previous</span>
+      <span className="tw-hidden sm:tw-block">Previous</span>
     </PaginationLink>)
   );
 }
@@ -83,9 +83,9 @@ function PaginationNext({
     (<PaginationLink
       aria-label="Go to next page"
       size="default"
-      className={cn("gap-1 px-2.5 sm:pr-2.5", className)}
+      className={cn("tw-gap-1 tw-px-2.5 sm:tw-pr-2.5", className)}
       {...props}>
-      <span className="hidden sm:block">Next</span>
+      <span className="tw-hidden sm:tw-block">Next</span>
       <ChevronRightIcon />
     </PaginationLink>)
   );
@@ -99,10 +99,10 @@ function PaginationEllipsis({
     (<span
       aria-hidden
       data-slot="pagination-ellipsis"
-      className={cn("flex size-9 items-center justify-center", className)}
+      className={cn("tw-flex tw-size-9 tw-items-center tw-justify-center", className)}
       {...props}>
-      <MoreHorizontalIcon className="size-4" />
-      <span className="sr-only">More pages</span>
+      <MoreHorizontalIcon className="tw-size-4" />
+      <span className="tw-sr-only">More pages</span>
     </span>)
   );
 }

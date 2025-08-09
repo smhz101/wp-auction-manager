@@ -30,26 +30,26 @@ export default function Settings() {
 			{/* ===== Top Heading ===== */}
 			<Header>
 				<Search />
-				<div className="ml-auto! flex! items-center! space-x-4!">
+                                <div className="tw-ml-auto! tw-flex! tw-items-center! tw-space-x-4!">
 					<ThemeSwitch />
 				</div>
 			</Header>
 
 			<Main fixed>
-				<div className="space-y-0.5!">
-					<h1 className="text-2xl! font-bold! tracking-tight! md:text-3xl!">
+                                <div className="tw-space-y-0.5!">
+                                        <h1 className="tw-text-2xl! tw-font-bold! tw-tracking-tight! md:tw-text-3xl!">
 						Settings
 					</h1>
-					<p className="text-muted-foreground!">
+                                        <p className="tw-text-muted-foreground!">
 						Manage your account settings and set e-mail preferences.
 					</p>
 				</div>
-				<Separator className="my-4! lg:my-6!" />
-				<div className="flex! flex-1! flex-col! space-y-2! overflow-hidden! md:space-y-2! lg:flex-row! lg:space-y-0! lg:space-x-12!">
-					<aside className="top-0! lg:sticky! lg:w-1/5!">
+                                <Separator className="tw-my-4! lg:tw-my-6!" />
+                                <div className="tw-flex! tw-flex-1! tw-flex-col! tw-space-y-2! tw-overflow-hidden! md:tw-space-y-2! lg:tw-flex-row! lg:tw-space-y-0! lg:tw-space-x-12!">
+                                        <aside className="tw-top-0! lg:tw-sticky! lg:tw-w-1/5!">
 						<SidebarNav items={sidebarNavItems} />
 					</aside>
-					<div className="flex! w-full! overflow-y-hidden! p-1!">
+                                        <div className="tw-flex! tw-w-full! tw-overflow-y-hidden! tw-p-1!">
 						<Outlet />
 					</div>
 				</div>

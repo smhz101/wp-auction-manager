@@ -38,7 +38,7 @@ function DialogOverlay({
     (<DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/50",
+        "data-[state=open]:tw-animate-in data-[state=closed]:tw-animate-out data-[state=closed]:tw-fade-out-0 data-[state=open]:tw-fade-in-0 tw-fixed tw-inset-0 tw-z-50 tw-bg-black/50",
         className
       )}
       {...props} />)
@@ -57,7 +57,7 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-lg",
+          "tw-bg-background data-[state=open]:tw-animate-in data-[state=closed]:tw-animate-out data-[state=closed]:tw-fade-out-0 data-[state=open]:tw-fade-in-0 data-[state=closed]:tw-zoom-out-95 data-[state=open]:tw-zoom-in-95 tw-fixed tw-top-[50%] tw-left-[50%] tw-z-50 tw-grid tw-w-full tw-max-w-[calc(100%-2rem)] tw-translate-x-[-50%] tw-translate-y-[-50%] tw-gap-4 tw-rounded-lg tw-border tw-p-6 tw-shadow-lg tw-duration-200 sm:tw-max-w-lg",
           className
         )}
         {...props}>
@@ -65,9 +65,9 @@ function DialogContent({
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
-            className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
+            className="tw-ring-offset-background focus:tw-ring-ring data-[state=open]:tw-bg-accent data-[state=open]:tw-text-muted-foreground tw-absolute tw-top-4 tw-right-4 tw-rounded-xs tw-opacity-70 tw-transition-opacity hover:tw-opacity-100 focus:tw-ring-2 focus:tw-ring-offset-2 focus:tw-outline-hidden disabled:tw-pointer-events-none [&_svg]:tw-pointer-events-none [&_svg]:tw-shrink-0 [&_svg:not([class*='size-'])]:tw-size-4">
             <XIcon />
-            <span className="sr-only">Close</span>
+            <span className="tw-sr-only">Close</span>
           </DialogPrimitive.Close>
         )}
       </DialogPrimitive.Content>
@@ -82,7 +82,7 @@ function DialogHeader({
   return (
     (<div
       data-slot="dialog-header"
-      className={cn("flex flex-col gap-2 text-center sm:text-left", className)}
+      className={cn("tw-flex tw-flex-col tw-gap-2 tw-text-center sm:tw-text-left", className)}
       {...props} />)
   );
 }
@@ -94,7 +94,7 @@ function DialogFooter({
   return (
     (<div
       data-slot="dialog-footer"
-      className={cn("flex flex-col-reverse gap-2 sm:flex-row sm:justify-end", className)}
+      className={cn("tw-flex tw-flex-col-reverse tw-gap-2 sm:tw-flex-row sm:tw-justify-end", className)}
       {...props} />)
   );
 }
@@ -106,7 +106,7 @@ function DialogTitle({
   return (
     (<DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn("text-lg leading-none font-semibold", className)}
+      className={cn("tw-text-lg tw-leading-none tw-font-semibold", className)}
       {...props} />)
   );
 }
@@ -118,7 +118,7 @@ function DialogDescription({
   return (
     (<DialogPrimitive.Description
       data-slot="dialog-description"
-      className={cn("text-muted-foreground text-sm", className)}
+      className={cn("tw-text-muted-foreground tw-text-sm", className)}
       {...props} />)
   );
 }

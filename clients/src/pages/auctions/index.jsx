@@ -74,7 +74,7 @@ export default function Auctions() {
             ))}
           </TableBody>
         </Table>
-        <Pagination className="mt-4">
+        <Pagination className="tw-mt-4">
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious

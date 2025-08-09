@@ -33,9 +33,9 @@ export function SelectDropdown({
       </FormControl>
       <SelectContent>
         {isPending ? (
-          <SelectItem disabled value='loading' className='h-14'>
-            <div className='flex items-center justify-center gap-2'>
-              <IconLoader className='h-5 w-5 animate-spin' />
+          <SelectItem disabled value='loading' className='tw-h-14'>
+            <div className='tw-flex tw-items-center tw-justify-center tw-gap-2'>
+              <IconLoader className='tw-h-5 tw-w-5 tw-animate-spin' />
               Loading...
             </div>
           </SelectItem>
