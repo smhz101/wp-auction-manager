@@ -6,8 +6,8 @@ export function ShowSubmittedData({ data, title }) {
 	const showToast = () => {
 		toast.message(title, {
 			description: (
-				<pre className="mt-2 w-full overflow-x-auto rounded-md bg-slate-950 p-4">
-					<code className="text-white">
+                                <pre className="tw-mt-2 tw-w-full tw-overflow-x-auto tw-rounded-md tw-bg-slate-950 tw-p-4">
+                                        <code className="tw-text-white">
 						{JSON.stringify(data, null, 2)}
 					</code>
 				</pre>

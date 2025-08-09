@@ -54,7 +54,7 @@ function FormItem({
 
   return (
     (<FormItemContext.Provider value={{ id }}>
-      <div data-slot="form-item" className={cn("grid gap-2", className)} {...props} />
+      <div data-slot="form-item" className={cn("tw-grid tw-gap-2", className)} {...props} />
     </FormItemContext.Provider>)
   );
 }
@@ -69,7 +69,7 @@ function FormLabel({
     (<Label
       data-slot="form-label"
       data-error={!!error}
-      className={cn("data-[error=true]:text-destructive", className)}
+      className={cn("data-[error=true]:tw-text-destructive", className)}
       htmlFor={formItemId}
       {...props} />)
   );
@@ -104,7 +104,7 @@ function FormDescription({
     (<p
       data-slot="form-description"
       id={formDescriptionId}
-      className={cn("text-muted-foreground text-sm", className)}
+      className={cn("tw-text-muted-foreground tw-text-sm", className)}
       {...props} />)
   );
 }
@@ -124,7 +124,7 @@ function FormMessage({
     (<p
       data-slot="form-message"
       id={formMessageId}
-      className={cn("text-destructive text-sm", className)}
+      className={cn("tw-text-destructive tw-text-sm", className)}
       {...props}>
       {body}
     </p>)

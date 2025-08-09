@@ -11,7 +11,7 @@ const Toaster = ({
   return (
     (<Sonner
       theme={theme}
-      className="toaster group"
+      className="toaster tw-group"
       style={
         {
           "--normal-bg": "var(--popover)",

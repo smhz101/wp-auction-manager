@@ -16,17 +16,17 @@ export function DatePicker({ selected, onSelect, placeholder = 'Pick a date' }) 
         <Button
           variant='outline'
           data-empty={!selected}
-          className='data-[empty=true]:text-muted-foreground w-[240px] justify-start text-left font-normal'
+          className='data-[empty=true]:tw-text-muted-foreground tw-w-[240px] tw-justify-start tw-text-left tw-font-normal'
         >
           {selected ? (
             format(selected, 'MMM d, yyyy')
           ) : (
             <span>{placeholder}</span>
           )}
-          <CalendarIcon className='ml-auto h-4 w-4 opacity-50' />
+          <CalendarIcon className='tw-ml-auto tw-h-4 tw-w-4 tw-opacity-50' />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className='w-auto p-0'>
+      <PopoverContent className='tw-w-auto tw-p-0'>
         <Calendar
           mode='single'
           captionLayout='dropdown'
