@@ -21,10 +21,13 @@ export function ThemeProvider({
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
 
     const applyTheme = (theme) => {
-      root.classList.remove('light', 'dark')
       const systemTheme = mediaQuery.matches ? 'dark' : 'light'
       const effectiveTheme = theme === 'system' ? systemTheme : theme
-      root.classList.add(effectiveTheme)
+      if (effectiveTheme === 'dark') {
+        root.classList.add('dark')
+      } else {
+        root.classList.remove('dark')
+      }
     }
 
     const handleChange = () => {

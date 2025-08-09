@@ -6,7 +6,7 @@ import prefixer from '@tailwindcss/prefixer';
 export default {
         // Avoid conflict with WP admin styles
         content: ['./**/*.php', './index.html', './src/**/*.{js,jsx,ts,tsx}'],
-	darkMode: true,
+        darkMode: 'class',
 	important: '#wpam-auctions-root',
 	// theme: {
 	// 	extend: {
