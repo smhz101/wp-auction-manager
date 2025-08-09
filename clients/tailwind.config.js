@@ -1,12 +1,11 @@
-import defaultTheme from 'tailwindcss/defaultTheme';
 import forms from '@tailwindcss/forms';
 import typography from '@tailwindcss/typography';
 import aspectRatio from '@tailwindcss/aspect-ratio';
+import prefixer from '@tailwindcss/prefixer';
 
 export default {
-	// Avoid conflict with WP admin styles
-	prefix: 'tw-',
-	content: ['./**/*.php', './index.html', './src/**/*.{js,jsx,ts,tsx}'],
+        // Avoid conflict with WP admin styles
+        content: ['./**/*.php', './index.html', './src/**/*.{js,jsx,ts,tsx}'],
 	darkMode: true,
 	important: '#wpam-auctions-root',
 	// theme: {
@@ -65,7 +64,7 @@ export default {
 	// 		},
 	// 	},
 	// },
-	plugins: [forms, typography, aspectRatio],
+        plugins: [prefixer({ prefix: 'tw' }), forms, typography, aspectRatio],
 	safelist: [
 		{
 			pattern:
