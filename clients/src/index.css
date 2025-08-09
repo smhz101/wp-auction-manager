@@ -108,15 +108,15 @@
 
 @layer base {
 	* {
-		@apply border-border! outline-ring/50!;
+                @apply tw-border-border! tw-outline-ring/50!;
 		scrollbar-width: thin;
 		scrollbar-color: var(--border) transparent;
 	}
 	html {
-		@apply overflow-x-hidden!;
+                @apply tw-overflow-x-hidden!;
 	}
 	body {
-		@apply bg-background! text-foreground! min-h-svh! w-full!;
+                @apply tw-bg-background! tw-text-foreground! tw-min-h-svh! tw-w-full!;
 	}
 
 	button:not(:disabled),
@@ -150,7 +150,8 @@
 }
 
 @utility faded-bottom {
-	@apply after:pointer-events-none! after:absolute! after:bottom-0! after:left-0! after:hidden! after:h-32! after:w-full! after:bg-[linear-gradient(180deg,_transparent_10%,_var(--background)_70%)]! md:after:block!;
+	@apply after:tw-pointer-events-none! after:tw-absolute! after:tw-bottom-0! after:tw-left-0! after:tw-hidden! after:tw-h-32! after:tw-w-full!
+after:tw-bg-[linear-gradient(180deg,_transparent_10%,_var(--background)_70%)]! md:after:tw-block!;
 }
 
 /* styles.css */
