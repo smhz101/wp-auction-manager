@@ -16,7 +16,7 @@ export function TopNav({ className, links, ...props }) {
   return (
     <>
       {/* Mobile Menu */}
-      <div className='md:hidden'>
+      <div className='md:tw-hidden'>
         <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
             <Button size='icon' variant='outline'>
@@ -30,8 +30,8 @@ export function TopNav({ className, links, ...props }) {
                 <Link
                   to={href}
                   className={cn(
-                    !isActive && 'text-muted-foreground',
-                    disabled && 'pointer-events-none opacity-50'
+                    !isActive && 'tw-text-muted-foreground',
+                    disabled && 'tw-pointer-events-none tw-opacity-50'
                   )}
                 >
                   {title}
@@ -45,7 +45,7 @@ export function TopNav({ className, links, ...props }) {
       {/* Desktop Nav */}
       <nav
         className={cn(
-          'hidden items-center space-x-4 md:flex lg:space-x-6',
+          'tw-hidden tw-items-center tw-space-x-4 md:tw-flex lg:tw-space-x-6',
           className
         )}
         {...props}
@@ -55,9 +55,9 @@ export function TopNav({ className, links, ...props }) {
             key={`${title}-${href}`}
             to={href}
             className={cn(
-              'hover:text-primary text-sm font-medium transition-colors',
-              !isActive && 'text-muted-foreground',
-              disabled && 'pointer-events-none opacity-50'
+              'hover:tw-text-primary tw-text-sm tw-font-medium tw-transition-colors',
+              !isActive && 'tw-text-muted-foreground',
+              disabled && 'tw-pointer-events-none tw-opacity-50'
             )}
           >
             {title}
