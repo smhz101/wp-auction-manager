@@ -6,5 +6,5 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 interface WPAM_API_Provider {
-    public function send( $to, $message );
+	public function send( $to, $message );
 }
