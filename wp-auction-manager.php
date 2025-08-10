@@ -97,6 +97,14 @@ function wpam_activation() {
 
 	\WPAM\Includes\WPAM_Install::activate();
 	update_option( 'wpam_version', WPAM_PLUGIN_VERSION );
+	
+	if ( ! wp_next_scheduled( 'wpam_check_ended_auctions' ) ) {
+		wp_schedule_event( time(), 'hourly', 'wpam_check_ended_auctions' );
+	}
+
+	if ( ! wp_next_scheduled( 'wpam_update_auction_states' ) ) {
+		wp_schedule_event( time(), 'hourly', 'wpam_update_auction_states' );
+	}
 }
 
 function wpam_run_plugin() {
