@@ -1,6 +1,10 @@
 <?php
 namespace WPAM\Admin;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly
+}
+
 if ( ! class_exists( 'WP_List_Table' ) ) {
 	require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
 }
@@ -26,7 +30,7 @@ class WPAM_Auctions_Table extends \WP_List_Table {
 			),
 			'meta_query'     => array(),
 		);
-               $now                = wp_date( 'Y-m-d H:i:s', current_datetime()->getTimestamp(), new \DateTimeZone( 'UTC' ) );
+				$now        = wp_date( 'Y-m-d H:i:s', current_datetime()->getTimestamp(), new \DateTimeZone( 'UTC' ) );
 		if ( $this->auction_type ) {
 			$args['meta_query'][] = array(
 				'key'   => '_auction_type',
@@ -66,23 +70,23 @@ class WPAM_Auctions_Table extends \WP_List_Table {
 		$query = new \WP_Query( $args );
 		$items = array();
 		foreach ( $query->posts as $post ) {
-                       $start_gmt = get_post_meta( $post->ID, '_auction_start', true );
-                       $end_gmt   = get_post_meta( $post->ID, '_auction_end', true );
-                       $start     = $start_gmt ? get_date_from_gmt( $start_gmt, 'Y-m-d H:i:s' ) : '';
-                       $end       = $end_gmt ? get_date_from_gmt( $end_gmt, 'Y-m-d H:i:s' ) : '';
-                       $state   = get_post_meta( $post->ID, '_auction_state', true );
-                       $status  = get_post_meta( $post->ID, '_auction_status', true );
-                       $reason  = get_post_meta( $post->ID, '_auction_ending_reason', true );
-                       $items[] = array(
-                               'ID'     => $post->ID,
-                               'title'  => $post->post_title,
-                               'start'  => $start,
-                               'end'    => $end,
-                               'state'  => $state,
-                               'status' => $status,
-                               'reason' => $reason,
-                       );
-               }
+						$start_gmt = get_post_meta( $post->ID, '_auction_start', true );
+						$end_gmt   = get_post_meta( $post->ID, '_auction_end', true );
+						$start     = $start_gmt ? get_date_from_gmt( $start_gmt, 'Y-m-d H:i:s' ) : '';
+						$end       = $end_gmt ? get_date_from_gmt( $end_gmt, 'Y-m-d H:i:s' ) : '';
+						$state     = get_post_meta( $post->ID, '_auction_state', true );
+						$status    = get_post_meta( $post->ID, '_auction_status', true );
+						$reason    = get_post_meta( $post->ID, '_auction_ending_reason', true );
+						$items[]   = array(
+							'ID'     => $post->ID,
+							'title'  => $post->post_title,
+							'start'  => $start,
+							'end'    => $end,
+							'state'  => $state,
+							'status' => $status,
+							'reason' => $reason,
+						);
+		}
 		$this->items = $items;
 		$this->set_pagination_args(
 			array(
@@ -110,15 +114,15 @@ class WPAM_Auctions_Table extends \WP_List_Table {
 	}
 
 	public function get_columns() {
-               return array(
-                       'title'  => __( 'Auction', 'wpam' ),
-                       'start'  => __( 'Start', 'wpam' ),
-                       'end'    => __( 'End', 'wpam' ),
-                       'state'  => __( 'State', 'wpam' ),
-                       'status' => __( 'Status', 'wpam' ),
-                       'reason' => __( 'Ending Reason', 'wpam' ),
-               );
-       }
+				return array(
+					'title'  => __( 'Auction', 'wpam' ),
+					'start'  => __( 'Start', 'wpam' ),
+					'end'    => __( 'End', 'wpam' ),
+					'state'  => __( 'State', 'wpam' ),
+					'status' => __( 'Status', 'wpam' ),
+					'reason' => __( 'Ending Reason', 'wpam' ),
+				);
+	}
 
 	protected function column_title( $item ) {
 		$edit_link = get_edit_post_link( $item['ID'] );
@@ -137,13 +141,13 @@ class WPAM_Auctions_Table extends \WP_List_Table {
 		return $title . $this->row_actions( $actions );
 	}
 
-       protected function column_state( $item ) {
-               return ucfirst( $item['state'] );
-       }
+	protected function column_state( $item ) {
+			return ucfirst( $item['state'] );
+	}
 
-       protected function column_status( $item ) {
-               return ucfirst( $item['status'] );
-       }
+	protected function column_status( $item ) {
+			return ucfirst( $item['status'] );
+	}
 
 	protected function column_reason( $item ) {
 		return $item['reason'];

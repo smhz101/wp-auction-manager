@@ -1,6 +1,10 @@
 <?php
 namespace WPAM\Includes;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly
+}
+
 class WPAM_Watchlist {
     public function __construct() {
         add_action( 'wp_ajax_wpam_toggle_watchlist', [ self::class, 'toggle_watchlist' ] );

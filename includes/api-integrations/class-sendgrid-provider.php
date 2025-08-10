@@ -1,6 +1,10 @@
 <?php
 namespace WPAM\Includes;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly
+}
+
 class WPAM_SendGrid_Provider implements WPAM_API_Provider {
     public function send( $to, $message ) {
         $key = get_option( 'wpam_sendgrid_key' );

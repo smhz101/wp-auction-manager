@@ -1,6 +1,10 @@
 <?php
 namespace WPAM\Includes;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly
+}
+
 class WPAM_Blocks {
     public function __construct() {
         add_action( 'init', [ $this, 'register_blocks' ] );

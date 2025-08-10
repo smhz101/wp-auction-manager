@@ -1,6 +1,10 @@
 <?php
 namespace WPAM\Includes;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly
+}
+
 class WPAM_Notifications {
     public static function send_to_user( $user_id, $subject, $message ) {
         $sms_enabled   = get_option( 'wpam_enable_twilio', '0' );

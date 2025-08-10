@@ -1,6 +1,10 @@
 <?php
 namespace WPAM\Includes;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly
+}
+
 use WPAM\Includes\WPAM_Auction_State;
 use WPAM\Includes\WPAM_Soft_Close;
 use WPAM\Includes\Bidding\StandardStrategy;

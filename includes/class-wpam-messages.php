@@ -1,6 +1,10 @@
 <?php
 namespace WPAM\Includes;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly
+}
+
 class WPAM_Messages {
     public function __construct() {
         add_action( 'wp_ajax_wpam_submit_question', [ $this, 'submit_question' ] );

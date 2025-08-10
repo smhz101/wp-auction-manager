@@ -1,6 +1,10 @@
 <?php
 namespace WPAM\Includes;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly
+}
+
 use Pusher\Pusher;
 
 class WPAM_Pusher_Provider implements WPAM_Realtime_Provider {

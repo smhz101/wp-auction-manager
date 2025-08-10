@@ -1,6 +1,10 @@
 <?php
 namespace WPAM\Includes;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly
+}
+
 class WPAM_Firebase_Provider implements WPAM_API_Provider {
     /**
      * Send a push notification via Firebase Cloud Messaging.

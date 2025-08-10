@@ -1,6 +1,10 @@
 <?php
 namespace WPAM\Includes\Bidding;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly
+}
+
 use WPAM\Includes\WPAM_Auction;
 use WPAM\Includes\WPAM_Bid;
 

@@ -7,8 +7,12 @@
  * @package WP_Auction_Manager
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly
+}
+
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
-	exit();
+	exit; // Exit if accessed directly
 }
 
 // Verify the current user has permission to uninstall plugins.

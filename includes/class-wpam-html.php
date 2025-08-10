@@ -2,6 +2,10 @@
 
 namespace WPAM\Includes;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly
+}
+
 class WPAM_HTML {
   /**
    * Renders auction meta block HTML.

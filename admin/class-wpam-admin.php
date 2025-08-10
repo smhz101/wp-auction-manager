@@ -1,5 +1,10 @@
 <?php
+
 namespace WPAM\Admin;
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly
+}
 
 use WPAM\Includes\WPAM_Admin_Log;
 

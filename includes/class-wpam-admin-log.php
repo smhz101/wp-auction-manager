@@ -1,6 +1,10 @@
 <?php
 namespace WPAM\Includes;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly
+}
+
 class WPAM_Admin_Log {
         const ACTION_SUSPEND    = 'suspend';
         const ACTION_CANCEL     = 'cancel';

@@ -1,6 +1,10 @@
 <?php
 namespace WPAM\Includes;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly
+}
+
 class WPAM_Auction_State {
 	const SCHEDULED      = 'scheduled';
 	const ABOUT_TO_START = 'about_to_start';

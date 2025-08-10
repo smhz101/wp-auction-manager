@@ -1,6 +1,10 @@
 <?php
 namespace WPAM\Includes;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly
+}
+
 class WPAM_Admin_Rest {
 	public static function get_auctions( \WP_REST_Request $request ) {
 		$search   = sanitize_text_field( $request->get_param( 'search' ) );
