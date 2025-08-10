@@ -11,111 +11,127 @@ class WPAM_Install {
 		$charset_collate = $wpdb->get_charset_collate();
 		$table_name      = $wpdb->prefix . 'wc_auction_bids';
 		$sql             = "CREATE TABLE IF NOT EXISTS $table_name (
-            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-            auction_id bigint(20) unsigned NOT NULL,
-            user_id bigint(20) unsigned NOT NULL,
-            bid_amount decimal(20,2) NOT NULL,
-            bid_time datetime NOT NULL,
-            PRIMARY KEY  (id),
-            KEY auction_id (auction_id),
-            KEY user_id (user_id)
-        ) $charset_collate;";
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			auction_id bigint(20) unsigned NOT NULL,
+			user_id bigint(20) unsigned NOT NULL,
+			bid_amount decimal(20,2) NOT NULL,
+			bid_time datetime NOT NULL,
+			PRIMARY KEY  (id),
+			KEY auction_id (auction_id),
+			KEY user_id (user_id)
+		) $charset_collate;";
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta( $sql );
 
 		// Watchlist table
 		$watchlist_table = $wpdb->prefix . 'wc_auction_watchlists';
 		$watchlist_sql   = "CREATE TABLE IF NOT EXISTS $watchlist_table (
-            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-            auction_id bigint(20) unsigned NOT NULL,
-            user_id bigint(20) unsigned NOT NULL,
-            PRIMARY KEY  (id),
-            KEY auction_id (auction_id),
-            KEY user_id (user_id)
-        ) $charset_collate;";
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			auction_id bigint(20) unsigned NOT NULL,
+			user_id bigint(20) unsigned NOT NULL,
+			PRIMARY KEY  (id),
+			KEY auction_id (auction_id),
+			KEY user_id (user_id)
+		) $charset_collate;";
 		dbDelta( $watchlist_sql );
 
 		// Messages table
 		$messages_table = $wpdb->prefix . 'wc_auction_messages';
 		$messages_sql   = "CREATE TABLE IF NOT EXISTS $messages_table (
-            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-            auction_id bigint(20) unsigned NOT NULL,
-            user_id bigint(20) unsigned NOT NULL,
-            message text NOT NULL,
-            parent_id bigint(20) unsigned NOT NULL DEFAULT 0,
-            approved tinyint(1) NOT NULL DEFAULT 0,
-            created_at datetime NOT NULL,
-            PRIMARY KEY  (id),
-            KEY auction_id (auction_id),
-            KEY user_id (user_id)
-        ) $charset_collate;";
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			auction_id bigint(20) unsigned NOT NULL,
+			user_id bigint(20) unsigned NOT NULL,
+			message text NOT NULL,
+			parent_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			approved tinyint(1) NOT NULL DEFAULT 0,
+			created_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			KEY auction_id (auction_id),
+			KEY user_id (user_id)
+		) $charset_collate;";
 		dbDelta( $messages_sql );
 
 		// Audit table
 		$audit_table = $wpdb->prefix . 'wc_auction_audit';
 		$audit_sql   = "CREATE TABLE IF NOT EXISTS $audit_table (
-            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-            bid_id bigint(20) unsigned NOT NULL,
-            user_id bigint(20) unsigned NOT NULL,
-            ip varchar(100) NOT NULL,
-            user_agent varchar(255) NOT NULL,
-            logged_at datetime NOT NULL,
-            PRIMARY KEY  (id),
-            KEY bid_id (bid_id),
-            KEY user_id (user_id)
-        ) $charset_collate;";
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			bid_id bigint(20) unsigned NOT NULL,
+			user_id bigint(20) unsigned NOT NULL,
+			ip varchar(100) NOT NULL,
+			user_agent varchar(255) NOT NULL,
+			logged_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			KEY bid_id (bid_id),
+			KEY user_id (user_id)
+		) $charset_collate;";
 		dbDelta( $audit_sql );
 
 		// Flagged users table
 		$flag_table = $wpdb->prefix . 'wc_flagged_users';
 		$flag_sql   = "CREATE TABLE IF NOT EXISTS $flag_table (
-					id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-					user_id bigint(20) unsigned NOT NULL,
-					reason varchar(255) NOT NULL,
-					flagged_at datetime NOT NULL,
-					PRIMARY KEY  (id),
-					KEY user_id (user_id)
-			) $charset_collate;";
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			user_id bigint(20) unsigned NOT NULL,
+			reason varchar(255) NOT NULL,
+			flagged_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			KEY user_id (user_id)
+		) $charset_collate;";
 		dbDelta( $flag_sql );
 
 		// KYC failure logs table
 		$kyc_table = $wpdb->prefix . 'wc_kyc_failures';
 		$kyc_sql   = "CREATE TABLE IF NOT EXISTS $kyc_table (
-					id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-					user_id bigint(20) unsigned NOT NULL,
-					reason varchar(100) NOT NULL,
-					ip varchar(100) NOT NULL,
-					user_agent varchar(255) NOT NULL,
-					logged_at datetime NOT NULL,
-					PRIMARY KEY  (id),
-					KEY user_id (user_id)
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			user_id bigint(20) unsigned NOT NULL,
+			reason varchar(100) NOT NULL,
+			ip varchar(100) NOT NULL,
+			user_agent varchar(255) NOT NULL,
+			logged_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			KEY user_id (user_id)
 		) $charset_collate;";
 		dbDelta( $kyc_sql );
 
 		// Admin logs table
 		$logs_table = $wpdb->prefix . 'wc_auction_logs';
 		$logs_sql   = "CREATE TABLE IF NOT EXISTS $logs_table (
-            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-            auction_id bigint(20) unsigned NOT NULL,
-            admin_id bigint(20) unsigned NOT NULL,
-            action varchar(50) NOT NULL,
-            details text NULL,
-            logged_at datetime NOT NULL,
-            PRIMARY KEY  (id),
-            KEY auction_id (auction_id),
-            KEY admin_id (admin_id)
-        ) $charset_collate;";
-			dbDelta( $logs_sql );
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			auction_id bigint(20) unsigned NOT NULL,
+			admin_id bigint(20) unsigned NOT NULL,
+			action varchar(50) NOT NULL,
+			details text NULL,
+			logged_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			KEY auction_id (auction_id),
+			KEY admin_id (admin_id)
+		) $charset_collate;";
+		dbDelta( $logs_sql );
 
-			// Ensure administrators retain full access.
-			$admin = get_role( 'administrator' );
+		// Notification logs table
+		$notify_table = $wpdb->prefix . 'wc_notification_logs';
+		$notify_sql   = "CREATE TABLE IF NOT EXISTS $notify_table (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			user_id bigint(20) unsigned NOT NULL,
+			provider varchar(50) NOT NULL,
+			status varchar(20) NOT NULL,
+			error text NULL,
+			attempt smallint unsigned NOT NULL DEFAULT 0,
+			created_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			KEY user_id (user_id),
+			KEY provider (provider)
+		) $charset_collate;";
+		dbDelta( $notify_sql );
+
+		// Ensure administrators retain full access.
+		$admin = get_role( 'administrator' );
 		if ( $admin ) {
-				$admin->add_cap( 'auction_seller' );
-				$admin->add_cap( 'auction_bidder' );
+			$admin->add_cap( 'auction_seller' );
+			$admin->add_cap( 'auction_bidder' );
 		}
 
 		add_action( 'init', array( self::class, 'register_endpoints' ) );
-		
+
 		// self::register_endpoints();
 		flush_rewrite_rules();
 

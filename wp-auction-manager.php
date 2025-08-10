@@ -161,5 +161,6 @@ function wpam_plugins_loaded() {
 	}
 
 	wpam_run_plugin();
+	\WPAM\Includes\WPAM_Notifications::init();
 }
 add_action( 'plugins_loaded', 'wpam_plugins_loaded' );
