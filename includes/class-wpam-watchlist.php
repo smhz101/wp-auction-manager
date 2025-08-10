@@ -68,6 +68,7 @@ class WPAM_Watchlist {
 	public static function get_watchlist() {
 		check_ajax_referer( 'wpam_get_watchlist', 'nonce' );
 		$user_id = get_current_user_id();
+		
 		if ( ! $user_id ) {
 			wp_send_json_error( array( 'message' => __( 'Please login', 'wpam' ) ) );
 		}
@@ -75,22 +76,42 @@ class WPAM_Watchlist {
 		wp_send_json_success( array( 'items' => self::get_user_watchlist_items( $user_id ) ) );
 	}
 
+	public static function rest_permissions( \WP_REST_Request $request ) {
+		$nonce = $request->get_param( 'nonce' );
+		
+		if ( empty( $nonce ) ) {
+			$nonce = $request->get_header( 'X-WP-Nonce' );
+		}
+		
+		$nonce = sanitize_text_field( $nonce );
+		
+		if ( ! $nonce || ! wp_verify_nonce( $nonce, 'wpam_watchlist' ) ) {
+			return new \WP_Error( 'wpam_invalid_nonce', __( 'Invalid nonce', 'wpam' ), array( 'status' => 403 ) );
+		}
+		
+		if ( ! current_user_can( 'read' ) ) {
+			return new \WP_Error( 'rest_forbidden', __( 'Sorry, you are not allowed to access watchlist.', 'wpam' ), array( 'status' => 403 ) );
+		}
+		
+		return true;
+	}
+
 	/**
 	 * REST handler to toggle watchlist items.
 	 */
 	public static function rest_toggle_watchlist( \WP_REST_Request $request ) {
-		$auction_id = absint( $request['auction_id'] );
-		$user_id    = get_current_user_id();
-		if ( ! $user_id ) {
-			return new \WP_Error( 'wpam_login', __( 'Please login', 'wpam' ), array( 'status' => 403 ) );
-		}
+		$auction_id = absint( $request->get_param( 'auction_id' ) );
+		
 		if ( ! $auction_id ) {
 			return new \WP_Error( 'wpam_invalid', __( 'Invalid auction', 'wpam' ), array( 'status' => 400 ) );
 		}
 
+		$user_id = get_current_user_id();
+
 		global $wpdb;
 		$table    = $wpdb->prefix . 'wc_auction_watchlists';
 		$existing = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM $table WHERE user_id = %d AND auction_id = %d", $user_id, $auction_id ) );
+
 		if ( $existing ) {
 			$wpdb->delete( $table, array( 'id' => $existing ), array( '%d' ) );
 			return rest_ensure_response( array( 'message' => __( 'Removed from watchlist', 'wpam' ) ) );
@@ -104,6 +125,7 @@ class WPAM_Watchlist {
 			),
 			array( '%d', '%d' )
 		);
+
 		return rest_ensure_response( array( 'message' => __( 'Added to watchlist', 'wpam' ) ) );
 	}
 
@@ -111,13 +133,11 @@ class WPAM_Watchlist {
 	 * REST handler returning watchlist items for current user.
 	 */
 	public static function rest_get_watchlist( \WP_REST_Request $request ) {
-		$user_id = get_current_user_id();
-		if ( ! $user_id ) {
-			return new \WP_Error( 'wpam_login', __( 'Please login', 'wpam' ), array( 'status' => 403 ) );
-		}
+				$user_id = get_current_user_id();
 
-		return rest_ensure_response( array( 'items' => self::get_user_watchlist_items( $user_id ) ) );
+				return rest_ensure_response( array( 'items' => self::get_user_watchlist_items( $user_id ) ) );
 	}
+
 
 	public function add_account_menu_item( $items ) {
 		$items['watchlist'] = __( 'Watchlist', 'wpam' );
