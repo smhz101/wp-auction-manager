@@ -6,7 +6,36 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class WPAM_Notifications {
+	/**
+	 * Initialize hooks for asynchronous processing.
+	 */
+	public static function init() {
+		add_action( 'wpam_send_notification', array( __CLASS__, 'process_notification' ), 10, 4 );
+	}
+
+	/**
+	 * Queue a notification for asynchronous delivery.
+	 *
+	 * @param int    $user_id User ID.
+	 * @param string $subject Email subject.
+	 * @param string $message Message body.
+	 */
 	public static function send_to_user( $user_id, $subject, $message ) {
+		wp_schedule_single_event( time(), 'wpam_send_notification', array( $user_id, $subject, $message, 0 ) );
+	}
+
+	/**
+	 * Process a queued notification.
+	 *
+	 * Implements retry logic with exponential backoff. Each attempt is
+	 * recorded in the wpam_logs table via WPAM_Logger.
+	 *
+	 * @param int    $user_id User ID.
+	 * @param string $subject Email subject.
+	 * @param string $message Message body.
+	 * @param int    $attempt Current attempt number.
+	 */
+	public static function process_notification( $user_id, $subject, $message, $attempt = 0 ) {
 		$sms_enabled   = get_option( 'wpam_enable_twilio', '0' );
 		$push_enabled  = get_option( 'wpam_enable_firebase', '0' );
 		$email_enabled = get_option( 'wpam_enable_email', '1' );
@@ -21,29 +50,40 @@ class WPAM_Notifications {
 		$token = get_user_meta( $user_id, 'wpam_firebase_token', true );
 
 		$sent = false;
+
 		if ( $push_enabled && $token ) {
 			$push_provider = new WPAM_Firebase_Provider();
 			$result        = $push_provider->send( $token, $message );
-			$sent          = ! is_wp_error( $result );
+			WPAM_Logger::log( $user_id, 'firebase', is_wp_error( $result ) ? 'error' : 'success', is_wp_error( $result ) ? $result->get_error_message() : '', $attempt );
+			$sent = ! is_wp_error( $result );
 		}
 
 		if ( ! $sent && $sms_enabled && $phone ) {
 			$sms_provider = new WPAM_Twilio_Provider();
 			$result       = $sms_provider->send( $phone, $message );
-			$sent         = ! is_wp_error( $result );
+			WPAM_Logger::log( $user_id, 'twilio', is_wp_error( $result ) ? 'error' : 'success', is_wp_error( $result ) ? $result->get_error_message() : '', $attempt );
+			$sent = ! is_wp_error( $result );
 		}
 
 		if ( ! $sent && $email_enabled ) {
 			if ( $sendgrid_key ) {
 				$sendgrid_provider = new WPAM_SendGrid_Provider();
 				$result            = $sendgrid_provider->send( $user->user_email, $message );
-				$sent              = ! is_wp_error( $result );
+				WPAM_Logger::log( $user_id, 'sendgrid', is_wp_error( $result ) ? 'error' : 'success', is_wp_error( $result ) ? $result->get_error_message() : '', $attempt );
+				$sent = ! is_wp_error( $result );
 			}
 
 			if ( ! $sent ) {
-				wp_mail( $user->user_email, $subject, $message );
-				$sent = true;
+				$mail_result = wp_mail( $user->user_email, $subject, $message );
+				$result      = $mail_result ? true : new \WP_Error( 'mail_failed', 'wp_mail failed' );
+				WPAM_Logger::log( $user_id, 'email', is_wp_error( $result ) ? 'error' : 'success', is_wp_error( $result ) ? $result->get_error_message() : '', $attempt );
+				$sent = ! is_wp_error( $result );
 			}
+		}
+
+		if ( ! $sent && $attempt < 3 ) {
+			$delay = pow( 2, $attempt ) * MINUTE_IN_SECONDS;
+			wp_schedule_single_event( time() + $delay, 'wpam_send_notification', array( $user_id, $subject, $message, $attempt + 1 ) );
 		}
 	}
 

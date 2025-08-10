@@ -83,7 +83,7 @@ class WPAM_KYC {
 
 	protected function log_failure( $user_id, $reason ) {
 		global $wpdb;
-		
+
 		$table = $wpdb->prefix . 'wc_kyc_failures';
 		$wpdb->insert(
 			$table,
@@ -97,5 +97,4 @@ class WPAM_KYC {
 			array( '%d', '%s', '%s', '%s', '%s' )
 		);
 	}
-
 }

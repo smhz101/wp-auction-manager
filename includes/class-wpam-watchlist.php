@@ -68,7 +68,7 @@ class WPAM_Watchlist {
 	public static function get_watchlist() {
 		check_ajax_referer( 'wpam_get_watchlist', 'nonce' );
 		$user_id = get_current_user_id();
-		
+
 		if ( ! $user_id ) {
 			wp_send_json_error( array( 'message' => __( 'Please login', 'wpam' ) ) );
 		}
@@ -78,21 +78,21 @@ class WPAM_Watchlist {
 
 	public static function rest_permissions( \WP_REST_Request $request ) {
 		$nonce = $request->get_param( 'nonce' );
-		
+
 		if ( empty( $nonce ) ) {
 			$nonce = $request->get_header( 'X-WP-Nonce' );
 		}
-		
+
 		$nonce = sanitize_text_field( $nonce );
-		
+
 		if ( ! $nonce || ! wp_verify_nonce( $nonce, 'wpam_watchlist' ) ) {
 			return new \WP_Error( 'wpam_invalid_nonce', __( 'Invalid nonce', 'wpam' ), array( 'status' => 403 ) );
 		}
-		
+
 		if ( ! current_user_can( 'read' ) ) {
 			return new \WP_Error( 'rest_forbidden', __( 'Sorry, you are not allowed to access watchlist.', 'wpam' ), array( 'status' => 403 ) );
 		}
-		
+
 		return true;
 	}
 
@@ -101,7 +101,7 @@ class WPAM_Watchlist {
 	 */
 	public static function rest_toggle_watchlist( \WP_REST_Request $request ) {
 		$auction_id = absint( $request->get_param( 'auction_id' ) );
-		
+
 		if ( ! $auction_id ) {
 			return new \WP_Error( 'wpam_invalid', __( 'Invalid auction', 'wpam' ), array( 'status' => 400 ) );
 		}
