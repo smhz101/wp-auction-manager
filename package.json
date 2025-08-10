@@ -2,7 +2,7 @@
   "name": "wp-auction-manager",
   "version": "1.0.0",
   "devDependencies": {
-    "@wordpress/scripts": "^26.0.0",
+    "@wordpress/scripts": "^30.21.0",
     "countdown": "^2.6.0"
   },
   "scripts": {
