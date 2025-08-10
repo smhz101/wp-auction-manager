@@ -43,7 +43,7 @@ class WPAM_Fraud_Detector {
 	 */
 	private static function flag_user( $user_id, $reason ) {
 		global $wpdb;
-		$table  = $wpdb->prefix . 'wpam_flagged_users';
+		$table  = $wpdb->prefix . 'wc_flagged_users';
 		$exists = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM $table WHERE user_id = %d AND reason = %s", $user_id, $reason ) );
 		if ( $exists ) {
 			return;

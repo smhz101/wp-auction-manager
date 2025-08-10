@@ -28,8 +28,9 @@ $tables = array(
 	$wpdb->prefix . 'wc_auction_watchlists',
 	$wpdb->prefix . 'wc_auction_messages',
 	$wpdb->prefix . 'wc_auction_audit',
-	$wpdb->prefix . 'wpam_flagged_users',
+	$wpdb->prefix . 'wc_flagged_users',
 	$wpdb->prefix . 'wc_auction_logs',
+	$wpdb->prefix . 'wc_kyc_failures',
 );
 
 foreach ( $tables as $table ) {

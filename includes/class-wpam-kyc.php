@@ -60,10 +60,42 @@ class WPAM_KYC {
 	}
 
 	public function handle_kyc_submission( WP_REST_Request $request ) {
-		$user_id     = get_current_user_id();
+		$user_id = get_current_user_id();
+		$nonce   = $request->get_header( 'X-WP-Nonce' );
+
+		if ( ! wp_verify_nonce( $nonce, 'wp_rest' ) ) {
+			$this->log_failure( $user_id, 'invalid_nonce' );
+			return new \WP_Error( 'rest_forbidden', __( 'Invalid nonce.', 'wpam' ), array( 'status' => 403 ) );
+		}
+
+		if ( ! current_user_can( 'read' ) ) {
+			$this->log_failure( $user_id, 'missing_read_capability' );
+			return new \WP_Error( 'rest_forbidden', __( 'Sorry, you are not allowed to do that.', 'wpam' ), array( 'status' => 403 ) );
+		}
+
 		$id_document = sanitize_text_field( $request['id_document'] );
+
 		// In a real system, the document would be processed here.
 		do_action( 'wpam_kyc_submitted', $user_id, $id_document );
+
 		return rest_ensure_response( array( 'message' => __( 'Document received', 'wpam' ) ) );
 	}
+
+	protected function log_failure( $user_id, $reason ) {
+		global $wpdb;
+		
+		$table = $wpdb->prefix . 'wc_kyc_failures';
+		$wpdb->insert(
+			$table,
+			array(
+				'user_id'    => absint( $user_id ),
+				'reason'     => $reason,
+				'ip'         => isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '',
+				'user_agent' => isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '',
+				'logged_at'  => wp_date( 'Y-m-d H:i:s', null, new \DateTimeZone( 'UTC' ) ),
+			),
+			array( '%d', '%s', '%s', '%s', '%s' )
+		);
+	}
+
 }

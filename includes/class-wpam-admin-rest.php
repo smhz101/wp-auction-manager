@@ -194,7 +194,7 @@ class WPAM_Admin_Rest {
 
 	public static function get_flagged( \WP_REST_Request $request ) {
 		global $wpdb;
-		$table    = $wpdb->prefix . 'wpam_flagged_users';
+		$table    = $wpdb->prefix . 'wc_flagged_users';
 		$per_page = max( 1, intval( $request->get_param( 'per_page' ) ) );
 		$page     = max( 1, intval( $request->get_param( 'page' ) ) );
 		$offset   = ( $page - 1 ) * $per_page;

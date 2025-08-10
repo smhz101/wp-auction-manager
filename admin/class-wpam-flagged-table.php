@@ -12,7 +12,7 @@ if ( ! class_exists( 'WP_List_Table' ) ) {
 class WPAM_Flagged_Table extends \WP_List_Table {
 	public function prepare_items() {
 		global $wpdb;
-		$table = $wpdb->prefix . 'wpam_flagged_users';
+		$table = $wpdb->prefix . 'wc_flagged_users';
 
 		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) !== $table ) {
 			$this->items = array();

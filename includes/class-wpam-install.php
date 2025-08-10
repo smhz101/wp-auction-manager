@@ -66,17 +66,31 @@ class WPAM_Install {
         ) $charset_collate;";
 		dbDelta( $audit_sql );
 
-			// Flagged users table
-			$flag_table = $wpdb->prefix . 'wpam_flagged_users';
-			$flag_sql   = "CREATE TABLE IF NOT EXISTS $flag_table (
-            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-            user_id bigint(20) unsigned NOT NULL,
-            reason varchar(255) NOT NULL,
-            flagged_at datetime NOT NULL,
-            PRIMARY KEY  (id),
-            KEY user_id (user_id)
-        ) $charset_collate;";
-			dbDelta( $flag_sql );
+		// Flagged users table
+		$flag_table = $wpdb->prefix . 'wc_flagged_users';
+		$flag_sql   = "CREATE TABLE IF NOT EXISTS $flag_table (
+					id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+					user_id bigint(20) unsigned NOT NULL,
+					reason varchar(255) NOT NULL,
+					flagged_at datetime NOT NULL,
+					PRIMARY KEY  (id),
+					KEY user_id (user_id)
+			) $charset_collate;";
+		dbDelta( $flag_sql );
+
+		// KYC failure logs table
+		$kyc_table = $wpdb->prefix . 'wc_kyc_failures';
+		$kyc_sql   = "CREATE TABLE IF NOT EXISTS $kyc_table (
+					id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+					user_id bigint(20) unsigned NOT NULL,
+					reason varchar(100) NOT NULL,
+					ip varchar(100) NOT NULL,
+					user_agent varchar(255) NOT NULL,
+					logged_at datetime NOT NULL,
+					PRIMARY KEY  (id),
+					KEY user_id (user_id)
+		) $charset_collate;";
+		dbDelta( $kyc_sql );
 
 		// Admin logs table
 		$logs_table = $wpdb->prefix . 'wc_auction_logs';
@@ -100,24 +114,25 @@ class WPAM_Install {
 				$admin->add_cap( 'auction_bidder' );
 		}
 
-			add_action( 'init', array( self::class, 'register_endpoints' ) );
-			// self::register_endpoints();
-			flush_rewrite_rules();
+		add_action( 'init', array( self::class, 'register_endpoints' ) );
+		
+		// self::register_endpoints();
+		flush_rewrite_rules();
 
-			// Schedule cron events for existing auctions
-			$auctions = get_posts(
-				array(
-					'post_type'      => 'product',
-					'posts_per_page' => -1,
-					'meta_query'     => array(
-						array(
-							'key'     => '_auction_start',
-							'compare' => 'EXISTS',
-						),
+		// Schedule cron events for existing auctions
+		$auctions = get_posts(
+			array(
+				'post_type'      => 'product',
+				'posts_per_page' => -1,
+				'meta_query'     => array(
+					array(
+						'key'     => '_auction_start',
+						'compare' => 'EXISTS',
 					),
-					'fields'         => 'ids',
-				)
-			);
+				),
+				'fields'         => 'ids',
+			)
+		);
 
 		foreach ( $auctions as $auction_id ) {
 			$start = get_post_meta( $auction_id, '_auction_start', true );
@@ -140,11 +155,11 @@ class WPAM_Install {
 			}
 		}
 
-			// Only flush rewrite rules on activation
-			flush_rewrite_rules();
+		// Only flush rewrite rules on activation
+		flush_rewrite_rules();
 
-			// Schedule auction events
-			self::schedule_auction_events();
+		// Schedule auction events
+		self::schedule_auction_events();
 	}
 
 	public static function init_hooks() {
@@ -178,9 +193,6 @@ class WPAM_Install {
 				$admin->add_cap( 'auction_bidder' );
 		}
 	}
-
-
-
 
 	public static function register_endpoints() {
 		add_rewrite_endpoint( 'watchlist', EP_ROOT | EP_PAGES );
@@ -217,6 +229,7 @@ class WPAM_Install {
 			if ( $start_ts && $start_ts > $now ) {
 				wp_schedule_single_event( $start_ts, 'wpam_auction_start', array( $auction_id ) );
 			}
+
 			if ( $end_ts && $end_ts > $now ) {
 				wp_schedule_single_event( $end_ts, 'wpam_auction_end', array( $auction_id ) );
 			}
