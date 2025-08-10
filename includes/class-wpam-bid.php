@@ -441,119 +441,157 @@ class WPAM_Bid {
 	 * REST endpoint to place a bid.
 	 */
 	public static function rest_place_bid( \WP_REST_Request $request ) {
-		$auction_id = absint( $request['auction_id'] );
-		$bid        = function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $request['bid'] ) : (float) $request['bid'];
-		$max_bid    = $request->get_param( 'max_bid' );
-		if ( null !== $max_bid ) {
-			$max_bid = function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $max_bid ) : (float) $max_bid;
+		if ( ! wp_verify_nonce( $request->get_header( 'X-WP-Nonce' ), 'wp_rest' ) ) {
+				return new \WP_Error( 'wpam_bad_nonce', __( 'Invalid nonce', 'wpam' ), array( 'status' => 403 ) );
 		}
 
-		// Reuse internal logic from place_bid without nonce check.
-		$user_id = get_current_user_id();
+			$auction_id = absint( $request['auction_id'] );
+			$bid        = function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $request['bid'] ) : (float) $request['bid'];
+			$max_bid    = $request->get_param( 'max_bid' );
+		if ( null !== $max_bid ) {
+				$max_bid = function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $max_bid ) : (float) $max_bid;
+		}
+
+			// Reuse internal logic from place_bid without nonce check.
+			$user_id = get_current_user_id();
 		if ( ! $user_id ) {
-			return new \WP_Error( 'wpam_login', __( 'Please login', 'wpam' ), array( 'status' => 403 ) );
+				return new \WP_Error( 'wpam_login', __( 'Please login', 'wpam' ), array( 'status' => 403 ) );
 		}
 
 		if ( ! current_user_can( 'auction_bidder' ) ) {
-			return new \WP_Error( 'wpam_forbidden', __( 'You are not allowed to bid', 'wpam' ), array( 'status' => 403 ) );
+				return new \WP_Error( 'wpam_forbidden', __( 'You are not allowed to bid', 'wpam' ), array( 'status' => 403 ) );
 		}
 
-		$start    = get_post_meta( $auction_id, '_auction_start', true );
-		$end      = get_post_meta( $auction_id, '_auction_end', true );
-		$start_ts = $start ? ( new \DateTimeImmutable( $start, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : 0;
-		$end_ts   = $end ? ( new \DateTimeImmutable( $end, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : 0;
-		$now      = current_datetime()->getTimestamp();
+			$start    = get_post_meta( $auction_id, '_auction_start', true );
+			$end      = get_post_meta( $auction_id, '_auction_end', true );
+			$start_ts = $start ? ( new \DateTimeImmutable( $start, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : 0;
+			$end_ts   = $end ? ( new \DateTimeImmutable( $end, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : 0;
+			$now      = current_datetime()->getTimestamp();
 		if ( $now < $start_ts || $now > $end_ts ) {
-			return new \WP_Error( 'wpam_inactive', __( 'Auction not active', 'wpam' ), array( 'status' => 400 ) );
+				return new \WP_Error( 'wpam_inactive', __( 'Auction not active', 'wpam' ), array( 'status' => 400 ) );
 		}
 
-		global $wpdb;
-		$table   = $wpdb->prefix . 'wc_auction_bids';
-		$reverse = self::is_reverse( $auction_id );
-		$sealed  = self::is_sealed( $auction_id );
+			global $wpdb;
+			$table   = $wpdb->prefix . 'wc_auction_bids';
+			$reverse = self::is_reverse( $auction_id );
+			$sealed  = self::is_sealed( $auction_id );
 
-		$order        = $reverse ? 'ASC' : 'DESC';
-		$highest_row  = $wpdb->get_row( $wpdb->prepare( "SELECT user_id, bid_amount FROM $table WHERE auction_id = %d ORDER BY bid_amount {$order}, id DESC LIMIT 1", $auction_id ), ARRAY_A );
-		$highest      = $highest_row ? ( function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $highest_row['bid_amount'] ) : (float) $highest_row['bid_amount'] ) : 0;
-		$highest_user = $highest_row ? intval( $highest_row['user_id'] ) : 0;
+			$hook_calls = array();
 
-		$prev_highest_user = $highest_user;
+			// Begin transaction for atomic updates.
+			$wpdb->query( 'START TRANSACTION' );
 
-		$prev_lead_user = intval( get_post_meta( $auction_id, '_auction_lead_user', true ) );
-		$prev_lead_max  = 0;
-		if ( $prev_lead_user ) {
-			$prev_lead_max = get_user_meta( $prev_lead_user, 'wpam_proxy_max_' . $auction_id, true );
-			$prev_lead_max = $prev_lead_max ? ( function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $prev_lead_max ) : (float) $prev_lead_max ) : $highest;
-		} else {
-			$prev_lead_max = $highest;
+			// Lock auction state row and verify live state.
+			$state = $wpdb->get_var( $wpdb->prepare( "SELECT meta_value FROM {$wpdb->postmeta} WHERE post_id = %d AND meta_key = %s FOR UPDATE", $auction_id, '_auction_state' ) );
+		if ( WPAM_Auction_State::LIVE !== $state ) {
+				$wpdb->query( 'ROLLBACK' );
+				return new \WP_Error( 'wpam_not_live', __( 'Auction not live', 'wpam' ), array( 'status' => 400 ) );
 		}
 
-		$proxy_enabled  = $reverse ? false : self::proxy_enabled( $auction_id );
-		$silent_enabled = $sealed ? true : self::silent_enabled( $auction_id );
-		if ( null === $max_bid ) {
-			$max_bid = $bid;
-		}
-		if ( $max_bid < $bid ) {
-			$max_bid = $bid;
-		}
+			$order        = $reverse ? 'ASC' : 'DESC';
+			$highest_row  = $wpdb->get_row( $wpdb->prepare( "SELECT user_id, bid_amount FROM $table WHERE auction_id = %d ORDER BY bid_amount {$order}, id DESC LIMIT 1 FOR UPDATE", $auction_id ), ARRAY_A );
+			$highest      = $highest_row ? ( function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $highest_row['bid_amount'] ) : (float) $highest_row['bid_amount'] ) : 0;
+			$highest_user = $highest_row ? intval( $highest_row['user_id'] ) : 0;
 
-		$max_bids = intval( get_post_meta( $auction_id, '_auction_max_bids', true ) );
-		if ( $max_bids > 0 ) {
-			$count = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $table WHERE auction_id = %d AND user_id = %d", $auction_id, $user_id ) );
-			if ( $count >= $max_bids ) {
-				return new \WP_Error( 'wpam_limit', __( 'Bid limit reached', 'wpam' ), array( 'status' => 400 ) );
+			// Reserve price enforcement.
+			$reserve = $wpdb->get_var( $wpdb->prepare( "SELECT meta_value FROM {$wpdb->postmeta} WHERE post_id = %d AND meta_key = %s", $auction_id, '_auction_reserve' ) );
+			$reserve = $reserve ? ( function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $reserve ) : (float) $reserve ) : 0;
+		if ( $reserve ) {
+			if ( $reverse && $bid > $reserve ) {
+					$wpdb->query( 'ROLLBACK' );
+					return new \WP_Error( 'wpam_reserve', __( 'Bid exceeds reserve price', 'wpam' ), array( 'status' => 400 ) );
+			} elseif ( ! $reverse && $bid < $reserve ) {
+					$wpdb->query( 'ROLLBACK' );
+					return new \WP_Error( 'wpam_reserve', __( 'Bid below reserve price', 'wpam' ), array( 'status' => 400 ) );
 			}
 		}
 
-		$increment = WPAM_Auction::get_bid_increment( $auction_id, $highest );
+			$prev_highest_user = $highest_user;
+
+			$prev_lead_user = intval( get_post_meta( $auction_id, '_auction_lead_user', true ) );
+			$prev_lead_max  = 0;
+		if ( $prev_lead_user ) {
+				$prev_lead_max = get_user_meta( $prev_lead_user, 'wpam_proxy_max_' . $auction_id, true );
+				$prev_lead_max = $prev_lead_max ? ( function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $prev_lead_max ) : (float) $prev_lead_max ) : $highest;
+		} else {
+				$prev_lead_max = $highest;
+		}
+
+			$proxy_enabled  = $reverse ? false : self::proxy_enabled( $auction_id );
+			$silent_enabled = $sealed ? true : self::silent_enabled( $auction_id );
+		if ( null === $max_bid ) {
+				$max_bid = $bid;
+		}
+		if ( $max_bid < $bid ) {
+				$max_bid = $bid;
+		}
+
+			$max_bids = intval( get_post_meta( $auction_id, '_auction_max_bids', true ) );
+		if ( $max_bids > 0 ) {
+				$count = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $table WHERE auction_id = %d AND user_id = %d", $auction_id, $user_id ) );
+			if ( $count >= $max_bids ) {
+					$wpdb->query( 'ROLLBACK' );
+					return new \WP_Error( 'wpam_limit', __( 'Bid limit reached', 'wpam' ), array( 'status' => 400 ) );
+			}
+		}
+
+			$increment = WPAM_Auction::get_bid_increment( $auction_id, $highest );
+
+			$new_lead_user = $prev_lead_user;
+		if ( $max_bid > $prev_lead_max ) {
+				$new_lead_user = $user_id;
+		}
 
 		if ( ! $proxy_enabled ) {
 			if ( $reverse ) {
 				if ( $highest_row && $bid > $highest - $increment ) {
+					$wpdb->query( 'ROLLBACK' );
 					return new \WP_Error( 'wpam_high', __( 'Bid too high', 'wpam' ), array( 'status' => 400 ) );
 				}
 			} elseif ( $bid < $highest + $increment ) {
+					$wpdb->query( 'ROLLBACK' );
 					return new \WP_Error( 'wpam_low', __( 'Bid too low', 'wpam' ), array( 'status' => 400 ) );
 			}
 
-			$wpdb->insert(
-				$table,
-				array(
-					'auction_id' => $auction_id,
-					'user_id'    => $user_id,
-					'bid_amount' => $bid,
-					'bid_time'   => wp_date( 'Y-m-d H:i:s', null, new \DateTimeZone( 'UTC' ) ),
-				),
-				array( '%d', '%d', '%f', '%s' )
-			);
-			self::log_bid( $wpdb->insert_id, $user_id );
+				$wpdb->insert(
+					$table,
+					array(
+						'auction_id' => $auction_id,
+						'user_id'    => $user_id,
+						'bid_amount' => $bid,
+						'bid_time'   => wp_date( 'Y-m-d H:i:s', null, new \DateTimeZone( 'UTC' ) ),
+					),
+					array( '%d', '%d', '%f', '%s' )
+				);
+				self::log_bid( $wpdb->insert_id, $user_id );
 
-			do_action( 'wpam_bid_placed', $auction_id, $user_id, $bid );
+				$hook_calls[] = array( $auction_id, $user_id, $bid );
 		} else {
 			if ( $max_bid < $highest + $increment ) {
-				return new \WP_Error( 'wpam_low', __( 'Bid too low', 'wpam' ), array( 'status' => 400 ) );
+					$wpdb->query( 'ROLLBACK' );
+					return new \WP_Error( 'wpam_low', __( 'Bid too low', 'wpam' ), array( 'status' => 400 ) );
 			}
 
-			$place_bid = ( $highest > 0 ) ? min( $max_bid, $highest + $increment ) : $max_bid;
-			$wpdb->insert(
-				$table,
-				array(
-					'auction_id' => $auction_id,
-					'user_id'    => $user_id,
-					'bid_amount' => $place_bid,
-					'bid_time'   => wp_date( 'Y-m-d H:i:s', null, new \DateTimeZone( 'UTC' ) ),
-				),
-				array( '%d', '%d', '%f', '%s' )
-			);
-			self::log_bid( $wpdb->insert_id, $user_id );
-			do_action( 'wpam_bid_placed', $auction_id, $user_id, $place_bid );
-			update_user_meta( $user_id, 'wpam_proxy_max_' . $auction_id, $max_bid );
+				$place_bid = ( $highest > 0 ) ? min( $max_bid, $highest + $increment ) : $max_bid;
+				$wpdb->insert(
+					$table,
+					array(
+						'auction_id' => $auction_id,
+						'user_id'    => $user_id,
+						'bid_amount' => $place_bid,
+						'bid_time'   => wp_date( 'Y-m-d H:i:s', null, new \DateTimeZone( 'UTC' ) ),
+					),
+					array( '%d', '%d', '%f', '%s' )
+				);
+				self::log_bid( $wpdb->insert_id, $user_id );
+				$hook_calls[] = array( $auction_id, $user_id, $place_bid );
+				update_user_meta( $user_id, 'wpam_proxy_max_' . $auction_id, $max_bid );
 
-			$bid = $place_bid;
+				$bid = $place_bid;
 
 			if ( $highest_user && $highest_user !== $user_id ) {
-				$prev_max = get_user_meta( $highest_user, 'wpam_proxy_max_' . $auction_id, true );
-				$prev_max = $prev_max ? ( function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $prev_max ) : (float) $prev_max ) : $highest;
+					$prev_max = get_user_meta( $highest_user, 'wpam_proxy_max_' . $auction_id, true );
+					$prev_max = $prev_max ? ( function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $prev_max ) : (float) $prev_max ) : $highest;
 				if ( $prev_max > $place_bid ) {
 					$auto_bid = min( $prev_max, $place_bid + $increment );
 					$wpdb->insert(
@@ -567,85 +605,96 @@ class WPAM_Bid {
 						array( '%d', '%d', '%f', '%s' )
 					);
 					self::log_bid( $wpdb->insert_id, $highest_user );
-					do_action( 'wpam_bid_placed', $auction_id, $highest_user, $auto_bid );
-					$bid = $auto_bid;
+					$hook_calls[] = array( $auction_id, $highest_user, $auto_bid );
+					$bid          = $auto_bid;
 				} else {
-					$highest_user = $user_id;
+						$highest_user = $user_id;
 				}
 			} else {
-				$highest_user = $user_id;
+					$highest_user = $user_id;
 			}
 		}
 
-		$soft_close = WPAM_Soft_Close::maybe_extend_end( $auction_id, $end_ts, $now );
-		$extended   = $soft_close['extended'];
-		$new_end_ts = $soft_close['new_end_ts'];
+			$soft_close = WPAM_Soft_Close::maybe_extend_end( $auction_id, $end_ts, $now );
+			$extended   = $soft_close['extended'];
+			$new_end_ts = $soft_close['new_end_ts'];
 
-		$new_highest_row  = $wpdb->get_row( $wpdb->prepare( "SELECT user_id, bid_amount FROM $table WHERE auction_id = %d ORDER BY bid_amount {$order}, id DESC LIMIT 1", $auction_id ), ARRAY_A );
-		$new_highest_user = $new_highest_row ? intval( $new_highest_row['user_id'] ) : 0;
-		$new_highest      = $new_highest_row ? ( function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $new_highest_row['bid_amount'] ) : (float) $new_highest_row['bid_amount'] ) : 0;
+			$new_highest_row  = $wpdb->get_row( $wpdb->prepare( "SELECT user_id, bid_amount FROM $table WHERE auction_id = %d ORDER BY bid_amount {$order}, id DESC LIMIT 1", $auction_id ), ARRAY_A );
+			$new_highest_user = $new_highest_row ? intval( $new_highest_row['user_id'] ) : 0;
+			$new_highest      = $new_highest_row ? ( function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $new_highest_row['bid_amount'] ) : (float) $new_highest_row['bid_amount'] ) : 0;
 		if ( $new_lead_user !== $prev_lead_user ) {
-			update_post_meta( $auction_id, '_auction_lead_user', $new_lead_user );
+				update_post_meta( $auction_id, '_auction_lead_user', $new_lead_user );
 		}
 
-		$statuses = self::calculate_statuses( $auction_id, $new_highest, $new_highest_user, $reverse );
+			$statuses = self::calculate_statuses( $auction_id, $new_highest, $new_highest_user, $reverse );
 
-		WPAM_Event_Bus::dispatch(
-			'bid_placed',
-			array(
-				'auction_id' => $auction_id,
-				'user_id'    => $user_id,
-				'amount'     => $bid,
-				'statuses'   => $statuses,
-			)
-		);
+			$message     = $sealed ? __( 'Sealed bid submitted', 'wpam' ) : __( 'Bid received', 'wpam' );
+			$max_reached = false;
+		if ( $proxy_enabled && $max_bid <= $bid ) {
+				$max_reached = true;
+				$message     = __( 'Max bid reached', 'wpam' );
+		}
 
-		if ( ! $silent_enabled && $prev_lead_user && $prev_lead_user !== $new_lead_user ) {
-			WPAM_Event_Bus::dispatch(
-				'user_outbid',
-				array(
-					'auction_id' => $auction_id,
-					'user_id'    => $prev_lead_user,
-				)
+			$response = array(
+				'message'  => $message,
+				'status'   => isset( $statuses[ $user_id ] ) ? $statuses[ $user_id ] : '',
+				'statuses' => $statuses,
 			);
-		}
+			if ( $extended ) {
+					$response['new_end_ts'] = (int) $new_end_ts;
+					$response['extended']   = true;
+			}
+			if ( $max_reached ) {
+					$response['max_reached'] = true;
+			}
 
-		if ( $max_reached ) {
+			$wpdb->query( 'COMMIT' );
+
+			foreach ( $hook_calls as $args ) {
+					do_action( 'wpam_bid_placed', $args[0], $args[1], $args[2] );
+			}
+
 			WPAM_Event_Bus::dispatch(
-				'max_exceeded',
+				'bid_placed',
 				array(
 					'auction_id' => $auction_id,
 					'user_id'    => $user_id,
+					'amount'     => $bid,
+					'statuses'   => $statuses,
 				)
 			);
+
+		if ( ! $silent_enabled && $prev_lead_user && $prev_lead_user !== $new_lead_user ) {
+				WPAM_Event_Bus::dispatch(
+					'user_outbid',
+					array(
+						'auction_id' => $auction_id,
+						'user_id'    => $prev_lead_user,
+					)
+				);
 		}
 
-		$message = $sealed ? __( 'Sealed bid submitted', 'wpam' ) : __( 'Bid received', 'wpam' );
 		if ( $max_reached ) {
-			$message = __( 'Max bid reached', 'wpam' );
+				WPAM_Event_Bus::dispatch(
+					'max_exceeded',
+					array(
+						'auction_id' => $auction_id,
+						'user_id'    => $user_id,
+					)
+				);
 		}
 
-		$response = array(
-			'message'  => $message,
-			'status'   => isset( $statuses[ $user_id ] ) ? $statuses[ $user_id ] : '',
-			'statuses' => $statuses,
-		);
 		if ( $extended ) {
-			$response['new_end_ts'] = (int) $new_end_ts;
-			$response['extended']   = true;
-			WPAM_Event_Bus::dispatch(
-				'auction_extended',
-				array(
-					'auction_id' => $auction_id,
-					'new_end_ts' => (int) $new_end_ts,
-				)
-			);
-		}
-		if ( $max_reached ) {
-			$response['max_reached'] = true;
+				WPAM_Event_Bus::dispatch(
+					'auction_extended',
+					array(
+						'auction_id' => $auction_id,
+						'new_end_ts' => (int) $new_end_ts,
+					)
+				);
 		}
 
-		return rest_ensure_response( $response );
+			return rest_ensure_response( $response );
 	}
 
 	/**
