@@ -27,6 +27,9 @@ class WPAM_Auction {
                 add_action( 'wpam_update_auction_states', array( $this, 'update_auction_states' ) );
                 add_action( 'wpam_auction_start', array( $this, 'handle_auction_start' ) );
                 add_action( 'wpam_auction_end', array( $this, 'handle_auction_end' ) );
+               add_action( 'wpam_auction_suspend', array( $this, 'handle_auction_suspend' ) );
+               add_action( 'wpam_auction_resume', array( $this, 'handle_auction_resume' ) );
+               add_action( 'wpam_auction_cancel', array( $this, 'handle_auction_cancel' ) );
                add_action( 'wpam_send_auction_reminders', array( $this, 'send_auction_reminders' ) );
                add_filter( 'cron_schedules', array( $this, 'register_cron_schedules' ) );
                if ( defined( 'WP_CLI' ) && WP_CLI ) {
@@ -661,27 +664,76 @@ class WPAM_Auction {
                        update_post_meta( $post_id, '_auction_relist_price_adjustment', 0 );
                }
 
-                if ( isset( $_POST['_auction_opening_price'] ) ) {
-                        $new_opening_price = wc_clean( wp_unslash( $_POST['_auction_opening_price'] ) );
-                        if ( $new_opening_price !== $old_opening_price ) {
-                                WPAM_Admin_Log::log_price_edit( $post_id, $old_opening_price, $new_opening_price );
-                        }
-                }
+               if ( isset( $_POST['_auction_opening_price'] ) ) {
+                       $new_opening_price = wc_clean( wp_unslash( $_POST['_auction_opening_price'] ) );
+                       if ( $new_opening_price !== $old_opening_price ) {
+                               WPAM_Admin_Log::log_price_edit( $post_id, $old_opening_price, $new_opening_price );
+                       }
+               }
 
-		$state = $this->determine_state( $post_id );
-		update_post_meta( $post_id, '_auction_state', $state );
-	}
+               $state = $this->determine_state( $post_id );
+               update_post_meta( $post_id, '_auction_state', $state );
+       }
+
+       protected function get_auction_timestamps( $auction_id ) {
+               $start = get_post_meta( $auction_id, '_auction_start', true );
+               $end   = get_post_meta( $auction_id, '_auction_end', true );
+               $start_ts = $start ? ( new \DateTimeImmutable( $start, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : 0;
+               $end_ts   = $end ? ( new \DateTimeImmutable( $end, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : 0;
+               return array( $start_ts, $end_ts );
+       }
+
        public function handle_auction_start( $auction_id ) {
                do_action( 'wpam_before_auction_start', $auction_id );
                update_post_meta( $auction_id, '_auction_status', 'live' );
                update_post_meta( $auction_id, '_auction_state', WPAM_Auction_State::LIVE );
+               list( $start_ts, $end_ts ) = $this->get_auction_timestamps( $auction_id );
                WPAM_Event_Bus::dispatch( 'auction_status', [
                        'auction_id' => $auction_id,
                        'status'     => 'started',
+                       'start_ts'   => $start_ts,
+                       'end_ts'     => $end_ts,
                ] );
        }
 
-	public function handle_auction_end( $auction_id ) {
+       public function handle_auction_suspend( $auction_id ) {
+               update_post_meta( $auction_id, '_auction_status', 'suspended' );
+               update_post_meta( $auction_id, '_auction_state', WPAM_Auction_State::SUSPENDED );
+               list( $start_ts, $end_ts ) = $this->get_auction_timestamps( $auction_id );
+               WPAM_Event_Bus::dispatch( 'auction_status', [
+                       'auction_id' => $auction_id,
+                       'status'     => 'suspended',
+                       'start_ts'   => $start_ts,
+                       'end_ts'     => $end_ts,
+               ] );
+       }
+
+       public function handle_auction_resume( $auction_id ) {
+               update_post_meta( $auction_id, '_auction_status', 'live' );
+               update_post_meta( $auction_id, '_auction_state', WPAM_Auction_State::LIVE );
+               list( $start_ts, $end_ts ) = $this->get_auction_timestamps( $auction_id );
+               WPAM_Event_Bus::dispatch( 'auction_status', [
+                       'auction_id' => $auction_id,
+                       'status'     => 'resumed',
+                       'start_ts'   => $start_ts,
+                       'end_ts'     => $end_ts,
+               ] );
+       }
+
+       public function handle_auction_cancel( $auction_id ) {
+               update_post_meta( $auction_id, '_auction_status', 'canceled' );
+               update_post_meta( $auction_id, '_auction_state', WPAM_Auction_State::CANCELED );
+               update_post_meta( $auction_id, '_auction_ending_reason', 'canceled' );
+               list( $start_ts, $end_ts ) = $this->get_auction_timestamps( $auction_id );
+               WPAM_Event_Bus::dispatch( 'auction_status', [
+                       'auction_id' => $auction_id,
+                       'status'     => 'canceled',
+                       'start_ts'   => $start_ts,
+                       'end_ts'     => $end_ts,
+               ] );
+       }
+
+       public function handle_auction_end( $auction_id ) {
 		global $wpdb;
 
                 $table   = $wpdb->prefix . 'wc_auction_bids';
@@ -689,7 +741,8 @@ class WPAM_Auction {
                 $order   = $reverse ? 'ASC' : 'DESC';
                 $highest = $wpdb->get_row( $wpdb->prepare( "SELECT user_id, bid_amount FROM $table WHERE auction_id = %d ORDER BY bid_amount {$order} LIMIT 1", $auction_id ), ARRAY_A );
 
-		$ending_reason = '';
+               $ending_reason = '';
+               list( $start_ts, $end_ts ) = $this->get_auction_timestamps( $auction_id );
 
                if ( ! $highest ) {
                        $ending_reason = 'no_bids';
@@ -704,6 +757,8 @@ class WPAM_Auction {
                                'auction_id' => $auction_id,
                                'status'     => 'failed',
                                'reason'     => $ending_reason,
+                               'start_ts'   => $start_ts,
+                               'end_ts'     => $end_ts,
                        ] );
                        return;
                }
@@ -726,6 +781,8 @@ class WPAM_Auction {
                                'auction_id' => $auction_id,
                                'status'     => 'failed',
                                'reason'     => $ending_reason,
+                               'start_ts'   => $start_ts,
+                               'end_ts'     => $end_ts,
                        ] );
                        return;
                }
@@ -760,21 +817,9 @@ class WPAM_Auction {
 		update_post_meta( $auction_id, '_auction_sold', '1' );
 		update_post_meta( $auction_id, '_stock_status', 'outofstock' );
 
-		$user    = get_user_by( 'id', $user_id );
-		$subject = sprintf( __( 'You won the auction: %s', 'wpam' ), get_the_title( $auction_id ) );
-		$message = sprintf( __( 'Congratulations! You won with a bid of %1$s. Order #%2$d has been created.', 'wpam' ), wc_price( $amount ), $order->get_id() );
-		wp_mail( $user->user_email, $subject, $message );
-
-		$sid   = get_option( 'wpam_twilio_sid' );
-		$token = get_option( 'wpam_twilio_token' );
-		$from  = get_option( 'wpam_twilio_from' );
-		$phone = get_user_meta( $user_id, 'billing_phone', true );
-
-		if ( $sid && $token && $from && $phone && class_exists( 'WPAM_Twilio_Provider' ) ) {
-			$twilio  = new WPAM_Twilio_Provider();
-			$sms_msg = sprintf( __( 'You won auction %1$s for %2$s', 'wpam' ), get_the_title( $auction_id ), wc_price( $amount ) );
-			$twilio->send( $phone, $sms_msg );
-		}
+                $subject = sprintf( __( 'You won the auction: %s', 'wpam' ), get_the_title( $auction_id ) );
+                $message = sprintf( __( 'Congratulations! You won with a bid of %1$s. Order #%2$d has been created.', 'wpam' ), wc_price( $amount ), $order->get_id() );
+                WPAM_Notifications::send_to_user( $user_id, $subject, $message );
 
                update_post_meta( $auction_id, '_auction_state', WPAM_Auction_State::COMPLETED );
                update_post_meta( $auction_id, '_auction_status', 'completed' );
@@ -784,6 +829,8 @@ class WPAM_Auction {
                        'auction_id' => $auction_id,
                        'status'     => 'completed',
                        'reason'     => $ending_reason,
+                       'start_ts'   => $start_ts,
+                       'end_ts'     => $end_ts,
                ] );
                
                do_action( 'wpam_after_auction_end', $auction_id, $user_id, $amount );
@@ -903,9 +950,8 @@ class WPAM_Auction {
                         );
 
                         foreach ( $query->posts as $post ) {
+                                $this->handle_auction_end( $post->ID );
                                 update_post_meta( $post->ID, '_auction_ended', 1 );
-                                update_post_meta( $post->ID, '_auction_state', WPAM_Auction_State::ENDED );
-                                WPAM_Notifications::notify_auction_end( $post->ID );
                         }
 
                         wp_reset_postdata();

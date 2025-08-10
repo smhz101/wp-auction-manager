@@ -13,6 +13,7 @@ class WPAM_HTML {
    *     @type bool $showCountdown
    *     @type bool $showBidForm
    *     @type bool $showWatchlist
+   *     @type bool $showWinner
    * }
    *
    * @return string HTML output.
@@ -23,6 +24,7 @@ class WPAM_HTML {
       'showCountdown' => true,
       'showBidForm'   => true,
       'showWatchlist' => true,
+      'showWinner'    => true,
     ];
     $atts = wp_parse_args( $atts, $defaults );
 
@@ -56,27 +58,51 @@ class WPAM_HTML {
       echo '<p class="wpam-countdown" data-start="' . esc_attr( $start_ts ) . '" data-end="' . esc_attr( $end_ts ) . '" data-status="' . esc_attr( $status ) . '"></p>';
     }
 
-    $label = ( 'reverse' === $type ) ? __( 'Lowest Bid:', 'wpam' ) : __( 'Current Bid:', 'wpam' );
-    echo '<p class="wpam-current-price">' . esc_html( $label ) .
-         ' <span class="wpam-current-bid" data-auction-id="' . esc_attr( $auction_id ) . '">' .
-         esc_html( $display_highest ) . '</span></p>';
-    echo '<div class="wpam-bid-status" data-auction-id="' . esc_attr( $auction_id ) . '"></div>';
-    echo '<p>' . esc_html__( 'Viewers:', 'wpam' ) . ' <span class="wpam-viewer-count" data-auction-id="' . esc_attr( $auction_id ) . '">0</span></p>';
-    echo '<p>' . esc_html__( 'Participants:', 'wpam' ) . ' <span class="wpam-participant-count" data-auction-id="' . esc_attr( $auction_id ) . '">0</span></p>';
-
-    if ( $atts['showBidForm'] ) {
-      echo '<form class="wpam-bid-form">';
-      echo '<input type="number" step="0.01" class="wpam-bid-input" />';
-      wp_nonce_field( 'wpam_place_bid', 'wpam_bid_nonce', false );
-      echo '<button class="button wpam-bid-button" data-auction-id="' . esc_attr( $auction_id ) . '">' .
-           esc_html__( 'Place Bid', 'wpam' ) . '</button>';
-      echo '</form>';
+    if ( 'live' === $status ) {
+      $label = ( 'reverse' === $type ) ? __( 'Lowest Bid:', 'wpam' ) : __( 'Current Bid:', 'wpam' );
+      echo '<p class="wpam-current-price">' . esc_html( $label ) .
+          ' <span class="wpam-current-bid" data-auction-id="' . esc_attr( $auction_id ) . '">' .
+          esc_html( $display_highest ) . '</span></p>';
+      echo '<div class="wpam-bid-status" data-auction-id="' . esc_attr( $auction_id ) . '"></div>';
+      echo '<p>' . esc_html__( 'Viewers:', 'wpam' ) . ' <span class="wpam-viewer-count" data-auction-id="' . esc_attr( $auction_id ) . '">0</span></p>';
+      echo '<p>' . esc_html__( 'Participants:', 'wpam' ) . ' <span class="wpam-participant-count" data-auction-id="' . esc_attr( $auction_id ) . '">0</span></p>';
     }
 
-    if ( $atts['showWatchlist'] ) {
-      wp_nonce_field( 'wpam_toggle_watchlist', 'wpam_watchlist_nonce', false );
-      echo '<button class="button wpam-watchlist-button" data-auction-id="' . esc_attr( $auction_id ) . '">' .
-           esc_html__( 'Toggle Watchlist', 'wpam' ) . '</button>';
+    $winner_id = (int) get_post_meta( $auction_id, '_auction_winner', true );
+    if ( $atts['showWinner'] ) {
+      if ( 'completed' === $status && $winner_id ) {
+        $current_user_id = get_current_user_id();
+        if ( $current_user_id === $winner_id ) {
+          echo '<p class="wpam-auction-winner">' . esc_html__( 'You won this auction', 'wpam' ) . '</p>';
+        } else {
+          $user        = get_userdata( $winner_id );
+          $name        = $user ? $user->display_name : '';
+          $anon_name   = $name ? substr( $name, 0, 1 ) . str_repeat( '*', max( strlen( $name ) - 1, 0 ) ) : __( 'Unknown', 'wpam' );
+          $winner_text = sprintf( __( 'Winner: %s', 'wpam' ), $anon_name );
+          echo '<p class="wpam-auction-winner">' . esc_html( $winner_text ) . '</p>';
+        }
+      } elseif ( 'failed' === $status ) {
+        echo '<p class="wpam-auction-winner">' . esc_html__( 'Auction ended without a winner', 'wpam' ) . '</p>';
+      } elseif ( 'ended' === $status ) {
+        echo '<p class="wpam-auction-winner">' . esc_html__( 'Processing results...', 'wpam' ) . '</p>';
+      }
+    }
+
+    if ( 'live' === $status ) {
+      if ( $atts['showBidForm'] ) {
+        echo '<form class="wpam-bid-form">';
+        echo '<input type="number" step="0.01" class="wpam-bid-input" />';
+        wp_nonce_field( 'wpam_place_bid', 'wpam_bid_nonce', false );
+        echo '<button class="button wpam-bid-button" data-auction-id="' . esc_attr( $auction_id ) . '">' .
+             esc_html__( 'Place Bid', 'wpam' ) . '</button>';
+        echo '</form>';
+      }
+
+      if ( $atts['showWatchlist'] ) {
+        wp_nonce_field( 'wpam_toggle_watchlist', 'wpam_watchlist_nonce', false );
+        echo '<button class="button wpam-watchlist-button" data-auction-id="' . esc_attr( $auction_id ) . '">' .
+             esc_html__( 'Toggle Watchlist', 'wpam' ) . '</button>';
+      }
     }
 
     echo '</div>';

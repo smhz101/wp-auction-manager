@@ -13,8 +13,8 @@ export default function Toast({ open, type = 'success', message, onOpenChange })
   return (
     <div
       className={cn(
-        'fixed bottom-4 right-4 rounded-md px-4 py-2 text-sm text-white shadow-lg',
-        type === 'error' ? 'bg-destructive' : 'bg-primary'
+        'fixed bottom-wp-4 right-wp-4 rounded-sm px-wp-3 py-wp-1 text-wp-base text-wp-white shadow-lg',
+        type === 'error' ? 'bg-wp-red' : 'bg-wp-blue'
       )}
     >
       {message}

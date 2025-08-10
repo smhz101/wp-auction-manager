@@ -6,7 +6,7 @@ import metadata from './block.json';
 
 registerBlockType(metadata.name, {
   edit({ attributes, setAttributes }) {
-    const { showCountdown, showBidForm, showStatus, showWatchlist, auctionId } = attributes;
+    const { showCountdown, showBidForm, showStatus, showWatchlist, showWinner, auctionId } = attributes;
     return (
       <>
         <InspectorControls>
@@ -35,6 +35,11 @@ registerBlockType(metadata.name, {
               label={__('Show Watchlist Button', 'wpam')}
               checked={showWatchlist}
               onChange={(val) => setAttributes({ showWatchlist: val })}
+            />
+            <ToggleControl
+              label={__('Show Winner', 'wpam')}
+              checked={showWinner}
+              onChange={(val) => setAttributes({ showWinner: val })}
             />
           </PanelBody>
         </InspectorControls>

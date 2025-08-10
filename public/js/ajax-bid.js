@@ -296,6 +296,24 @@ jQuery(function ($) {
             ) {
               showToast(i18n.reserve_not_met || 'Reserve price not met', 'warning');
               bidStatus[auctionId + '_reserve'] = true;
+            } else if (
+              res.data.ending_reason === 'sold' &&
+              !bidStatus[auctionId + '_sold']
+            ) {
+              showToast(
+                i18n.auction_completed || 'Auction completed',
+                'info'
+              );
+              bidStatus[auctionId + '_sold'] = true;
+            } else if (
+              res.data.ending_reason === 'no_bids' &&
+              !bidStatus[auctionId + '_no_bids']
+            ) {
+              showToast(
+                i18n.auction_no_bids || 'Auction ended with no bids',
+                'warning'
+              );
+              bidStatus[auctionId + '_no_bids'] = true;
             }
             if (res.data.start_ts || res.data.end_ts || res.data.state) {
               updateCountdown(
@@ -383,9 +401,50 @@ jQuery(function ($) {
         }
       });
       channel.bind('auction_status', function (data) {
-        if (!data || !data.status) return;
-        if (data.status === 'ended') {
-          showToast(i18n.auction_ended || 'Auction ended', 'info');
+        if (!data || !data.status || !data.auction_id) return;
+
+        let status = data.status;
+        let toast = '';
+        let type = 'info';
+
+        switch (status) {
+          case 'started':
+          case 'resumed':
+            toast = i18n.auction_started || 'Auction started';
+            status = 'live';
+            break;
+          case 'suspended':
+            toast = i18n.auction_suspended || 'Auction suspended';
+            type = 'warning';
+            break;
+          case 'canceled':
+            toast = i18n.auction_canceled || 'Auction canceled';
+            type = 'warning';
+            break;
+          case 'failed':
+            toast = i18n.auction_failed || 'Auction failed';
+            break;
+          case 'completed':
+            toast = i18n.auction_completed || 'Auction completed';
+            break;
+          default:
+            return;
+        }
+
+        updateCountdown(data.auction_id, data.start_ts, data.end_ts, status);
+
+        const container =
+          $('[data-auction-id="' + data.auction_id + '"]').closest(
+            '.auction-single, .wpam-auction-block'
+          );
+        if (container.length) {
+          container.attr('data-status', status);
+          if (data.start_ts) container.attr('data-start', data.start_ts);
+          if (data.end_ts) container.attr('data-end', data.end_ts);
+        }
+
+        if (toast) {
+          showToast(toast, type);
         }
       });
       const presence = pusher.subscribe('presence-auction-' + auctionId);
@@ -421,6 +480,7 @@ jQuery(function ($) {
       });
     });
   } else {
-    setInterval(refreshBids, 5000);
+    const pollInterval = parseInt(wpam_ajax.poll_interval, 10) || 5000;
+    setInterval(refreshBids, pollInterval);
   }
 });

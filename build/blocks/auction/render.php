@@ -19,6 +19,7 @@ $atts = wp_parse_args(
         'showBidForm'   => true,
         'showStatus'    => true,
         'showWatchlist' => true,
+        'showWinner'    => true,
     ]
 );
 
