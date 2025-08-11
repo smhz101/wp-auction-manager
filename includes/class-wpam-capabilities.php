@@ -95,24 +95,47 @@ class WPAM_Capabilities {
 	}
 
 	/**
+	 * Add or update core auction roles.
+	 *
+	 * This consolidates the creation of the `auction_seller` and
+	 * `auction_bidder` roles so both activation routines and runtime
+	 * refreshes reuse the same logic.
+	 *
+	 * @return void
+	 */
+	public static function add_roles() {
+		self::ensure_core_roles();
+	}
+
+	/**
+	 * Ensure the custom roles exist with their capabilities.
+	 *
+	 * @return void
+	 */
+	private static function ensure_core_roles() {
+		// Add/update Seller role with its capabilities.
+		$seller_caps         = array_fill_keys( self::get_seller_capabilities(), true );
+		$seller_caps['read'] = true;
+		self::upsert_role( self::ROLE_SELLER, \__( 'Auction Seller', 'wpam' ), $seller_caps );
+
+		// Add/update Bidder role with its capabilities.
+		$bidder_caps         = array_fill_keys( self::get_bidder_capabilities(), true );
+		$bidder_caps['read'] = true;
+		self::upsert_role( self::ROLE_BIDDER, \__( 'Auction Bidder', 'wpam' ), $bidder_caps );
+	}
+
+	/**
 	 * Install/refresh roles & capabilities.
 	 *
 	 * Use on plugin activation and optionally on 'init' (idempotent).
 	 */
 	public static function register_caps() {
-		// 1) Add/update Seller role with its capabilities.
-		$seller_caps         = array_fill_keys( self::get_seller_capabilities(), true );
-		$seller_caps['read'] = true;
-		self::upsert_role( self::ROLE_SELLER, \__( 'Auction Seller', 'wpam' ), $seller_caps );
+		// Ensure roles exist first.
+		self::add_roles();
 
-		// 2) Add/update Bidder role with its capabilities.
-		$bidder_caps         = array_fill_keys( self::get_bidder_capabilities(), true );
-		$bidder_caps['read'] = true;
-		self::upsert_role( self::ROLE_BIDDER, \__( 'Auction Bidder', 'wpam' ), $bidder_caps );
-
-		// 3) Ensure admin/shop_manager have all admin-level caps (if roles exist).
+		// Ensure admin/shop_manager have all admin-level caps (if roles exist).
 		self::grant_caps_to_role( 'administrator', self::get_admin_capabilities() );
-		self::grant_caps_to_role( 'shop_manager',  self::get_admin_capabilities() );
+		self::grant_caps_to_role( 'shop_manager', self::get_admin_capabilities() );
 	}
 
 	/**
