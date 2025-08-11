@@ -124,7 +124,7 @@ class WPAM_Install {
 		dbDelta( $notify_sql );
 
 		// Register plugin capabilities and assign them to roles.
-		WPAM_Capabilities::register_caps();
+		WPAM_Capabilities::register_roles_and_caps();
 
 		add_action( 'init', array( self::class, 'register_endpoints' ) );
 
