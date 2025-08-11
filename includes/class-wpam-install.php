@@ -123,12 +123,8 @@ class WPAM_Install {
 		) $charset_collate;";
 		dbDelta( $notify_sql );
 
-		// Ensure administrators retain full access.
-		$admin = get_role( 'administrator' );
-		if ( $admin ) {
-			$admin->add_cap( 'auction_seller' );
-			$admin->add_cap( 'auction_bidder' );
-		}
+		// Register plugin capabilities and assign them to roles.
+		WPAM_Capabilities::register_caps();
 
 		add_action( 'init', array( self::class, 'register_endpoints' ) );
 
