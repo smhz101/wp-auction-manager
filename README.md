@@ -152,6 +152,20 @@ Twilio SMS notifications can be toggled via the `Enable Twilio Notifications` op
 Firebase push notifications are available through the `Enable Firebase` option (`wpam_enable_firebase`) once you provide a valid server key.
 Email alerts are on by default. They can be disabled via the `Enable Email Notifications` option (`wpam_enable_email`). If a SendGrid API key is provided emails will be sent through SendGrid.
 
+### Live auctions shortcode
+
+Use the `[wpam_auctions]` shortcode on any page to display a paginated list of live auctions.
+
+```
+[wpam_auctions]
+```
+
+The optional `per_page` attribute controls how many auctions appear on each page:
+
+```
+[wpam_auctions per_page="6"]
+```
+
 ### React frontend
 
 The plugin includes a lightweight React application that can render either a list of auctions or a single auction view. Use the `[wpam_auction_app]` shortcode on any page to load the React interface. When used on a single auction product page the current auction is automatically displayed.
