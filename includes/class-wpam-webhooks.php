@@ -7,6 +7,10 @@
 
 namespace WPAM\Includes;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly
+}
+
 /**
  * Send webhook calls on key auction events.
  */

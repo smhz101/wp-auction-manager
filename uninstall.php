@@ -7,8 +7,12 @@
  * @package WP_Auction_Manager
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly
+}
+
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
-	exit();
+	exit; // Exit if accessed directly
 }
 
 // Verify the current user has permission to uninstall plugins.
@@ -24,8 +28,9 @@ $tables = array(
 	$wpdb->prefix . 'wc_auction_watchlists',
 	$wpdb->prefix . 'wc_auction_messages',
 	$wpdb->prefix . 'wc_auction_audit',
-	$wpdb->prefix . 'wpam_flagged_users',
+	$wpdb->prefix . 'wc_flagged_users',
 	$wpdb->prefix . 'wc_auction_logs',
+	$wpdb->prefix . 'wc_kyc_failures',
 );
 
 foreach ( $tables as $table ) {

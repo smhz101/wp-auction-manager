@@ -1,5 +1,10 @@
 <?php
+
 namespace WPAM\Admin;
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly
+}
 
 use WPAM\Includes\WPAM_Admin_Log;
 
@@ -505,9 +510,7 @@ class WPAM_Admin {
 				array(
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => array( '\\WPAM\\Includes\\WPAM_Watchlist', 'rest_toggle_watchlist' ),
-					'permission_callback' => function () {
-						return is_user_logged_in();
-					},
+					'permission_callback' => array( '\\WPAM\\Includes\\WPAM_Watchlist', 'rest_permissions' ),
 				)
 			);
 
@@ -517,9 +520,7 @@ class WPAM_Admin {
 				array(
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => array( '\\WPAM\\Includes\\WPAM_Watchlist', 'rest_get_watchlist' ),
-					'permission_callback' => function () {
-						return is_user_logged_in();
-					},
+					'permission_callback' => array( '\\WPAM\\Includes\\WPAM_Watchlist', 'rest_permissions' ),
 				)
 			);
 

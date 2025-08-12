@@ -1,14 +1,18 @@
 <?php
 namespace WPAM\Includes;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly
+}
+
 class WPAM_Admin_Rest {
 	public static function get_auctions( \WP_REST_Request $request ) {
-		$search   = sanitize_text_field( $request->get_param( 'search' ) );
-		$status   = sanitize_text_field( $request->get_param( 'status' ) );
-		$type     = sanitize_text_field( $request->get_param( 'type' ) );
-		$page     = max( 1, intval( $request->get_param( 'page' ) ) );
-		$per_page = max( 1, intval( $request->get_param( 'per_page' ) ) );
-		$args     = array(
+		$search      = sanitize_text_field( $request->get_param( 'search' ) );
+		$status      = sanitize_text_field( $request->get_param( 'status' ) );
+		$type        = sanitize_text_field( $request->get_param( 'type' ) );
+		$page        = max( 1, intval( $request->get_param( 'page' ) ) );
+		$per_page    = max( 1, intval( $request->get_param( 'per_page' ) ) );
+		$args        = array(
 			'post_type'      => 'product',
 			'posts_per_page' => $per_page ?: 20,
 			'paged'          => $page,
@@ -22,7 +26,7 @@ class WPAM_Admin_Rest {
 			),
 			'meta_query'     => array(),
 		);
-               $now      = wp_date( 'Y-m-d H:i:s', current_datetime()->getTimestamp(), new \DateTimeZone( 'UTC' ) );
+				$now = wp_date( 'Y-m-d H:i:s', current_datetime()->getTimestamp(), new \DateTimeZone( 'UTC' ) );
 		if ( $type ) {
 			$args['meta_query'][] = array(
 				'key'   => '_auction_type',
@@ -190,7 +194,7 @@ class WPAM_Admin_Rest {
 
 	public static function get_flagged( \WP_REST_Request $request ) {
 		global $wpdb;
-		$table    = $wpdb->prefix . 'wpam_flagged_users';
+		$table    = $wpdb->prefix . 'wc_flagged_users';
 		$per_page = max( 1, intval( $request->get_param( 'per_page' ) ) );
 		$page     = max( 1, intval( $request->get_param( 'page' ) ) );
 		$offset   = ( $page - 1 ) * $per_page;

@@ -1,3 +1,5 @@
-jQuery(function($){
-  $('#product-type').val('auction').trigger('change');
-});
+jQuery(
+	function ($) {
+		$( '#product-type' ).val( 'auction' ).trigger( 'change' );
+	}
+);
