@@ -31,6 +31,7 @@ class WPAM_Loader {
 		new WPAM_Messages();
 		new \WPAM\Admin\WPAM_Admin();
 		new \WPAM\Public\WPAM_Public();
+		new \WPAM\Public\WPAM_Shortcodes();
 		new WPAM_Blocks();
 		new WPAM_Webhooks();
 	}
