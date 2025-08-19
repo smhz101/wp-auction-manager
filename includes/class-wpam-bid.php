@@ -707,16 +707,17 @@ class WPAM_Bid {
 		$reverse = self::is_reverse( $auction_id );
 		$sealed  = self::is_sealed( $auction_id );
 
-		$query   = $reverse ? "SELECT MIN(bid_amount) FROM $table WHERE auction_id = %d" : "SELECT MAX(bid_amount) FROM $table WHERE auction_id = %d";
-		$highest = $wpdb->get_var( $wpdb->prepare( $query, $auction_id ) );
-		$highest = $highest ? ( function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $highest ) : (float) $highest ) : 0;
+                $query   = $reverse ? "SELECT MIN(bid_amount) FROM $table WHERE auction_id = %d" : "SELECT MAX(bid_amount) FROM $table WHERE auction_id = %d";
+                $highest = $wpdb->get_var( $wpdb->prepare( $query, $auction_id ) );
+                $highest = $highest ? ( function_exists( 'wc_format_decimal' ) ? (float) wc_format_decimal( $highest ) : (float) $highest ) : 0;
+                $lead_user = (int) get_post_meta( $auction_id, '_auction_lead_user', true );
 
-		if ( $sealed || self::silent_enabled( $auction_id ) ) {
-			$end    = get_post_meta( $auction_id, '_auction_end', true );
-			$end_ts = $end ? ( new \DateTimeImmutable( $end, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : 0;
-			if ( current_datetime()->getTimestamp() < $end_ts ) {
-				$highest   = 0;
-				$lead_user = 0;
+                if ( $sealed || self::silent_enabled( $auction_id ) ) {
+                        $end    = get_post_meta( $auction_id, '_auction_end', true );
+                        $end_ts = $end ? ( new \DateTimeImmutable( $end, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : 0;
+                        if ( current_datetime()->getTimestamp() < $end_ts ) {
+                                $highest   = 0;
+                                $lead_user = 0;
 			}
 		}
 
