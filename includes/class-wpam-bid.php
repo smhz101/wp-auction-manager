@@ -52,19 +52,18 @@ class WPAM_Bid {
 	}
 
 	public static function log_bid( $bid_id, $user_id ) {
-		global $wpdb;
-		$table = $wpdb->prefix . 'wc_auction_audit';
-		$wpdb->insert(
-			$table,
-			array(
-				'bid_id'     => $bid_id,
-				'user_id'    => $user_id,
-				'ip'         => isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '',
-				'user_agent' => isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '',
-				'logged_at'  => wp_date( 'Y-m-d H:i:s', null, new \DateTimeZone( 'UTC' ) ),
-			),
-			array( '%d', '%d', '%s', '%s', '%s' )
-		);
+               $table = WPAM_DB::table( WPAM_DB::AUDIT );
+               WPAM_DB::insert(
+                       $table,
+                       array(
+                               'bid_id'     => $bid_id,
+                               'user_id'    => $user_id,
+                               'ip'         => isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '',
+                               'user_agent' => isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '',
+                               'logged_at'  => wp_date( 'Y-m-d H:i:s', null, new \DateTimeZone( 'UTC' ) ),
+                       ),
+                       array( '%d', '%d', '%s', '%s', '%s' )
+               );
 
 		if ( class_exists( '\\WPAM\\Includes\\WPAM_Fraud_Detector' ) ) {
 			\WPAM\Includes\WPAM_Fraud_Detector::analyze_bid( $bid_id, $user_id );
@@ -81,24 +80,20 @@ class WPAM_Bid {
 	 * @return array            Map of user_id => status.
 	 */
 	private static function calculate_statuses( $auction_id, $highest, $lead_user, $reverse ) {
-		global $wpdb;
+               if ( self::is_sealed( $auction_id ) || self::silent_enabled( $auction_id ) ) {
+                       $end    = get_post_meta( $auction_id, '_auction_end', true );
+                       $end_ts = $end ? ( new \DateTimeImmutable( $end, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : 0;
+                       if ( current_datetime()->getTimestamp() < $end_ts ) {
+                               return array();
+                       }
+               }
 
-		if ( self::is_sealed( $auction_id ) || self::silent_enabled( $auction_id ) ) {
-			$end    = get_post_meta( $auction_id, '_auction_end', true );
-			$end_ts = $end ? ( new \DateTimeImmutable( $end, new \DateTimeZone( 'UTC' ) ) )->getTimestamp() : 0;
-			if ( current_datetime()->getTimestamp() < $end_ts ) {
-				return array();
-			}
-		}
-
-		$table = $wpdb->prefix . 'wc_auction_bids';
-		$order = $reverse ? 'ASC' : 'DESC';
-		$rows  = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT user_id, bid_amount FROM $table WHERE auction_id = %d ORDER BY bid_amount {$order}, id DESC",
-				$auction_id
-			)
-		);
+               $table = WPAM_DB::table( WPAM_DB::BIDS );
+               $order = $reverse ? 'ASC' : 'DESC';
+               $rows  = WPAM_DB::get_results(
+                       "SELECT user_id, bid_amount FROM $table WHERE auction_id = %d ORDER BY bid_amount {$order}, id DESC",
+                       array( $auction_id )
+               );
 
 		$statuses = array();
 		$seen     = array();

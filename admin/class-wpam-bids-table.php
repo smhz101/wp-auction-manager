@@ -2,11 +2,13 @@
 namespace WPAM\Admin;
 
 if ( ! defined( 'ABSPATH' ) ) {
-	exit; // Exit if accessed directly
+        exit; // Exit if accessed directly
 }
 
+use WPAM\Includes\WPAM_DB;
+
 if ( ! class_exists( 'WP_List_Table' ) ) {
-	require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
+        require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
 }
 
 class WPAM_Bids_Table extends \WP_List_Table {
@@ -18,10 +20,9 @@ class WPAM_Bids_Table extends \WP_List_Table {
 	}
 
 	public function prepare_items() {
-		global $wpdb;
-		$table = $wpdb->prefix . 'wc_auction_bids';
+               $table = WPAM_DB::table( WPAM_DB::BIDS );
 
-		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) !== $table ) {
+               if ( WPAM_DB::get_var( 'SHOW TABLES LIKE %s', array( $table ) ) !== $table ) {
 			$this->items = array();
 			$this->set_pagination_args(
 				array(
@@ -39,7 +40,7 @@ class WPAM_Bids_Table extends \WP_List_Table {
 			return;
 		}
 
-		$results     = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $table WHERE auction_id = %d ORDER BY bid_time DESC", $this->auction_id ), ARRAY_A );
+               $results     = WPAM_DB::get_results( "SELECT * FROM $table WHERE auction_id = %d ORDER BY bid_time DESC", array( $this->auction_id ), ARRAY_A );
 		$this->items = $results;
 		$this->set_pagination_args(
 			array(
