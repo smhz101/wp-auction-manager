@@ -69,7 +69,7 @@ export default function GeneralForm() {
 		<Form {...form}>
 			<form
                                 onSubmit={form.handleSubmit((data) => showSubmittedData(data))}
-                                className="tw-space-y-8"
+                                className="space-y-8"
 			>
 				<FormField
 					control={form.control}
@@ -133,7 +133,7 @@ export default function GeneralForm() {
 							<FormControl>
 								<Textarea
 									placeholder="Tell us a little bit about yourself"
-                                                                        className="tw-resize-none"
+                                                                        className="resize-none"
 									{...field}
 								/>
 							</FormControl>
@@ -154,12 +154,12 @@ export default function GeneralForm() {
 							render={({ field }) => (
 								<FormItem>
                                                                         <FormLabel
-                                                                                className={cn(index !== 0 && 'tw-sr-only')}
+                                                                                className={cn(index !== 0 && 'sr-only')}
 									>
 										URLs
 									</FormLabel>
                                                                         <FormDescription
-                                                                                className={cn(index !== 0 && 'tw-sr-only')}
+                                                                                className={cn(index !== 0 && 'sr-only')}
 									>
 										Add links to your website, blog, or
 										social media profiles.
@@ -176,7 +176,7 @@ export default function GeneralForm() {
 						type="button"
 						variant="outline"
 						size="sm"
-                                                className="tw-mt-2"
+                                                className="mt-2"
 						onClick={() => append({ value: '' })}
 					>
 						Add URL

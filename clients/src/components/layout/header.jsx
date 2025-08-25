@@ -23,20 +23,20 @@ export const Header = ({ className, fixed, children, ...props }) => {
 
 	return (
 		<header
-                        className={cn(
-                                'tw-bg-background tw-flex tw-h-16 tw-items-center tw-gap-3 tw-p-4 sm:tw-gap-4',
-                                fixed &&
-                                        'header-fixed peer/header tw-fixed tw-z-50 tw-w-[inherit] tw-rounded-md',
-                                offset > 10 && fixed ? 'tw-shadow-sm' : 'tw-shadow-none',
-                                className
-                        )}
+			className={cn(
+				'bg-background flex h-16 items-center gap-3 p-4 sm:gap-4',
+				fixed &&
+					'header-fixed peer/header fixed z-50 w-[inherit] rounded-md',
+				offset > 10 && fixed ? 'shadow-sm' : 'shadow-none',
+				className
+			)}
 			{...props}
 		>
-                        <h1 className="tw-flex! tw-text-base! tw-font-extrabold! tw-mt-0! tw-pt-0! tw-pb-0!">
-                                <IconGavel aria-hidden="true" className="tw-mr-2!" />
+			<h1 className="flex! text-base! font-extrabold! mt-0! pt-0! pb-0!">
+				<IconGavel aria-hidden="true" className="mr-2!" />
 				Auction Manager
 			</h1>
-                        <Separator orientation="vertical" className="tw-h-6!" />
+			<Separator orientation="vertical" className="h-6!" />
 			{children}
 		</header>
 	);

@@ -5,103 +5,108 @@ import { Header } from '@/components/layout/header';
 import { Main } from '@/components/layout/main';
 import { Search } from '@/components/search';
 import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
+	Table,
+	TableHeader,
+	TableBody,
+	TableRow,
+	TableHead,
+	TableCell,
 } from '@/components/ui/table';
 import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationPrevious,
-  PaginationNext,
+	Pagination,
+	PaginationContent,
+	PaginationItem,
+	PaginationLink,
+	PaginationPrevious,
+	PaginationNext,
 } from '@/components/ui/pagination';
 
 export default function Messages() {
-  const { highlightSubmenu } = useSubmenu();
-  const [messages, setMessages] = useState([]);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+	const { highlightSubmenu } = useSubmenu();
+	const [messages, setMessages] = useState([]);
+	const [page, setPage] = useState(1);
+	const [totalPages, setTotalPages] = useState(1);
 
-  useEffect(() => {
-    highlightSubmenu('/messages');
-  }, [highlightSubmenu]);
+	useEffect(() => {
+		highlightSubmenu('/messages');
+	}, [highlightSubmenu]);
 
-  useEffect(() => {
-    const controller = new AbortController();
+	useEffect(() => {
+		const controller = new AbortController();
 
-      api
-        .get(window.wpamData.messages_endpoint, {
-          params: { page },
-          signal: controller.signal,
-        })
-        .then((res) => {
-          const { data } = res;
-          const items = Array.isArray(data) ? data : data?.items;
-          setMessages(items || []);
-          setTotalPages(data?.totalPages ?? 1);
-        })
-        .catch(() => {});
+		api.get(window.wpamData.messages_endpoint, {
+			params: { page },
+			signal: controller.signal,
+		})
+			.then((res) => {
+				const { data } = res;
+				const items = Array.isArray(data) ? data : data?.items;
+				setMessages(items || []);
+				setTotalPages(data?.totalPages ?? 1);
+			})
+			.catch(() => {});
 
-    return () => controller.abort();
-  }, [page]);
+		return () => controller.abort();
+	}, [page]);
 
-  return (
-    <>
-      <Header>
-        <Search placeholder="Search messages" />
-      </Header>
-      <Main fixed>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>From</TableHead>
-              <TableHead>Message</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {messages.map((message) => (
-              <TableRow key={message.id}>
-                <TableCell>{message.id}</TableCell>
-                <TableCell>{message.from}</TableCell>
-                <TableCell>{message.message || message.content}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        <Pagination className="tw-mt-4">
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                href="#"
-                onClick={() => setPage((p) => Math.max(p - 1, 1))}
-              />
-            </PaginationItem>
-            {Array.from({ length: totalPages }, (_, i) => (
-              <PaginationItem key={i}>
-                <PaginationLink
-                  href="#"
-                  isActive={page === i + 1}
-                  onClick={() => setPage(i + 1)}
-                >
-                  {i + 1}
-                </PaginationLink>
-              </PaginationItem>
-            ))}
-            <PaginationItem>
-              <PaginationNext
-                href="#"
-                onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      </Main>
-    </>
-  );
+	return (
+		<>
+			<Header>
+				<Search placeholder="Search messages" />
+			</Header>
+			<Main fixed>
+				<Table>
+					<TableHeader>
+						<TableRow>
+							<TableHead>ID</TableHead>
+							<TableHead>From</TableHead>
+							<TableHead>Message</TableHead>
+						</TableRow>
+					</TableHeader>
+					<TableBody>
+						{messages.map((message) => (
+							<TableRow key={message.id}>
+								<TableCell>{message.id}</TableCell>
+								<TableCell>{message.from}</TableCell>
+								<TableCell>
+									{message.message || message.content}
+								</TableCell>
+							</TableRow>
+						))}
+					</TableBody>
+				</Table>
+				<Pagination className="mt-4">
+					<PaginationContent>
+						<PaginationItem>
+							<PaginationPrevious
+								href="#"
+								onClick={() =>
+									setPage((p) => Math.max(p - 1, 1))
+								}
+							/>
+						</PaginationItem>
+						{Array.from({ length: totalPages }, (_, i) => (
+							<PaginationItem key={i}>
+								<PaginationLink
+									href="#"
+									isActive={page === i + 1}
+									onClick={() => setPage(i + 1)}
+								>
+									{i + 1}
+								</PaginationLink>
+							</PaginationItem>
+						))}
+						<PaginationItem>
+							<PaginationNext
+								href="#"
+								onClick={() =>
+									setPage((p) => Math.min(p + 1, totalPages))
+								}
+							/>
+						</PaginationItem>
+					</PaginationContent>
+				</Pagination>
+			</Main>
+		</>
+	);
 }
