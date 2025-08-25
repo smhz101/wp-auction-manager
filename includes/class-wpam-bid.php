@@ -366,6 +366,10 @@ class WPAM_Bid {
 			wp_send_json_error( array( 'message' => __( 'Please login', 'wpam' ) ) );
 		}
 
+		if ( ! current_user_can( 'auction_bidder' ) ) {
+			wp_send_json_error( array( 'message' => __( 'You are not allowed to buy now', 'wpam' ) ), 403 );
+		}
+
 		$enabled = get_post_meta( $auction_id, '_auction_enable_buy_now', true );
 		$price   = get_post_meta( $auction_id, '_auction_buy_now', true );
 		if ( ! $enabled || ! $price ) {
