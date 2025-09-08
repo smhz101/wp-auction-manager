@@ -299,7 +299,7 @@ class WPAM_Admin {
 
 	public function render_auctions_page() {
 		echo '<div class="wrap">';
-		echo '<div id="wpam-auctions-root" class="ml-auto! w-full! max-w-full! peer-data-[state=collapsed]:w-[calc(100%-var(--sidebar-width-icon)-1rem)]! peer-data-[state=expanded]:w-[calc(100%-var(--sidebar-width))]! sm:transition-[width]! sm:duration-200! sm:ease-linear! flex! h-svh! flex-col! group-data-[scroll-locked=1]/body:h-full! has-[main.fixed-main]:group-data-[scroll-locked=1]/body:h-svh!"></div>';
+		echo '<div id="wpam-auctions-root" data-basepath="#/"></div>';
 		echo '</div>';
 	}
 
@@ -353,7 +353,7 @@ class WPAM_Admin {
 		$screen = get_current_screen();
 
 		if ( 'post-new.php' === $hook && 'product' === $screen->post_type && 'add' === $screen->action ) {
-						wp_enqueue_script( 'wpam-select-auction-type', WPAM_PLUGIN_URL . 'assets/admin/js/select-auction-product-type.js', array( 'jquery' ), WPAM_PLUGIN_VERSION, true );
+			wp_enqueue_script( 'wpam-select-auction-type', WPAM_PLUGIN_URL . 'assets/admin/js/select-auction-product-type.js', array( 'jquery' ), WPAM_PLUGIN_VERSION, true );
 		}
 
 		if ( in_array( $hook, array( 'post-new.php', 'post.php' ), true ) && 'product' === $screen->post_type ) {
@@ -387,22 +387,46 @@ class WPAM_Admin {
 				// wp_enqueue_style( 'wpam-admin', WPAM_PLUGIN_URL . 'assets/admin/css/wpam-admin.css', array( 'wp-components' ), WPAM_PLUGIN_VERSION );
 				// wp_enqueue_script( 'wpam-admin-tables', WPAM_PLUGIN_URL . 'assets/admin/js/admin-tables.js', array( 'wp-element', 'wp-components', 'wp-api-fetch' ), WPAM_PLUGIN_VERSION, true );
 
-				wp_enqueue_style( 'wpam-admin-app', WPAM_PLUGIN_URL . 'assets/admin/css/admin-app.css', array(), rand(), );
-				wp_enqueue_script( 'wpam-admin-app', WPAM_PLUGIN_URL . 'assets/admin/js/admin-app.js', array(), rand(), true );
+				// wp_enqueue_style( 'wpam-admin-app', WPAM_PLUGIN_URL . 'assets/admin/css/admin-app.css', array(), rand(), );
+				// wp_enqueue_script( 'wpam-admin-app', WPAM_PLUGIN_URL . 'assets/admin/js/admin-app.js', array(), rand(), true );
 
-				wp_localize_script(
-					'wpam-admin-app',
-					'wpamData',
-					array(
-						'nonce'             => wp_create_nonce( 'wp_rest' ),
-						'auctions_endpoint' => rest_url( 'wpam/v1/auctions' ),
-						'bids_endpoint'     => rest_url( 'wpam/v1/bids' ),
-						'messages_endpoint' => rest_url( 'wpam/v1/messages' ),
-						'logs_endpoint'     => rest_url( 'wpam/v1/logs' ),
-						'flagged_endpoint'  => rest_url( 'wpam/v1/flagged' ),
-						'settings_endpoint' => rest_url( 'wpam/v1/settings' ),
-					)
-				);
+				// wp_localize_script(
+				// 	'wpam-admin-app',
+				// 	'wpamData',
+				// 	array(
+				// 		'nonce'             => wp_create_nonce( 'wp_rest' ),
+				// 		'auctions_endpoint' => rest_url( 'wpam/v1/auctions' ),
+				// 		'bids_endpoint'     => rest_url( 'wpam/v1/bids' ),
+				// 		'messages_endpoint' => rest_url( 'wpam/v1/messages' ),
+				// 		'logs_endpoint'     => rest_url( 'wpam/v1/logs' ),
+				// 		'flagged_endpoint'  => rest_url( 'wpam/v1/flagged' ),
+				// 		'settings_endpoint' => rest_url( 'wpam/v1/settings' ),
+				// 	)
+				// );
+			$manifest_path = WPAM_PLUGIN_DIR . 'admin-react/dist/.vite/manifest.json';
+			if ( ! file_exists($manifest_path) ) return;
+
+			$manifest = json_decode(file_get_contents($manifest_path), true);
+			$entry = $manifest['src/main.tsx'] ?? $manifest['src/main.ts'] ?? reset($manifest);
+
+			// CSS (if any)
+			if (!empty($entry['css'])) {
+				foreach ($entry['css'] as $i => $css) {
+					wp_enqueue_style("my-plugin-$i", WPAM_PLUGIN_URL . 'admin-react/dist/' . $css, [], null);
+				}
+			}
+
+			// JS (ESM)
+			wp_enqueue_script('my-plugin-admin', WPAM_PLUGIN_URL . 'admin-react/dist/' . $entry['file'], [], null, true);
+			wp_script_add_data('my-plugin-admin', 'type', 'module');
+
+			// Pass useful data to JS (REST nonce, base URLs)
+			wp_localize_script('my-plugin-admin', 'MY_PLUGIN_BOOT', [
+				'restUrl'  => esc_url_raw( rest_url() ),
+				'nonce'    => wp_create_nonce('wp_rest'),
+				'adminUrl' => esc_url_raw( admin_url('admin.php?page=wpam-' . $slug ) ),
+			]);
+
 		}
 
 		// if ( in_array( $hook, $admin_pages, true ) ) {
