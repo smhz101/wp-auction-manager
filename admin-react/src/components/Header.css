@@ -1,0 +1,20 @@
+/* styles.css (or a tiny separate file you import once)
+   Scope resets to beat WordPress admin focus/outline/box-shadow rules */
+
+#wpam-auctions-root .wpam-scope a,
+#wpam-auctions-root .wpam-scope button {
+  text-decoration: none;
+}
+
+#wpam-auctions-root .wpam-scope a:focus,
+#wpam-auctions-root .wpam-scope a:active,
+#wpam-auctions-root .wpam-scope [tabindex]:focus,
+#wpam-auctions-root .wpam-scope button:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* If WP admin adds borders to links, neutralize them inside scope */
+#wpam-auctions-root .wpam-scope a {
+  border: none;
+}
