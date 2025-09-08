@@ -14,7 +14,9 @@ class WPAM_Messages {
 	}
 
 	public function submit_question() {
-		check_ajax_referer( 'wpam_submit_question', 'nonce' );
+		if ( ! check_ajax_referer( 'wpam_submit_question', 'nonce', false ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid nonce', 'wpam' ) ), 403 );
+		}
 
 		if ( empty( $_POST['auction_id'] ) || empty( $_POST['message'] ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid data', 'wpam' ) ) );
@@ -45,7 +47,10 @@ class WPAM_Messages {
 	}
 
 	public function get_messages() {
-		check_ajax_referer( 'wpam_get_messages', 'nonce' );
+		if ( ! check_ajax_referer( 'wpam_get_messages', 'nonce', false ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid nonce', 'wpam' ) ), 403 );
+		}
+
 		if ( empty( $_POST['auction_id'] ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid auction', 'wpam' ) ) );
 		}

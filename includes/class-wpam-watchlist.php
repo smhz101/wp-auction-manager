@@ -17,7 +17,10 @@ class WPAM_Watchlist {
 	}
 
 	public static function toggle_watchlist() {
-		check_ajax_referer( 'wpam_toggle_watchlist', 'nonce' );
+
+		if ( ! check_ajax_referer( 'wpam_toggle_watchlist', 'nonce', false ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid nonce', 'wpam' ) ), 403 );
+		}
 
 		if ( empty( $_POST['auction_id'] ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid auction', 'wpam' ) ) );
@@ -66,7 +69,10 @@ class WPAM_Watchlist {
 	}
 
 	public static function get_watchlist() {
-		check_ajax_referer( 'wpam_get_watchlist', 'nonce' );
+		if ( ! check_ajax_referer( 'wpam_get_watchlist', 'nonce', false ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid nonce', 'wpam' ) ), 403 );
+		}
+
 		$user_id = get_current_user_id();
 
 		if ( ! $user_id ) {

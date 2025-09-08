@@ -122,7 +122,9 @@ class WPAM_Bid {
 	}
 
 	public function place_bid() {
-		check_ajax_referer( 'wpam_place_bid', 'nonce' );
+		if ( ! check_ajax_referer( 'wpam_place_bid', 'nonce', false ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid nonce', 'wpam' ) ), 403 );
+		}
 
 		if ( empty( $_POST['auction_id'] ) || empty( $_POST['bid'] ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid bid data', 'wpam' ) ) );
@@ -133,7 +135,7 @@ class WPAM_Bid {
 		$user_id    = get_current_user_id();
 
 		if ( 0 === $user_id ) {
-			wp_send_json_error( array( 'message' => __( 'Please login', 'wpam' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Please login', 'wpam' ) ), 403 );
 		}
 
 		if ( ! current_user_can( 'auction_bidder' ) ) {
@@ -297,7 +299,9 @@ class WPAM_Bid {
 	 * Return the current highest bid for an auction.
 	 */
 	public function get_highest_bid() {
-		check_ajax_referer( 'wpam_get_highest_bid', 'nonce' );
+		if ( ! check_ajax_referer( 'wpam_get_highest_bid', 'nonce', false ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid nonce', 'wpam' ) ), 403 );
+		}
 
 		if ( empty( $_REQUEST['auction_id'] ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid auction', 'wpam' ) ) );
@@ -353,7 +357,9 @@ class WPAM_Bid {
 	}
 
 	public function buy_now() {
-		check_ajax_referer( 'wpam_buy_now', 'nonce' );
+		if ( ! check_ajax_referer( 'wpam_buy_now', 'nonce', false ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid nonce', 'wpam' ) ), 403 );
+		}
 
 		if ( empty( $_POST['auction_id'] ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid auction', 'wpam' ) ) );
@@ -363,7 +369,7 @@ class WPAM_Bid {
 		$user_id    = get_current_user_id();
 
 		if ( 0 === $user_id ) {
-			wp_send_json_error( array( 'message' => __( 'Please login', 'wpam' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Please login', 'wpam' ) ), 403 );
 		}
 
 		if ( ! current_user_can( 'auction_bidder' ) ) {
