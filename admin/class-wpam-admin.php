@@ -16,6 +16,14 @@ class WPAM_Admin {
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
 		add_action( 'transition_post_status', array( $this, 'maybe_log_status_change' ), 10, 3 );
+
+		add_filter( 'admin_body_class', array( $this, 'admin_body_class' ) );
+	}
+
+	public function admin_body_class( $classes ) {
+    $classes = is_array( $classes ) ? $classes : explode( ' ', trim( $classes ) );
+    $new_classes = array_merge( $classes, array( 'wpam-admin', 'wpam-react-admin' ) );
+    return implode( ' ', array_unique( $new_classes ) );
 	}
 
 	public function add_menu() {
