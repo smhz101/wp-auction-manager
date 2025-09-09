@@ -20,9 +20,8 @@ import Header from './components/Header'
 import App from './App'
 
 // Your programmatic route factories
-// import ActiveCartsPage from './routes/active-carts-page'
 import ActiveCartsPage from './routes/features/active-carts/route'
-import BidsManagerPage from './routes/bids-manager-page'
+import BidsManagerPage from './routes/features/bids/route'
 import publicAuctionsPage from './routes/features/public-auctions/route'
 // import CustomerRolesPage from './routes/customer-roles-page'
 import CustomerRolesPage from './routes/features/customer-roles/route'

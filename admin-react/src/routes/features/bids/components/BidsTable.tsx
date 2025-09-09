@@ -12,14 +12,15 @@ import NoteDialog from './NoteDialog'
 
 import type { JSX } from 'react'
 import type { ColumnDef, Row, Table } from '@tanstack/react-table'
-import type { Cart } from '../types'
+import type { Bid } from '../types'
 
 import { fuzzy } from '@/lib/fuzzyFilter'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 
-interface CartsTableProps {
-  rows: Array<Cart>
+interface BidsTableProps {
+  rows: Array<Bid>
   total: number
   pageIndex: number
   pageSize: number
@@ -35,7 +36,7 @@ function arraysShallowEqual(a: Array<string>, b: Array<string>): boolean {
   return true
 }
 
-export default function CartsTable({
+export default function BidsTable({
   rows,
   total,
   pageIndex,
@@ -43,8 +44,8 @@ export default function CartsTable({
   onPageChange,
   onPageSizeChange,
   onSelectionChange,
-}: CartsTableProps): JSX.Element {
-  const col = createColumnHelper<Cart>()
+}: BidsTableProps): JSX.Element {
+  const col = createColumnHelper<Bid>()
   const [note, setNote] = useState<{
     id: string
     open: boolean
@@ -55,18 +56,18 @@ export default function CartsTable({
     initial: '',
   })
 
-  const columns: Array<ColumnDef<Cart, any>> = useMemo(() => {
-    return [
+  const columns = useMemo(() => {
+    const defs = [
       {
         id: 'select',
-        header: ({ table }: { table: Table<Cart> }) => (
+        header: ({ table }: { table: Table<Bid> }) => (
           <Checkbox
             aria-label="Select all rows"
             checked={table.getIsAllPageRowsSelected()}
             onCheckedChange={(v) => table.toggleAllPageRowsSelected(Boolean(v))}
           />
         ),
-        cell: ({ row }: { row: Row<Cart> }) => (
+        cell: ({ row }: { row: Row<Bid> }) => (
           <Checkbox
             aria-label={`Select row ${row.index + 1}`}
             checked={row.getIsSelected()}
@@ -77,8 +78,18 @@ export default function CartsTable({
         size: 24,
       },
 
-      col.accessor('customer', {
-        header: 'Customer',
+      col.accessor('auction', {
+        header: 'Auction',
+        cell: (info) => (
+          <div className="max-w-[340px]">
+            <div className="line-clamp-1 font-medium">{info.getValue()}</div>
+            <div className="text-xs text-zinc-500">{info.row.original.lot}</div>
+          </div>
+        ),
+      }),
+
+      col.accessor('bidder', {
+        header: 'Bidder',
         cell: (info) => (
           <div>
             <div className="font-medium">{info.getValue()}</div>
@@ -89,22 +100,31 @@ export default function CartsTable({
         ),
       }),
 
-      col.accessor('items', { header: 'Items', size: 60 }),
-
-      col.accessor('total', {
-        header: 'Total',
+      col.accessor('amount', {
+        header: 'Amount',
         cell: (info) => (
           <span className="tabular-nums">£{info.getValue().toFixed(2)}</span>
         ),
+        size: 90,
       }),
 
       col.accessor('status', {
         header: 'Status',
-        cell: (info) => <Badge status={info.getValue()} />,
+        cell: (info) => {
+          const s = info.getValue()
+          const cls =
+            s === 'leading'
+              ? 'bg-emerald-100 text-emerald-700'
+              : s === 'outbid'
+                ? 'bg-amber-100 text-amber-800'
+                : 'bg-zinc-100 text-zinc-700'
+          return <Badge className={cls}>{String(s)}</Badge>
+        },
+        size: 90,
       }),
 
-      col.accessor('updatedAt', {
-        header: 'Last Update',
+      col.accessor('placedAt', {
+        header: 'Placed',
         cell: (info) => {
           const d = new Date(info.getValue())
           return (
@@ -114,13 +134,14 @@ export default function CartsTable({
             </div>
           )
         },
+        size: 140,
       }),
 
       col.accessor('note', {
         header: 'Note',
         enableSorting: false,
         cell: (info) => {
-          const v = info.getValue() ?? ''
+          const v = info.getValue()
           return (
             <div className="flex items-center gap-2">
               <span className="line-clamp-2 max-w-[320px] whitespace-pre-wrap">
@@ -139,9 +160,11 @@ export default function CartsTable({
         },
       }),
     ]
+
+    return defs as unknown as Array<ColumnDef<Bid, unknown>>
   }, [])
 
-  const table = useReactTable<Cart>({
+  const table = useReactTable<Bid>({
     columns,
     data: rows,
     getCoreRowModel: getCoreRowModel(),
@@ -149,7 +172,7 @@ export default function CartsTable({
     getPaginationRowModel: getPaginationRowModel(),
     initialState: {
       pagination: { pageIndex, pageSize },
-      sorting: [{ id: 'customer', desc: false }],
+      sorting: [{ id: 'placedAt', desc: true }],
     },
     manualPagination: true,
     filterFns: { fuzzy },
@@ -160,8 +183,8 @@ export default function CartsTable({
         typeof updater === 'function'
           ? updater({ pageIndex, pageSize })
           : updater
-      if (next.pageIndex !== pageIndex) onPageChange(next.pageIndex)
-      if (next.pageSize !== pageSize) onPageSizeChange(next.pageSize)
+      onPageChange(next.pageIndex)
+      onPageSizeChange(next.pageSize)
     },
   })
 
@@ -219,14 +242,13 @@ export default function CartsTable({
                 ))}
               </tr>
             ))}
-
             {rows.length === 0 && (
               <tr>
                 <td
                   colSpan={columns.length}
                   className="px-3 py-10 text-center text-zinc-500"
                 >
-                  No carts match your filters.
+                  No bids match your filters.
                 </td>
               </tr>
             )}
@@ -278,21 +300,5 @@ export default function CartsTable({
         onOpenChange={(v) => setNote((s) => ({ ...s, open: v }))}
       />
     </>
-  )
-}
-
-/** Tiny status badge */
-function Badge(props: { status: Cart['status'] }): JSX.Element {
-  const map: Record<Cart['status'], string> = {
-    abandoned: 'bg-zinc-100 text-zinc-700',
-    active: 'bg-emerald-100 text-emerald-700',
-    recovering: 'bg-amber-100 text-amber-800',
-  }
-  return (
-    <span
-      className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-medium ${map[props.status]}`}
-    >
-      {props.status}
-    </span>
   )
 }
