@@ -6,6 +6,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly
 }
 
+
+
+use WPAM\Includes\Rest\Router;
+use WPAM\Includes\Rest\Admin\Auth_Controller;
+use WPAM\Includes\Rest\Admin\Auctions_Controller;
+use WPAM\Includes\Rest\Admin\Options_Controller;
+use WPAM\Includes\Rest\Admin\Public_Auctions_Controller;
+use WPAM\Includes\Rest\Admin\Active_Carts_Controller;
+use WPAM\Includes\Rest\Admin\Bids_Controller;
+use WPAM\Includes\Rest\Admin\Sellers_Dashboard_Controller;
+use WPAM\Includes\Rest\Admin\Roles_Controller;
+use WPAM\Includes\Rest\Admin\Users_Controller;
+use WPAM\Includes\Rest\Admin\Capabilities_Controller;
+
 use WPAM\Includes\WPAM_Admin_Log;
 
 class WPAM_Admin {
@@ -490,6 +504,23 @@ class WPAM_Admin {
 	}
 
 	public function register_rest_routes() {
+		
+		$router = new Router(
+			new Auth_Controller(),
+			new Auctions_Controller(),
+			new Options_Controller(),
+			new Public_Auctions_Controller(),
+			new Active_Carts_Controller(),
+			new Bids_Controller(),
+			new Sellers_Dashboard_Controller(),
+			new Roles_Controller(),
+			new Users_Controller(),
+			new Capabilities_Controller()
+		);
+		$router->register();
+
+		// ------------------------------------
+
 			register_rest_route(
 				'wpam/v1',
 				'/settings',
