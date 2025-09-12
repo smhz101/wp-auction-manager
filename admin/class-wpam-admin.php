@@ -501,6 +501,14 @@ class WPAM_Admin {
 		// 'rest_endpoint' => 'wpam/v1/settings',
 		// )
 		// );
+
+		$boot = $this->build_boot_payload();
+		// Put config BEFORE the bundle; avoids race conditions.
+		wp_add_inline_script(
+			'my-plugin-admin',
+			'window.WPAM_BOOT = ' . wp_json_encode( $boot ) . ';',
+			'before'
+		);
 	}
 
 	public function register_rest_routes() {
@@ -518,6 +526,8 @@ class WPAM_Admin {
 			new Capabilities_Controller()
 		);
 		$router->register();
+
+
 
 		// ------------------------------------
 
@@ -646,6 +656,71 @@ class WPAM_Admin {
 					},
 				)
 			);
+	}
+
+	private function build_boot_payload() {
+		$user = wp_get_current_user();
+
+		// Build REST endpoint map expected by your React feature APIs
+		$endpoints = array(
+			'auth'  => array(
+				'nonce'   => rest_url( 'wpam/v1/auth/nonce' ),
+				'profile' => rest_url( 'wpam/v1/auth/me' ),
+			),
+			'options' => array(
+				'fetch'  => rest_url( 'wpam/v1/options' ),
+				'update' => rest_url( 'wpam/v1/options' ),
+			),
+			'carts'   => array(
+				'list'        => rest_url( 'wpam/v1/carts' ),
+				'note'        => rest_url( 'wpam/v1/carts/{id}/note' ),
+				'bulkStatus'  => rest_url( 'wpam/v1/carts/bulk-status' ),
+			),
+			'bids'    => array(
+				'list'        => rest_url( 'wpam/v1/bids' ),
+				'note'        => rest_url( 'wpam/v1/bids/{id}/note' ),
+				'bulkTagLost' => rest_url( 'wpam/v1/bids/bulk-tag-lost' ),
+			),
+			'roles'   => array(
+				'list'    => rest_url( 'wpam/v1/roles' ),
+				'create'  => rest_url( 'wpam/v1/roles' ),
+				'update'  => rest_url( 'wpam/v1/roles/{id}' ),
+				'delete'  => rest_url( 'wpam/v1/roles/{id}' ),
+			),
+			'users'   => array(
+				'list'         => rest_url( 'wpam/v1/users' ),
+				'create'       => rest_url( 'wpam/v1/users' ),
+				'update'       => rest_url( 'wpam/v1/users/{id}' ),
+				'deleteBulk'   => rest_url( 'wpam/v1/users/bulk-delete' ),
+				'assignRoles'  => rest_url( 'wpam/v1/users/assign-roles' ),
+				'removeRoles'  => rest_url( 'wpam/v1/users/remove-roles' ),
+			),
+			'capabilities' => array(
+				'list'   => rest_url( 'wpam/v1/capabilities' ),
+				'upsert' => rest_url( 'wpam/v1/capabilities' ),
+				'delete' => rest_url( 'wpam/v1/capabilities/{key}' ),
+			),
+			'sellersDashboard' => array(
+				'dashboard' => rest_url( 'wpam/v1/sellers/dashboard' ),
+				'pause'     => rest_url( 'wpam/v1/sellers/auctions/{id}/pause' ),
+			),
+		);
+
+		return array(
+			'restRoot' => esc_url_raw( rest_url() ),
+			'nonce'    => wp_create_nonce( 'wp_rest' ),
+			'user'     => array(
+				'id'    => (int) $user->ID,
+				'name'  => $user->display_name,
+				'email' => $user->user_email,
+				'caps'  => array_keys( (array) $user->allcaps ),
+			),
+			'endpoints' => $endpoints,
+			// a few toggles your frontend may want
+			'flags' => array(
+				'debug' => (bool) WP_DEBUG,
+			),
+		);
 	}
 
 	public function rest_get_settings( \WP_REST_Request $request ) {
