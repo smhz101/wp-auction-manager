@@ -1,108 +1,169 @@
-// src/lib/api/client.ts
-import axios from 'axios'
-import type { AxiosError, AxiosInstance } from 'axios'
+// /src/lib/api/client.ts
 
-/**
- * WordPress-friendly axios client:
- * - baseURL = /wp-json/wpam/v1 by default (overridable)
- * - sends X-WP-Nonce header when available
- * - withCredentials so auth cookies work
- * - retries once on `rest_cookie_invalid_nonce` via optional refresh
- */
+import axios, { AxiosError } from 'axios'
+import type { AxiosInstance } from 'axios'
 
-export type WpClientBootstrap = {
-  restBase?: string // e.g. '/wp-json/wpam/v1'
-  nonce?: string | null // current REST nonce
-  ajaxUrl?: string | null // optional admin-ajax endpoint (if you use it)
-  refreshNonce?: (() => Promise<string>) | null
+import { getBoot } from '@/lib/api/boot'
+
+export type WPHttpConfig = {
+  baseURL?: string
+  authHeaderName?: string // default: 'X-WP-Nonce'
+  getAuthToken?: () => string | null // default: from boot()
+  refreshAuthToken?: () => Promise<string | null> // optional
+  withCredentials?: boolean // default: true
 }
 
-const wp: Required<WpClientBootstrap> = {
-  restBase: '/wp-json/wpam/v1',
-  nonce: null,
-  ajaxUrl: null,
-  refreshNonce: null,
+type WPErrorShape = {
+  code?: string
+  message?: string
+  data?: { status?: number }
 }
 
-export const client: AxiosInstance = axios.create({
-  baseURL: wp.restBase,
-  withCredentials: true,
-  timeout: 15000,
-})
-
-/** Optional bearer support if you ever need it */
-export function setAuthToken(token: string | null): void {
-  if (token) client.defaults.headers.common.Authorization = `Bearer ${token}`
-  else delete client.defaults.headers.common.Authorization
+function isWPError(payload: unknown): payload is WPErrorShape {
+  return (
+    !!payload && typeof payload === 'object' && 'message' in (payload as any)
+  )
 }
 
-/** Set/replace the current REST nonce (X-WP-Nonce) */
-export function setWpNonce(nonce: string | null): void {
-  wp.nonce = nonce
-  if (nonce) client.defaults.headers.common['X-WP-Nonce'] = nonce
-  else delete client.defaults.headers.common['X-WP-Nonce']
-}
+let singleton: AxiosInstance | null = null
+let configRef: WPHttpConfig | null = null
 
-/** One-time bootstrap (call as early as possible, e.g. in main.tsx) */
-export function initWpClient(cfg?: WpClientBootstrap): void {
-  if (cfg?.restBase) client.defaults.baseURL = cfg.restBase
-  if (cfg?.nonce !== undefined) setWpNonce(cfg.nonce)
-  if (cfg?.ajaxUrl) wp.ajaxUrl = cfg.ajaxUrl
-  if (cfg?.refreshNonce) wp.refreshNonce = cfg.refreshNonce
-}
+export function initHttp(config?: Partial<WPHttpConfig>): AxiosInstance {
+  if (singleton) return singleton
 
-// Attach nonce on every request (defensive in case it changes at runtime)
-client.interceptors.request.use((req) => {
-  if (wp.nonce && !req.headers['X-WP-Nonce']) {
-    req.headers = { ...req.headers, 'X-WP-Nonce': wp.nonce }
+  const boot = getBoot()
+  configRef = {
+    baseURL: config?.baseURL ?? boot.restRoot ?? '/wp-json/',
+    authHeaderName: config?.authHeaderName ?? 'X-WP-Nonce',
+    getAuthToken: config?.getAuthToken ?? (() => boot.nonce ?? null),
+    refreshAuthToken: config?.refreshAuthToken,
+    withCredentials: config?.withCredentials ?? true,
   }
-  return req
-})
 
-// Retry once on nonce failure
-client.interceptors.response.use(
-  (res) => res,
-  async (err: AxiosError<any>) => {
-    const config: any = err.config ?? {}
-    const code = err.response?.data?.code
-    const status = err.response?.status
-
-    // WP commonly returns 403 with code 'rest_cookie_invalid_nonce'
-    const isNonceFailure =
-      (status === 401 || status === 403) && code === 'rest_cookie_invalid_nonce'
-
-    if (isNonceFailure && !config.__wpamRetried && wp.refreshNonce) {
-      try {
-        const fresh = await wp.refreshNonce()
-        setWpNonce(fresh)
-        config.__wpamRetried = true
-        return client.request(config)
-      } catch {
-        // fall through
-      }
-    }
-    return Promise.reject(err)
-  },
-)
-
-/** Convenience: pull settings from a localized global if available */
-declare global {
-  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-  interface Window {
-    __WPAM__?: {
-      restBase?: string
-      nonce?: string
-      ajaxUrl?: string
-    }
-  }
-}
-
-if (typeof window !== 'undefined' && window.__WPAM__) {
-  initWpClient({
-    restBase: window.__WPAM__.restBase,
-    nonce: window.__WPAM__.nonce,
-    ajaxUrl: window.__WPAM__.ajaxUrl,
+  const client = axios.create({
+    baseURL: configRef.baseURL,
+    withCredentials: configRef.withCredentials,
+    headers: {
+      'Content-Type': 'application/json; charset=UTF-8',
+      'X-Requested-With': 'XMLHttpRequest',
+    },
   })
+
+  client.interceptors.request.use((req) => {
+    const nonce = configRef?.getAuthToken?.() ?? boot.nonce ?? null
+    if (nonce) req.headers[configRef!.authHeaderName!] = nonce
+    return req
+  })
+
+  client.interceptors.response.use(
+    (res) => {
+      if (isWPError(res.data) && res.data?.data?.status) {
+        const err = new AxiosError(
+          res.data.message || 'WordPress error',
+          String(res.data.data.status),
+          res.config,
+          res.request,
+          res,
+        )
+        ;(err as any).code = res.data.code
+        throw err
+      }
+      return res
+    },
+    async (error: any) => {
+      const status: number | undefined = error?.response?.status
+      const code: string | undefined = error?.response?.data?.code
+      const nonceProblem =
+        status === 401 ||
+        status === 403 ||
+        code === 'rest_cookie_invalid_nonce' ||
+        code === 'rest_nonce_invalid'
+
+      if (
+        nonceProblem &&
+        !error.config.__wpamRetried &&
+        typeof configRef?.refreshAuthToken === 'function'
+      ) {
+        try {
+          const fresh = await configRef.refreshAuthToken()
+          if (fresh) {
+            error.config.headers[configRef.authHeaderName!] = fresh
+            error.config.__wpamRetried = true
+            return client.request(error.config)
+          }
+        } catch {
+          // ignore and fall through
+        }
+      }
+
+      if (isWPError(error?.response?.data)) {
+        const wp = error.response.data as WPErrorShape
+        const err = new AxiosError(
+          wp.message || 'WordPress error',
+          String(wp.data?.status || status || 'WP_ERROR'),
+          error.config,
+          error.request,
+          error.response,
+        )
+        ;(err as any).code = wp.code
+        throw err
+      }
+
+      throw error
+    },
+  )
+
+  singleton = client
+  return client
 }
 
-export default client
+export function getHttp(): AxiosInstance {
+  return singleton ?? initHttp()
+}
+
+async function withMethodOverride<T>(
+  method: 'PUT' | 'PATCH' | 'DELETE',
+  url: string,
+  payload?: unknown,
+) {
+  const http = getHttp()
+  try {
+    if (method === 'PUT') {
+      const { data } = await http.put<T>(url, payload)
+      return data
+    }
+    if (method === 'PATCH') {
+      const { data } = await http.patch<T>(url, payload)
+      return data
+    }
+    const { data } = await http.delete<T>(url, { data: payload })
+    return data
+  } catch (e: any) {
+    if (e?.response?.status === 405) {
+      const { data } = await http.post<T>(url, payload, {
+        headers: { 'X-HTTP-Method-Override': method },
+      })
+      return data
+    }
+    throw e
+  }
+}
+
+export const wpHttp = {
+  get: async <T>(url: string, params?: Record<string, any>) => {
+    const http = getHttp()
+    const { data } = await http.get<T>(url, { params })
+    return data
+  },
+  post: async <T>(url: string, payload?: unknown) => {
+    const http = getHttp()
+    const { data } = await http.post<T>(url, payload)
+    return data
+  },
+  putJson: async <T>(url: string, payload?: unknown) =>
+    withMethodOverride<T>('PUT', url, payload),
+  patchJson: async <T>(url: string, payload?: unknown) =>
+    withMethodOverride<T>('PATCH', url, payload),
+  deleteJson: async <T>(url: string, payload?: unknown) =>
+    withMethodOverride<T>('DELETE', url, payload),
+}
