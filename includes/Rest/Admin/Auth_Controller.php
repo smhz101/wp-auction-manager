@@ -34,7 +34,7 @@ class Auth_Controller extends Base_Controller {
 	}
 
 	/** Permission: must be logged in user with read access to admin. */
-	public function can_get_nonce(): bool {
+	public function can_get_nonce() {
 		$this->require_logged_in();
 		// Optional: tighten to users who can access dashboard.
 		if ( ! current_user_can( 'read' ) ) {
@@ -43,7 +43,7 @@ class Auth_Controller extends Base_Controller {
 		return true;
 	}
 
-	public function can_get_me(): bool {
+	public function can_get_me() {
 		$this->require_logged_in();
 		if ( ! current_user_can( 'read' ) ) {
 			throw new Forbidden_Exception();
