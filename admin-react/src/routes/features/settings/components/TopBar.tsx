@@ -1,38 +1,33 @@
-// /features/settings/components/TopBar.tsx
+// /src/routes/features/settings/components/TopBar.tsx
 import { Loader2, RotateCcw, Save, Undo2 } from 'lucide-react'
 import { useFormContext } from 'react-hook-form'
-
-import {
-  fetchOptions,
-  saveOptions,
-  useAppDispatch,
-  useAppSelector,
-} from '../store'
+import { fetchOptions, saveOptions } from '../store'
 
 import type { JSX } from 'react'
 import type { OptionsFormValues } from '../schema'
 import type { FlatOptions } from '../types'
+
+import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { Button } from '@/components/ui/button'
 
 export default function TopBar(): JSX.Element {
   const form = useFormContext<OptionsFormValues>()
   const dispatch = useAppDispatch()
 
-  const load = useAppSelector((s) => s.options.loadState)
-  const save = useAppSelector((s) => s.options.saveState)
+  const load = useAppSelector((s) => s.settings.loadState)
+  const save = useAppSelector((s) => s.settings.saveState)
 
   const isLoading = load === 'loading'
   const isSaving = save === 'saving'
 
   return (
     <header
-      className="flex items-center justify-between"
+      className="mb-6 flex items-center justify-between"
       aria-busy={isLoading || isSaving}
     >
-      <h1 className="text-2xl font-bold mb-6">Settings</h1>
+      <h1 className="text-2xl font-bold">Settings</h1>
 
       <div className="flex items-center gap-2">
-        {/* Reset local form values */}
         <Button
           variant="ghost"
           onClick={() => form.reset()}
@@ -43,7 +38,6 @@ export default function TopBar(): JSX.Element {
           Reset
         </Button>
 
-        {/* Reload from server */}
         <Button
           variant="outline"
           onClick={() => dispatch(fetchOptions())}
@@ -58,7 +52,6 @@ export default function TopBar(): JSX.Element {
           {isLoading ? 'Loading…' : 'Reload'}
         </Button>
 
-        {/* Save to server */}
         <Button
           onClick={form.handleSubmit((values) =>
             dispatch(saveOptions(values as unknown as FlatOptions)),

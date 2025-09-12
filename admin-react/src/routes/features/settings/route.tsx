@@ -1,25 +1,12 @@
-// /features/settings/route.tsx
-
+// /src/routes/features/settings/route.tsx
 import { createRoute } from '@tanstack/react-router'
-
 import OptionsPage from './OptionsPage'
 
 import type { JSX } from 'react'
 import type { RootRoute } from '@tanstack/react-router'
-import type { OptionsApiConfig } from './types'
-
-const apiConfig: OptionsApiConfig = {
-  axiosBaseUrl: '/wp-json', // example
-  endpoints: {
-    fetchUrl: '/wpam/v1/options',
-    updateUrl: '/wpam/v1/options',
-  },
-  authHeaderName: 'X-WP-Nonce',
-  getAuthToken: () => (window as any)?.wpApiSettings?.nonce ?? null,
-}
 
 function SettingsRouteComponent(): JSX.Element {
-  return <OptionsPage api={apiConfig} />
+  return <OptionsPage />
 }
 
 export default (parentRoute: RootRoute) =>

@@ -1,28 +1,20 @@
-// /features/settings/api.ts
+// External (alphabetical)
+// — none —
 
-import axios from 'axios'
+// Types last
+import type { FlatOptions } from './types'
 
-import type { OptionsApiConfig } from './types'
+// Internal (alphabetical)
+import { wpHttp } from '@/lib/api/client'
 
-export function createAxiosClient(config: OptionsApiConfig) {
-  const baseURL = config.axiosBaseUrl ?? ''
-  const client = axios.create({ baseURL })
+const BASE = '/wpam/v1/options'
 
-  client.interceptors.request.use((req) => {
-    const header = config.authHeaderName ?? 'Authorization'
-    const token = config.getAuthToken?.()
-    if (token) req.headers[header] = `Bearer ${token}`
-    return req
-  })
+export async function fetchOptions(): Promise<FlatOptions> {
+  return wpHttp.get<FlatOptions>(`${BASE}`)
+}
 
-  return {
-    fetchOptions: async () => {
-      const res = await client.get(config.endpoints.fetchUrl)
-      return res.data
-    },
-    updateOptions: async (payload: unknown) => {
-      const res = await client.put(config.endpoints.updateUrl, payload)
-      return res.data
-    },
-  }
+export async function updateOptions(
+  payload: FlatOptions,
+): Promise<FlatOptions> {
+  return wpHttp.putJson<FlatOptions>(`${BASE}`, payload)
 }

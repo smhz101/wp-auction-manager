@@ -1,59 +1,42 @@
-// /features/settings/store.ts
+// /src/routes/features/settings/store.ts
 
-import { configureStore, createAsyncThunk, createSlice } from '@reduxjs/toolkit'
-import { useDispatch, useSelector } from 'react-redux'
-
-import { createAxiosClient } from './api'
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import { optionsSchema } from './schema'
+import {
+  fetchOptions as apiFetchOptions,
+  updateOptions as apiUpdateOptions,
+} from './api'
 
-import type {
-  FlatOptions,
-  LoadState,
-  OptionsApiConfig,
-  SaveState,
-} from './types'
-
-import type { AnyAction } from 'redux'
-import type { ThunkDispatch } from '@reduxjs/toolkit'
+import type { FlatOptions, LoadState, SaveState } from './types'
 
 /** Thunks */
-export const fetchOptions = createAsyncThunk<
-  FlatOptions,
-  void,
-  { state: RootState }
->('options/fetch', async (_, api) => {
-  const client = createAxiosClient(api.getState().options.api)
-  const data = await client.fetchOptions()
-  // Accept partial payload; coerce+default via schema
-  return optionsSchema.parse({ ...data })
-})
+export const fetchOptions = createAsyncThunk<FlatOptions>(
+  'options/fetch',
+  async () => {
+    const data = await apiFetchOptions()
+    return optionsSchema.parse({ ...data })
+  },
+)
 
-export const saveOptions = createAsyncThunk<
-  FlatOptions,
-  FlatOptions,
-  { state: RootState }
->('options/save', async (values, api) => {
-  const client = createAxiosClient(api.getState().options.api)
-  // Validate before send
-  const payload = optionsSchema.parse(values)
-  const data = await client.updateOptions(payload)
-  return optionsSchema.parse({ ...data })
-})
+export const saveOptions = createAsyncThunk<FlatOptions, FlatOptions>(
+  'options/save',
+  async (values) => {
+    const payload = optionsSchema.parse(values) // validate
+    const data = await apiUpdateOptions(payload)
+    return optionsSchema.parse({ ...data })
+  },
+)
 
 /** Slice */
 const slice = createSlice({
   name: 'options',
   initialState: {
-    api: {} as OptionsApiConfig,
     data: optionsSchema.parse({}), // defaults
     loadState: 'idle' as LoadState,
     saveState: 'idle' as SaveState,
     error: '' as string,
   },
   reducers: {
-    setApi(state, action: { payload: OptionsApiConfig }) {
-      state.api = action.payload
-    },
     setLocal(state, action: { payload: Partial<FlatOptions> }) {
       state.data = { ...state.data, ...action.payload }
     },
@@ -87,24 +70,5 @@ const slice = createSlice({
   },
 })
 
-export const { setApi, setLocal } = slice.actions
-
-export const makeStore = (apiConfig: OptionsApiConfig) => {
-  const store = configureStore({
-    reducer: { options: slice.reducer },
-    middleware: (gDM: any) => gDM({ serializableCheck: false }),
-  })
-  store.dispatch(setApi(apiConfig))
-  return store
-}
-
-/** Typed hooks */
-export type OptionsSliceState = ReturnType<typeof slice.reducer>
-export type RootState = { options: OptionsSliceState }
-
-// Define AppDispatch as a ThunkDispatch
-export type AppDispatch = ThunkDispatch<RootState, unknown, AnyAction>
-
-// And now the hooks:
-export const useAppDispatch = () => useDispatch<AppDispatch>()
-export const useAppSelector = <T>(sel: (s: RootState) => T) => useSelector(sel)
+export const { setLocal } = slice.actions
+export default slice.reducer

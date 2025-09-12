@@ -1,25 +1,29 @@
-// /features/settings/OptionsPage.tsx
-
+// /src/routes/features/settings/OptionsPage.tsx
 import { zodResolver } from '@hookform/resolvers/zod'
 import { FormProvider, useForm } from 'react-hook-form'
-import { Provider } from 'react-redux'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import InnerTabs from './components/InnerTabs'
 import Shell from './components/Shell'
 import TopBar from './components/TopBar'
 import { SECTIONS } from './fields'
 import { optionsSchema } from './schema'
-import { fetchOptions, makeStore, useAppSelector } from './store'
+import { fetchOptions } from './store'
 
 import type { JSX } from 'react'
-import type { OptionsApiConfig } from './types'
 import type { OptionsFormValues } from './schema'
 import type { Resolver } from 'react-hook-form'
+import { useAppDispatch, useAppSelector } from '@/store/hooks'
 
-function Content(): JSX.Element {
-  const apiErr = useAppSelector((s) => s.options.error)
-  const data = useAppSelector((s) => s.options.data)
+export default function OptionsPage(): JSX.Element {
+  const dispatch = useAppDispatch()
+  const apiErr = useAppSelector((s) => s.settings.error)
+  const data = useAppSelector((s) => s.settings.data)
+
+  // fetch once on mount
+  useEffect(() => {
+    dispatch(fetchOptions())
+  }, [dispatch])
 
   const form = useForm<OptionsFormValues>({
     defaultValues: data,
@@ -29,10 +33,10 @@ function Content(): JSX.Element {
     mode: 'onChange',
   })
 
-  // keep form in sync when data changes (after load/save)
+  // keep form in sync after load/save
   useEffect(() => {
     form.reset(data)
-  }, [data])
+  }, [data, form])
 
   const [active, setActive] = useState(SECTIONS[0].id)
 
@@ -58,22 +62,5 @@ function Content(): JSX.Element {
         </FormProvider>
       </section>
     </div>
-  )
-}
-
-export default function OptionsPage(props: {
-  api: OptionsApiConfig
-}): JSX.Element {
-  const store = useMemo(() => makeStore(props.api), [props.api])
-
-  // fetch once on mount
-  useEffect(() => {
-    store.dispatch(fetchOptions() as any)
-  }, [store])
-
-  return (
-    <Provider store={store}>
-      <Content />
-    </Provider>
   )
 }
