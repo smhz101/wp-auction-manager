@@ -1,11 +1,4 @@
-// src/router.tsx
-// -------------------------------------------------------------
-// Centralized, programmatic TanStack Router setup with typing.
-// - Builds route tree using your factory functions
-// - Creates the router with hash history + your context
-// - Registers the router type globally (once)
-// -------------------------------------------------------------
-
+// External (alpha, names alphabetic within braces)
 import {
   Outlet,
   createHashHistory,
@@ -15,74 +8,86 @@ import {
 } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 
-// App shell bits
-import Header from './components/Header'
+// Internal (alpha)
 import App from './App'
-
-// Your programmatic route factories
-import ActiveCartsPage from './routes/features/active-carts/route'
-import BidsManagerPage from './routes/features/bids/route'
-import publicAuctionsPage from './routes/features/public-auctions/route'
-// import CustomerRolesPage from './routes/customer-roles-page'
-import CustomerRolesPage from './routes/features/customer-roles/route'
+import Header from './components/Header'
+import ActiveCartsRoute from './routes/features/active-carts/route'
+import BidsManagerRoute from './routes/features/bids/route'
+import CustomerRolesRoute from './routes/features/customer-roles/route'
+import HelpRoute from './routes/features/help/route'
+import PublicAuctionsRoute from './routes/features/public-auctions/route'
 import SellersDashboardPage from './routes/sellers-dashboard-page'
-// import SettingsPage from './routes/settings-page'
-// import SettingsLayout from './routes/settings'
 import SettingsLayout from './routes/features/settings/route'
-import HelpPage from './routes/features/help/route'
-
-// TanStack Query integration context
 import * as TanStackQueryProvider from './integrations/tanstack-query/root-provider'
+import { getBoot } from './lib/api/boot'
 
-// ---------- Root route
+// Root route (header + outlet + devtools if debug flag is on)
 const rootRoute = createRootRoute({
-  component: () => (
-    <div className="bg-white">
-      <Header />
-      <Outlet />
-      <TanStackRouterDevtools />
-    </div>
-  ),
+  component: () => {
+    // guard devtools in case boot is missing (e.g., hot reload before PHP injection)
+    let showDevtools = false
+    try {
+      showDevtools = !!getBoot().flags?.debug
+    } catch {
+      showDevtools = false
+    }
+    return (
+      <div className="bg-white">
+        <Header />
+        <Outlet />
+        {showDevtools ? <TanStackRouterDevtools /> : null}
+      </div>
+    )
+  },
 })
 
-// ---------- Index route
+// Index route
 const indexRoute = createRoute({
+  component: App,
   getParentRoute: () => rootRoute,
   path: '/',
-  component: App,
 })
 
-// ---------- Child routes (programmatically via your factories)
+// Children (programmatic factories)
 const routeTree = rootRoute.addChildren([
   indexRoute,
-  ActiveCartsPage(rootRoute),
-  BidsManagerPage(rootRoute),
-  publicAuctionsPage(rootRoute),
-  CustomerRolesPage(rootRoute),
+  ActiveCartsRoute(rootRoute),
+  BidsManagerRoute(rootRoute),
+  PublicAuctionsRoute(rootRoute),
+  CustomerRolesRoute(rootRoute),
   SellersDashboardPage(rootRoute),
   SettingsLayout(rootRoute),
-  HelpPage(rootRoute),
+  HelpRoute(rootRoute),
 ])
 
-// ---------- History + context
+// History + context
 const history = createHashHistory()
 const tanstackQueryCtx = TanStackQueryProvider.getContext()
+let boot
+try {
+  boot = getBoot()
+} catch (e) {
+  // If WPAM_BOOT is missing we still create the router to avoid crashes;
+  // routes that actually call APIs will show their own error states.
+  boot = undefined
+}
 
-// ---------- Router (single instance, exported)
+// Router
 export const router = createRouter({
-  routeTree,
-  history,
   basepath: '/',
   context: {
     ...tanstackQueryCtx,
+    boot, // available to routes if you want to read it via useRouter().options.context
   },
   defaultPreload: 'intent',
-  scrollRestoration: true,
-  defaultStructuralSharing: true,
   defaultPreloadStaleTime: 0,
+  defaultStructuralSharing: true,
+  history,
+  routeTree,
+  scrollRestoration: true,
 })
 
-// ---------- Register router type (DO THIS ONCE ONLY)
+// Router type registration (once)
 declare module '@tanstack/react-router' {
   interface Register {
     router: typeof router
