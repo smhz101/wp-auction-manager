@@ -1,4 +1,4 @@
-// /features/bids/types.ts
+// Domain + API types
 
 export type BidStatus = 'leading' | 'outbid' | 'won' | 'lost'
 
@@ -9,7 +9,7 @@ export type Bid = {
   bidder: string
   email: string
   amount: number
-  placedAt: string
+  placedAt: string // ISO
   status: BidStatus
   note: string
 }
@@ -22,27 +22,8 @@ export type BidListParams = {
   from?: string
   to?: string
   page?: number
-  pageSize?: number
-  sortBy?: string
-  sortDir?: 'asc' | 'desc'
-}
-
-export type ListResponse = {
-  rows: Array<Bid>
-  total: number
-}
-
-export type BidsApiEndpoints = {
-  listUrl: string // GET with query params
-  updateNoteUrl: (id: string) => string // PUT { note }
-  bulkTagLostUrl: string // POST { ids }
-}
-
-export type BidsApiConfig = {
-  axiosBaseUrl?: string
-  endpoints: BidsApiEndpoints
-  authHeaderName?: string
-  getAuthToken?: () => string | null
+  per_page?: number
+  sort?: string
 }
 
 export type LoadState = 'idle' | 'loading' | 'success' | 'error'

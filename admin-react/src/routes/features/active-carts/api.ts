@@ -1,38 +1,26 @@
-// /features/active-carts/api.ts
+// /src/routes/features/active-carts/api.ts
 
-import axios from 'axios'
+import type { Cart, CartListParams } from './types'
+import { wpHttp } from '@/lib/api/client'
 
-import type { CartListParams, CartsApiConfig } from './types'
+const BASE = '/wpam/v1/carts'
 
-export function createAxiosClient(config: CartsApiConfig) {
-  const baseURL = config.axiosBaseUrl ?? ''
-  const client = axios.create({ baseURL })
+/** GET /wpam/v1/carts */
+export async function listCarts(
+  params: CartListParams,
+): Promise<{ rows: Array<Cart>; total: number } | Array<Cart>> {
+  return wpHttp.get(`${BASE}`, params as Record<string, any>)
+}
 
-  client.interceptors.request.use((req) => {
-    const header = config.authHeaderName ?? 'Authorization'
-    const token = config.getAuthToken?.()
-    if (token) req.headers[header] = `Bearer ${token}`
-    return req
-  })
+/** PUT /wpam/v1/carts/{id}/note */
+export async function updateCartNote(id: string, note: string): Promise<Cart> {
+  return wpHttp.putJson(`${BASE}/${encodeURIComponent(id)}/note`, { note })
+}
 
-  return {
-    async list(params: CartListParams) {
-      const res = await client.get(config.endpoints.listUrl, { params })
-      return res.data
-    },
-    async updateNote(id: string, note: string) {
-      const res = await client.put(config.endpoints.updateNoteUrl(id), { note })
-      return res.data
-    },
-    async bulkStatus(
-      ids: Array<string>,
-      status: 'active' | 'abandoned' | 'recovering',
-    ) {
-      const res = await client.post(config.endpoints.bulkStatusUrl, {
-        ids,
-        status,
-      })
-      return res.data
-    },
-  }
+/** POST /wpam/v1/carts/bulk-status */
+export async function bulkCartStatus(vars: {
+  ids: Array<string>
+  status: 'active' | 'abandoned' | 'recovering'
+}): Promise<{ updated: number }> {
+  return wpHttp.post(`${BASE}/bulk-status`, vars)
 }

@@ -1,77 +1,79 @@
-// /features/bids/components/NoteDialog.tsx
-
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm } from 'react-hook-form'
-
+import { FormProvider, useForm } from 'react-hook-form'
+import { useAppDispatch } from '@/store/hooks'
+import { updateBidNote } from '../store'
 import { NoteSchema } from '../schema'
-import { updateNote, useAppDispatch } from '../store'
-
-import type { JSX } from 'react'
-import type { NoteFormValues } from '../schema'
-import type { Resolver } from 'react-hook-form'
 
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 
-export default function NoteDialog(props: {
+import type { JSX } from 'react'
+import type { Resolver } from 'react-hook-form'
+import type { NoteFormValues } from '../schema'
+
+type Props = {
   id: string
   initial: string
   open: boolean
-  onOpenChange: (v: boolean) => void
-}): JSX.Element {
-  const { id, initial, open, onOpenChange } = props
-  const dispatch = useAppDispatch()
+  onOpenChange: (open: boolean) => void
+}
 
+export default function NoteDialog({
+  id,
+  initial,
+  open,
+  onOpenChange,
+}: Props): JSX.Element {
+  const dispatch = useAppDispatch()
   const form = useForm<NoteFormValues>({
-    defaultValues: { note: initial },
+    defaultValues: { note: initial ?? '' },
     resolver: zodResolver(NoteSchema) as unknown as Resolver<NoteFormValues>,
     mode: 'onChange',
   })
-
-  function submit(v: NoteFormValues): void {
-    void dispatch(updateNote({ id, note: v.note })).then(() =>
-      onOpenChange(false),
-    )
-  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[520px]">
         <DialogHeader>
-          <DialogTitle>Edit note</DialogTitle>
-          <DialogDescription>
-            Keep notes short and actionable.
-          </DialogDescription>
+          <DialogTitle>Edit Note</DialogTitle>
         </DialogHeader>
 
-        <form className="grid gap-3" onSubmit={form.handleSubmit(submit)}>
-          <div className="grid gap-1">
-            <Label htmlFor="note">Note</Label>
-            <Input id="note" {...form.register('note')} />
-          </div>
+        <FormProvider {...form}>
+          <form
+            className="space-y-3"
+            onSubmit={form.handleSubmit(async (values) => {
+              await dispatch(updateBidNote({ id, note: values.note }) as any)
+              onOpenChange(false)
+            })}
+          >
+            <div>
+              <Label className="mb-1 block text-xs text-zinc-600">Note</Label>
+              <Textarea
+                rows={5}
+                {...form.register('note')}
+                placeholder="Add a note…"
+              />
+            </div>
 
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={!form.formState.isValid}>
-              Save
-            </Button>
-          </DialogFooter>
-        </form>
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => onOpenChange(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit">Save</Button>
+            </div>
+          </form>
+        </FormProvider>
       </DialogContent>
     </Dialog>
   )

@@ -7,9 +7,17 @@ use WP_REST_Request;
 use WP_REST_Server;
 use WP_User_Query;
 use WPAM\Includes\Rest\Base_Controller;
+use WPAM\Includes\Services\User_Service;
 use WPAM\Includes\Support\Exceptions\Validation_Exception;
 
-final class Users_Controller extends Base_Controller {
+class Users_Controller extends Base_Controller {
+
+	/** @var User_Service */
+	protected $users;
+
+	public function __construct() {
+		$this->users = new User_Service();
+	}
 
 	public function register_routes() {
 		// List WP users with attached wpam role slugs.

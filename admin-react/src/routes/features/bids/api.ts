@@ -1,32 +1,22 @@
-// /features/bids/api.ts
+// Shared global client (nonce + errors handled centrally)
+import type { Bid, BidListParams } from './types'
+import { wpHttp } from '@/lib/api/client'
 
-import axios from 'axios'
+// REST base (server: /wp-json/wpam/v1/bids)
+const BASE = '/wpam/v1/bids'
 
-import type { BidListParams, BidsApiConfig } from './types'
+export async function list(params: BidListParams) {
+  // server may return either { rows, total } or an array
+  return wpHttp.get<{ rows?: Array<Bid>; total?: number } | Array<Bid>>(
+    BASE,
+    params,
+  )
+}
 
-export function createAxiosClient(config: BidsApiConfig) {
-  const baseURL = config.axiosBaseUrl ?? ''
-  const client = axios.create({ baseURL })
+export async function updateNote(id: string, note: string) {
+  return wpHttp.putJson<Bid>(`${BASE}/${encodeURIComponent(id)}/note`, { note })
+}
 
-  client.interceptors.request.use((req) => {
-    const header = config.authHeaderName ?? 'Authorization'
-    const token = config.getAuthToken?.()
-    if (token) req.headers[header] = `Bearer ${token}`
-    return req
-  })
-
-  return {
-    async list(params: BidListParams) {
-      const res = await client.get(config.endpoints.listUrl, { params })
-      return res.data
-    },
-    async updateNote(id: string, note: string) {
-      const res = await client.put(config.endpoints.updateNoteUrl(id), { note })
-      return res.data
-    },
-    async bulkTagLost(ids: Array<string>) {
-      const res = await client.post(config.endpoints.bulkTagLostUrl, { ids })
-      return res.data
-    },
-  }
+export async function bulkTagLost(ids: Array<string>) {
+  return wpHttp.post<{ updated: number }>(`${BASE}/bulk/lost`, { ids })
 }

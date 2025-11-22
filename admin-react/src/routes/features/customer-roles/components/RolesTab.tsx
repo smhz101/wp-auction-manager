@@ -1,6 +1,6 @@
 import React from 'react'
 import { Copy, Pencil, Plus, Trash2 } from 'lucide-react'
-import { useCR } from '../store'
+import { useCR } from '../storeAdapter'
 import RoleEditorDialog from './RoleEditorDialog'
 import CapabilitiesBoard from './CapabilitiesBoard'
 import CapabilityManager from './CapabilityManager'
@@ -91,14 +91,14 @@ export default function RolesTab(): JSX.Element {
       <div className="rounded-2xl border bg-white p-5">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-xl font-semibold">{selected.name}</div>
-            <div className="text-xs text-zinc-500">/{selected.slug}</div>
+            <div className="text-xl font-semibold">{selected?.name}</div>
+            <div className="text-xs text-zinc-500">/{selected?.slug}</div>
           </div>
           <div className="flex gap-2">
             <Button
               variant="outline"
               onClick={() => {
-                const dup = actions.duplicateRole(selected.id)
+                const dup = actions.duplicateRole(selected?.id)
                 if (dup) setSelectedRoleId(dup.id)
               }}
             >
@@ -109,7 +109,7 @@ export default function RolesTab(): JSX.Element {
             </Button>
             <Button
               variant="destructive"
-              disabled={!!selected.isSystem || selected.usersCount > 0}
+              disabled={!!selected?.isSystem || selected?.usersCount > 0}
               onClick={() => setDeleteOpen(true)}
             >
               <Trash2 className="mr-2 h-4 w-4" /> Delete
@@ -132,7 +132,7 @@ export default function RolesTab(): JSX.Element {
       <RoleEditorDialog
         open={editOpen}
         onOpenChange={setEditOpen}
-        roleId={selected.id}
+        roleId={selected?.id}
       />
 
       {/* Delete role confirm */}
@@ -149,7 +149,7 @@ export default function RolesTab(): JSX.Element {
             <AlertDialogAction
               className="bg-red-600 hover:bg-red-700"
               onClick={() => {
-                actions.deleteRole(selected.id)
+                actions.deleteRole(selected?.id)
                 setDeleteOpen(false)
               }}
             >

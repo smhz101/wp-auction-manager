@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: wordpress_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, intl, zip, mysql
+          coverage: xdebug
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build Gutenberg block
+        run: npm run build
+
+      - name: Run PHP unit tests
+        env:
+          WP_TESTS_DIR: /tmp/wordpress-tests-lib
+          WP_CORE_DIR: /tmp/wordpress
+        run: |
+          bash <(curl -s https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar) core download --path=/tmp/wordpress --version=6.5
+          bash <(curl -s https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar) core config --path=/tmp/wordpress --dbname=wordpress_test --dbuser=root --dbpass=root --dbhost=127.0.0.1
+          bash <(curl -s https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar) core install --path=/tmp/wordpress --url=http://example.com --title="Test Site" --admin_user=admin --admin_password=admin --admin_email=admin@example.com
+          vendor/bin/phpunit
+
+      - name: Run JavaScript tests
+        run: npm test
+
+      - name: Lint PHP code
+        run: vendor/bin/phpcs --standard=WordPress .
+
+      - name: Lint JavaScript code
+        run: npm run lint

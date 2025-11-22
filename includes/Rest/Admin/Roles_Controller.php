@@ -5,24 +5,64 @@ namespace WPAM\Includes\Rest\Admin;
 
 use WP_REST_Request;
 use WP_REST_Server;
+
 use WPAM\Includes\Rest\Base_Controller;
-use WPAM\Includes\Support\Exceptions\Not_Found_Exception;
-use WPAM\Includes\Support\Exceptions\Validation_Exception;
+use WPAM\Includes\Services\Role_Service;
+use WPAM\Includes\Services\User_Service;
+use WPAM\Includes\Services\Capability_Service;
+use WPAM\Includes\Services\Provenance_Service;
+use WPAM\Includes\Support\Exceptions\Rest_Exception;
 
-final class Roles_Controller extends Base_Controller {
+class Roles_Controller extends Base_Controller {
 
-	const OPT_ROLES = 'wpam_roles';
+	/** @var Role_Service */
+	protected $roles;
+
+	/** @var Capability_Service */
+	protected $caps;
+
+	/** @var User_Service */
+	protected $users;
+
+	public function __construct() {
+		$prov       	= new Provenance_Service();
+		$this->roles 	= new Role_Service( $prov );
+		$this->caps  	= new Capability_Service( $prov );
+		$this->users 	= new User_Service();
+	}
 
 	public function register_routes() {
+		
+		// GET /roles/boot  => roles + caps + users (paged)
 		$this->route(
-			'/roles',
+			'/roles/boot',
 			array(
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'list' ),
-				'permission_callback' => array( $this, 'can_read' ),
+				'callback'            => array( $this, 'boot' ),
+				'permission_callback' => array( $this, 'check_admin_permissions' ),
+				'args'                => array(
+					'paged'    => array(
+						'type'              => 'integer',
+						'required'          => false,
+						'sanitize_callback' => 'absint',
+						'default'           => 1,
+					),
+					'per_page' => array(
+						'type'              => 'integer',
+						'required'          => false,
+						'sanitize_callback' => 'absint',
+						'default'           => 50,
+					),
+					'search'   => array(
+						'type'              => 'string',
+						'required'          => false,
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+				),
 			)
 		);
 
+		// POST /roles
 		$this->route(
 			'/roles',
 			array(
@@ -32,6 +72,7 @@ final class Roles_Controller extends Base_Controller {
 			)
 		);
 
+		// POST /roles/{slug}
 		$this->route(
 			'/roles/(?P<slug>[\w\-]+)',
 			array(
@@ -41,6 +82,7 @@ final class Roles_Controller extends Base_Controller {
 			)
 		);
 
+		// POST /roles/{slug}
 		$this->route(
 			'/roles/(?P<slug>[\w\-]+)',
 			array(
@@ -50,6 +92,7 @@ final class Roles_Controller extends Base_Controller {
 			)
 		);
 
+		// POST /roles/{slug}/duplicate
 		$this->route(
 			'/roles/(?P<slug>[\w\-]+)/duplicate',
 			array(
@@ -60,124 +103,136 @@ final class Roles_Controller extends Base_Controller {
 		);
 	}
 
+	/**
+	 * @return bool
+	 */
 	public function can_read() {
 		$this->require_logged_in();
 		return current_user_can( 'list_users' ) || current_user_can( 'manage_options' );
 	}
 
+	/**
+	 * @param WP_REST_Request $req
+	 * @return bool
+	 */
 	public function can_write( $req ) {
 		$this->require_logged_in();
 		$this->require_rest_nonce( $req );
 		return current_user_can( 'promote_users' ) || current_user_can( 'manage_options' );
 	}
 
-	public function list() {
-		$roles = get_option( self::OPT_ROLES, array() );
-		return is_array( $roles ) ? array_values( $roles ) : array();
+	/**
+	 * Boot data for roles admin page.
+	 *
+	 * @param WP_REST_Request $request
+	 * @return \WP_REST_Response
+	 */
+	public function boot( \WP_REST_Request $request ) {
+		try {
+			$paged    = max( 1, (int) $request->get_param( 'paged' ) );
+			$per_page = max( 1, (int) $request->get_param( 'per_page' ) );
+			$search   = (string) ( $request->get_param( 'search' ) ?? '' );
+
+			$roles = $this->roles->get_all_roles();
+			$caps  = $this->caps->get_catalog();
+			$users = $this->users->list_users( $paged, $per_page, $search );
+
+			return rest_ensure_response( array(
+				'roles'        => $roles,
+				'capabilities' => $caps,
+				'users'        => $users['users'],
+				'usersTotal'   => $users['total'],
+			) );
+		} catch ( \Throwable $e ) {
+			throw new Rest_Exception( 'wpam_boot_error', $e->getMessage(), 500 );
+		}
 	}
 
+	/**
+	 * Create a new role.
+	 *
+	 * @param WP_REST_Request $req
+	 * @return array
+	 * @throws Rest_Exception
+	 */
 	public function create( WP_REST_Request $req ) {
-		$body = (array) $req->get_json_params();
-		$name = isset( $body['name'] ) ? sanitize_text_field( (string) $body['name'] ) : '';
-		$slug = isset( $body['slug'] ) ? sanitize_key( (string) $body['slug'] ) : '';
-		$caps = isset( $body['capabilities'] ) && is_array( $body['capabilities'] ) ? array_map( 'sanitize_text_field', $body['capabilities'] ) : array();
+		$slug = sanitize_key( (string) $req->get_param( 'slug' ) );
+		$name = sanitize_text_field( (string) $req->get_param( 'name' ) );
+		$capabilities = $req->get_param( 'capabilities' );
+		$capabilities = is_array( $capabilities ) ? array_map( 'sanitize_key', $capabilities ) : array();
 
-		if ( '' === $name || '' === $slug ) {
-			throw new Validation_Exception( __( 'Role name and slug are required.', 'wp-auction-manager' ) );
+		if ( empty( $slug ) || empty( $name ) ) {
+			throw new Rest_Exception( 'wpam_invalid', __( 'Missing role slug or name.', 'wpam' ), 400 );
 		}
 
-		$roles = $this->get_roles_map();
-		if ( isset( $roles[ $slug ] ) ) {
-			throw new Validation_Exception( __( 'Role slug already exists.', 'wp-auction-manager' ) );
+		$res = $this->roles->create_role( $slug, $name, $capabilities );
+		if ( is_wp_error( $res ) ) {
+			$data = $res->get_error_data(); $status = is_array( $data ) && isset( $data['status'] ) ? (int) $data['status'] : 400;
+			throw new Rest_Exception( $res->get_error_code() ?: 'wpam_error', $res->get_error_message(), $status );
 		}
 
-		$roles[ $slug ] = array(
-			'id'           => $slug,
-			'name'         => $name,
-			'slug'         => $slug,
-			'capabilities' => array_values( array_unique( $caps ) ),
-			'usersCount'   => 0,
-			'isSystem'     => false,
-		);
+		// Return the created role with full shape.
+		foreach ( $this->roles->get_all_roles() as $r ) {
+			if ( $r['slug'] === $slug ) { return $r; }
+		}
 
-		update_option( self::OPT_ROLES, $roles, false );
-
-		return $roles[ $slug ];
+		throw new Rest_Exception( 'wpam_unknown', __( 'Failed to create role.', 'wpam' ), 500 );
 	}
 
+	/**
+	 * Update an existing role.
+	 *
+	 * @param WP_REST_Request $req
+	 * @return array
+	 * @throws Rest_Exception
+	 */
 	public function update( WP_REST_Request $req ) {
-		$slug  = sanitize_key( (string) $req['slug'] );
-		$roles = $this->get_roles_map();
-		if ( ! isset( $roles[ $slug ] ) ) {
-			throw new Not_Found_Exception( __( 'Role not found.', 'wp-auction-manager' ) );
-		}
-		if ( ! empty( $roles[ $slug ]['isSystem'] ) ) {
-			throw new Validation_Exception( __( 'System roles cannot be edited.', 'wp-auction-manager' ) );
+		$slug   = sanitize_key( $req->get_param( 'slug' ) );
+		$fields = $req->get_json_params();
+		if ( empty( $slug ) ) {
+			throw new Rest_Exception( 'wpam_invalid', __( 'Missing role slug.', 'wpam' ), 400 );
 		}
 
-		$body = (array) $req->get_json_params();
-		if ( isset( $body['name'] ) ) {
-			$roles[ $slug ]['name'] = sanitize_text_field( (string) $body['name'] );
-		}
-		if ( isset( $body['capabilities'] ) && is_array( $body['capabilities'] ) ) {
-			$roles[ $slug ]['capabilities'] = array_values(
-				array_unique( array_map( 'sanitize_text_field', $body['capabilities'] ) )
-			);
+		$res = $this->roles->update_role( $slug, is_array( $fields ) ? $fields : array() );
+		if ( is_wp_error( $res ) ) {
+			$data = $res->get_error_data(); $status = is_array( $data ) && isset( $data['status'] ) ? (int) $data['status'] : 400;
+			throw new Rest_Exception( $res->get_error_code() ?: 'wpam_error', $res->get_error_message(), $status );
 		}
 
-		update_option( self::OPT_ROLES, $roles, false );
-		return $roles[ $slug ];
+		foreach ( $this->roles->get_all_roles() as $r ) {
+			if ( $r['slug'] === $slug ) { return $r; }
+		}
+		throw new Rest_Exception( 'wpam_unknown', __( 'Failed to update role.', 'wpam' ), 500 );
 	}
 
 	public function delete( WP_REST_Request $req ) {
-		$slug  = sanitize_key( (string) $req['slug'] );
-		$roles = $this->get_roles_map();
-
-		if ( ! isset( $roles[ $slug ] ) ) {
-			throw new Not_Found_Exception( __( 'Role not found.', 'wp-auction-manager' ) );
+		$slug = sanitize_key( $req->get_param( 'slug' ) );
+		if ( empty( $slug ) ) {
+			throw new Rest_Exception( 'wpam_invalid', __( 'Missing role slug.', 'wpam' ), 400 );
 		}
-		if ( ! empty( $roles[ $slug ]['isSystem'] ) ) {
-			throw new Validation_Exception( __( 'System roles cannot be deleted.', 'wp-auction-manager' ) );
+		$res = $this->roles->delete_role( $slug );
+		if ( is_wp_error( $res ) ) {
+			$data = $res->get_error_data(); $status = is_array( $data ) && isset( $data['status'] ) ? (int) $data['status'] : 400;
+			throw new Rest_Exception( $res->get_error_code() ?: 'wpam_error', $res->get_error_message(), $status );
 		}
-		if ( ! empty( $roles[ $slug ]['usersCount'] ) ) {
-			throw new Validation_Exception( __( 'Role has assigned users.', 'wp-auction-manager' ) );
-		}
-
-		unset( $roles[ $slug ] );
-		update_option( self::OPT_ROLES, $roles, false );
-
-		return array( 'deleted' => true );
+		return array( 'ok' => true );
 	}
 
 	public function duplicate( WP_REST_Request $req ) {
-		$slug  = sanitize_key( (string) $req['slug'] );
-		$roles = $this->get_roles_map();
-		if ( ! isset( $roles[ $slug ] ) ) {
-			throw new Not_Found_Exception( __( 'Role not found.', 'wp-auction-manager' ) );
+		$slug = sanitize_key( (string) $req->get_param( 'slug' ) );
+		if ( empty( $slug ) ) {
+			throw new Rest_Exception( 'wpam_invalid', __( 'Missing role slug.', 'wpam' ), 400 );
+		}
+		$res = $this->roles->duplicate_role( $slug );
+		if ( is_wp_error( $res ) ) {
+			$data = $res->get_error_data(); $status = is_array( $data ) && isset( $data['status'] ) ? (int) $data['status'] : 400;
+			throw new Rest_Exception( $res->get_error_code() ?: 'wpam_error', $res->get_error_message(), $status );
 		}
 
-		$src = $roles[ $slug ];
-		$i   = 2;
-		$dup = $slug . '-copy';
-		while ( isset( $roles[ $dup ] ) ) {
-			$dup = $slug . '-copy-' . $i++;
+		$new_slug = is_string( $res ) ? $res : '';
+		foreach ( $this->roles->get_all_roles() as $r ) {
+			if ( $r['slug'] === $new_slug ) { return $r; }
 		}
-
-		$roles[ $dup ] = array(
-			'id'           => $dup,
-			'name'         => $src['name'] . ' Copy',
-			'slug'         => $dup,
-			'capabilities' => isset( $src['capabilities'] ) ? array_values( $src['capabilities'] ) : array(),
-			'usersCount'   => 0,
-			'isSystem'     => false,
-		);
-
-		update_option( self::OPT_ROLES, $roles, false );
-		return $roles[ $dup ];
-	}
-
-	private function get_roles_map() {
-		$roles = get_option( self::OPT_ROLES, array() );
-		return is_array( $roles ) ? $roles : array();
+		throw new Rest_Exception( 'wpam_unknown', __( 'Failed to duplicate role.', 'wpam' ), 500 );
 	}
 }

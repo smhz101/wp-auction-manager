@@ -2,7 +2,7 @@ import React from 'react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useCR } from '../store'
+import { useCR } from '../storeAdapter'
 import { slugify } from '../utils'
 import type { JSX } from 'react'
 

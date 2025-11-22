@@ -8,7 +8,7 @@ use WP_REST_Request;
 use WP_REST_Response;
 use WPAM\Includes\Rest\Base_Controller;
 use WPAM\Includes\Support\Nonce_Helper;
-use WPAM\Includes\Domain\Current_User_Service;
+use WPAM\Includes\Services\Current_User_Service;
 use WPAM\Includes\Support\Exceptions\Forbidden_Exception;
 
 class Auth_Controller extends Base_Controller {

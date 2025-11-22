@@ -1,6 +1,6 @@
 // /features/customer-roles/components/UserTable.tsx
 import { useMemo } from 'react'
-import { useCR } from '../store'
+import { useCR } from '../storeAdapter'
 import type { JSX } from 'react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'

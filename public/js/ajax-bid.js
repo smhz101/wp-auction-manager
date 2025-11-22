@@ -197,6 +197,8 @@ jQuery(function ($) {
               res.data.new_status
             );
           }
+          // Focus back to input for accessibility
+          bidInput.focus();
         } else {
           toastr.error(msgNode(res.data.message));
           if (res.data && typeof res.data.min_bid !== 'undefined') {
@@ -204,6 +206,8 @@ jQuery(function ($) {
           } else if (res.data && typeof res.data.max_bid !== 'undefined') {
             bidInput.val(res.data.max_bid);
           }
+          // Focus back to input for accessibility
+          bidInput.focus();
         }
       }
     );
@@ -211,7 +215,8 @@ jQuery(function ($) {
 
   $('.wpam-watchlist-button').on('click', function (e) {
     e.preventDefault();
-    const auctionId = $(this).data('auction-id');
+    const btn = $(this);
+    const auctionId = btn.data('auction-id');
     $.post(
       wpam_ajax.ajax_url,
       {
@@ -236,6 +241,8 @@ jQuery(function ($) {
             res.data.new_status
           );
         }
+        // Focus back to button for accessibility
+        btn.focus();
       }
     );
   });

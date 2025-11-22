@@ -2,7 +2,7 @@ import React from 'react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useCR } from '../store'
+import { selectCR } from '../store'
 import type { UserStatus } from '../types'
 import type { JSX } from 'react'
 
@@ -54,7 +54,7 @@ export function CreateEditUserDialog({
   const {
     state: { users, roles },
     actions,
-  } = useCR()
+  } = selectCR()
   const editing = users.find((u) => u.id === userId) ?? null
 
   const form = useForm<UserFormValues>({

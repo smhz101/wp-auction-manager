@@ -1,3 +1,5 @@
+// /src/routes/features/active-carts/components/CartsTable.tsx
+
 import {
   createColumnHelper,
   flexRender,
@@ -6,7 +8,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import NoteDialog from './NoteDialog'
 
@@ -26,13 +28,6 @@ interface CartsTableProps {
   onPageChange: (idx: number) => void
   onPageSizeChange: (size: number) => void
   onSelectionChange: (ids: Array<string>) => void
-}
-
-function arraysShallowEqual(a: Array<string>, b: Array<string>): boolean {
-  if (a === b) return true
-  if (a.length !== b.length) return false
-  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false
-  return true
 }
 
 export default function CartsTable({
@@ -61,16 +56,16 @@ export default function CartsTable({
         id: 'select',
         header: ({ table }: { table: Table<Cart> }) => (
           <Checkbox
-            aria-label="Select all rows"
             checked={table.getIsAllPageRowsSelected()}
             onCheckedChange={(v) => table.toggleAllPageRowsSelected(Boolean(v))}
+            aria-label="Select all rows"
           />
         ),
         cell: ({ row }: { row: Row<Cart> }) => (
           <Checkbox
-            aria-label={`Select row ${row.index + 1}`}
             checked={row.getIsSelected()}
             onCheckedChange={(v) => row.toggleSelected(Boolean(v))}
+            aria-label={`Select row ${row.index + 1}`}
           />
         ),
         enableSorting: false,
@@ -139,19 +134,19 @@ export default function CartsTable({
         },
       }),
     ]
-  }, [])
+  }, [col])
 
   const table = useReactTable<Cart>({
-    columns,
     data: rows,
+    columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    manualPagination: true,
     initialState: {
       pagination: { pageIndex, pageSize },
       sorting: [{ id: 'customer', desc: false }],
     },
-    manualPagination: true,
     filterFns: { fuzzy },
     globalFilterFn: 'fuzzy',
     state: { pagination: { pageIndex, pageSize } },
@@ -165,19 +160,11 @@ export default function CartsTable({
     },
   })
 
-  // Guarded selection push-up
-  const rowSelection = table.getState().rowSelection
-  const selectedIds = useMemo(
-    () => table.getSelectedRowModel().rows.map((r) => r.original.id),
-    [rowSelection, rows],
-  )
-  const prevRef = useRef<Array<string>>([])
+  // Lift selection up (effect, not memo)
   useEffect(() => {
-    if (!arraysShallowEqual(prevRef.current, selectedIds)) {
-      prevRef.current = selectedIds
-      onSelectionChange(selectedIds)
-    }
-  }, [onSelectionChange, selectedIds])
+    const ids = table.getSelectedRowModel().rows.map((r) => r.original.id)
+    onSelectionChange(ids)
+  }, [onSelectionChange, table.getState().rowSelection, table])
 
   return (
     <>
@@ -195,17 +182,15 @@ export default function CartsTable({
                   >
                     <div className="inline-flex cursor-pointer items-center gap-1">
                       {flexRender(h.column.columnDef.header, h.getContext())}
-                      {{
-                        asc: '▲',
-                        desc: '▼',
-                      }[h.column.getIsSorted() as string] ?? null}
+                      {{ asc: '▲', desc: '▼' }[
+                        h.column.getIsSorted() as string
+                      ] ?? null}
                     </div>
                   </th>
                 ))}
               </tr>
             ))}
           </thead>
-
           <tbody>
             {table.getRowModel().rows.map((row) => (
               <tr
@@ -284,8 +269,8 @@ export default function CartsTable({
 /** Tiny status badge */
 function Badge(props: { status: Cart['status'] }): JSX.Element {
   const map: Record<Cart['status'], string> = {
-    abandoned: 'bg-zinc-100 text-zinc-700',
     active: 'bg-emerald-100 text-emerald-700',
+    abandoned: 'bg-zinc-100 text-zinc-700',
     recovering: 'bg-amber-100 text-amber-800',
   }
   return (

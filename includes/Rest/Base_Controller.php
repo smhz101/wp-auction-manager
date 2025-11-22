@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace WPAM\Includes\Rest;
 
+use WP_Error;
 use WP_REST_Request;
 use WPAM\Includes\Support\Exceptions\Rest_Exception;
 use WPAM\Includes\Support\Exceptions\Unauthorized_Exception;
@@ -83,5 +84,19 @@ abstract class Base_Controller {
 		if ( ! $nonce || ! wp_verify_nonce( $nonce, 'wp_rest' ) ) {
 			throw new Unauthorized_Exception( __( 'Invalid or missing nonce.', 'wp-auction-manager' ) );
 		}
+	}
+
+	/**
+	 * Permission check for admin-only endpoints.
+	 *
+	 * @return bool|WP_Error
+	 */
+	public function check_admin_permissions() {
+		$this->require_logged_in();
+		
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return new WP_Error( 'wpam_forbidden', __( 'Insufficient permissions.', 'wpam' ), array( 'status' => 403 ) );
+		}
+		return true;
 	}
 }

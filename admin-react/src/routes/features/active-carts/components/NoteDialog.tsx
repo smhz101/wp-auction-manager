@@ -1,81 +1,87 @@
-// /features/active-carts/components/NoteDialog.tsx
-
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm } from 'react-hook-form'
+import { FormProvider, useForm } from 'react-hook-form'
+import { useEffect, useState } from 'react'
 
+import { updateNote } from '../store'
 import { NoteSchema } from '../schema'
-import { updateNote, useAppDispatch } from '../store'
-
 import type { JSX } from 'react'
-import type { NoteFormValues } from '../schema'
 import type { Resolver } from 'react-hook-form'
+import type { NoteFormValues } from '../schema'
+
+import { useAppDispatch } from '@/store/hooks'
 
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 
-interface NoteDialogProps {
+export default function NoteDialog(props: {
   id: string
   initial: string
   open: boolean
   onOpenChange: (v: boolean) => void
-}
-
-export default function NoteDialog({
-  id,
-  initial,
-  open,
-  onOpenChange,
-}: NoteDialogProps): JSX.Element {
+}): JSX.Element {
   const dispatch = useAppDispatch()
+  const [submitting, setSubmitting] = useState(false)
 
   const form = useForm<NoteFormValues>({
-    defaultValues: { note: initial },
+    defaultValues: { note: props.initial ?? '' },
     resolver: zodResolver(NoteSchema) as unknown as Resolver<NoteFormValues>,
     mode: 'onChange',
   })
+  const { handleSubmit, register, reset } = form
 
-  function submit(v: NoteFormValues): void {
-    void dispatch(updateNote({ id, note: v.note })).then(() =>
-      onOpenChange(false),
-    )
-  }
+  // Keep initial note in sync if dialog is reopened for another row
+  useEffect(() => {
+    reset({ note: props.initial ?? '' })
+  }, [props.initial, reset])
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[520px]">
+    <Dialog open={props.open} onOpenChange={props.onOpenChange}>
+      <DialogContent className="sm:max-w-[540px]">
         <DialogHeader>
           <DialogTitle>Edit note</DialogTitle>
-          <DialogDescription>Keep short & actionable.</DialogDescription>
         </DialogHeader>
 
-        <form className="grid gap-3" onSubmit={form.handleSubmit(submit)}>
-          <div className="grid gap-1">
-            <Label htmlFor="note">Note</Label>
-            <Input id="note" {...form.register('note')} />
-          </div>
+        <FormProvider {...form}>
+          <form
+            className="mt-3 grid gap-3"
+            onSubmit={handleSubmit(async (v) => {
+              try {
+                setSubmitting(true)
+                await dispatch(
+                  updateNote({ id: props.id, note: v.note }),
+                ).unwrap()
+                props.onOpenChange(false)
+              } finally {
+                setSubmitting(false)
+              }
+            })}
+          >
+            <Textarea
+              placeholder="Add a note…"
+              rows={5}
+              {...register('note')}
+            />
 
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={!form.formState.isValid}>
-              Save
-            </Button>
-          </DialogFooter>
-        </form>
+            <div className="mt-2 flex items-center justify-end gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => props.onOpenChange(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={submitting}>
+                Save
+              </Button>
+            </div>
+          </form>
+        </FormProvider>
       </DialogContent>
     </Dialog>
   )

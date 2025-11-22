@@ -1,5 +1,5 @@
 import { Trash2, UserMinus, UserPlus } from 'lucide-react'
-import { useCR } from '../store'
+import { useCR } from '../storeAdapter'
 import type { JSX } from 'react'
 
 import { Button } from '@/components/ui/button'

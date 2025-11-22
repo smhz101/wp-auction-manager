@@ -1,8 +1,8 @@
-// /features/active-carts/exportCsv.ts
+// /src/routes/features/active-carts/exportCsv.ts
 
 import type { Cart } from './types'
 
-export function exportCsv(rows: Array<Cart>): void {
+export function exportCsv(rows: Array<Cart>) {
   const header = [
     'id',
     'customer',

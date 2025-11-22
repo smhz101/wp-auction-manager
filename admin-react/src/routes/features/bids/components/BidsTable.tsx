@@ -5,21 +5,22 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
+  type ColumnDef,
+  type Row,
+  type Table,
 } from '@tanstack/react-table'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { fuzzy } from '@/lib/fuzzyFilter'
 
 import NoteDialog from './NoteDialog'
-
-import type { JSX } from 'react'
-import type { ColumnDef, Row, Table } from '@tanstack/react-table'
-import type { Bid } from '../types'
-
-import { fuzzy } from '@/lib/fuzzyFilter'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 
-interface BidsTableProps {
+import type { JSX } from 'react'
+import type { Bid } from '../types'
+
+type Props = {
   rows: Array<Bid>
   total: number
   pageIndex: number
@@ -27,13 +28,6 @@ interface BidsTableProps {
   onPageChange: (idx: number) => void
   onPageSizeChange: (size: number) => void
   onSelectionChange: (ids: Array<string>) => void
-}
-
-function arraysShallowEqual(a: Array<string>, b: Array<string>): boolean {
-  if (a === b) return true
-  if (a.length !== b.length) return false
-  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false
-  return true
 }
 
 export default function BidsTable({
@@ -44,7 +38,7 @@ export default function BidsTable({
   onPageChange,
   onPageSizeChange,
   onSelectionChange,
-}: BidsTableProps): JSX.Element {
+}: Props): JSX.Element {
   const col = createColumnHelper<Bid>()
   const [note, setNote] = useState<{
     id: string
@@ -56,22 +50,22 @@ export default function BidsTable({
     initial: '',
   })
 
-  const columns = useMemo(() => {
-    const defs = [
+  const columns: Array<ColumnDef<Bid, any>> = useMemo(() => {
+    return [
       {
         id: 'select',
         header: ({ table }: { table: Table<Bid> }) => (
           <Checkbox
-            aria-label="Select all rows"
             checked={table.getIsAllPageRowsSelected()}
             onCheckedChange={(v) => table.toggleAllPageRowsSelected(Boolean(v))}
+            aria-label="Select all rows"
           />
         ),
         cell: ({ row }: { row: Row<Bid> }) => (
           <Checkbox
-            aria-label={`Select row ${row.index + 1}`}
             checked={row.getIsSelected()}
             onCheckedChange={(v) => row.toggleSelected(Boolean(v))}
+            aria-label={`Select row ${row.index + 1}`}
           />
         ),
         enableSorting: false,
@@ -160,13 +154,11 @@ export default function BidsTable({
         },
       }),
     ]
-
-    return defs as unknown as Array<ColumnDef<Bid, unknown>>
   }, [])
 
   const table = useReactTable<Bid>({
-    columns,
     data: rows,
+    columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -183,24 +175,16 @@ export default function BidsTable({
         typeof updater === 'function'
           ? updater({ pageIndex, pageSize })
           : updater
-      onPageChange(next.pageIndex)
-      onPageSizeChange(next.pageSize)
+      if (next.pageIndex !== pageIndex) onPageChange(next.pageIndex)
+      if (next.pageSize !== pageSize) onPageSizeChange(next.pageSize)
     },
   })
 
-  // Guarded selection push-up
-  const rowSelection = table.getState().rowSelection
-  const selectedIds = useMemo(
-    () => table.getSelectedRowModel().rows.map((r) => r.original.id),
-    [rowSelection, rows],
-  )
-  const prevRef = useRef<Array<string>>([])
+  // Push selection up when rowSelection changes (avoid loops)
   useEffect(() => {
-    if (!arraysShallowEqual(prevRef.current, selectedIds)) {
-      prevRef.current = selectedIds
-      onSelectionChange(selectedIds)
-    }
-  }, [onSelectionChange, selectedIds])
+    const ids = table.getSelectedRowModel().rows.map((r) => r.original.id)
+    onSelectionChange(ids)
+  }, [table.getState().rowSelection, table, onSelectionChange])
 
   return (
     <>
@@ -218,17 +202,15 @@ export default function BidsTable({
                   >
                     <div className="inline-flex cursor-pointer items-center gap-1">
                       {flexRender(h.column.columnDef.header, h.getContext())}
-                      {{
-                        asc: '▲',
-                        desc: '▼',
-                      }[h.column.getIsSorted() as string] ?? null}
+                      {{ asc: '▲', desc: '▼' }[
+                        h.column.getIsSorted() as string
+                      ] ?? null}
                     </div>
                   </th>
                 ))}
               </tr>
             ))}
           </thead>
-
           <tbody>
             {table.getRowModel().rows.map((row) => (
               <tr

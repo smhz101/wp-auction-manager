@@ -1,50 +1,69 @@
-// /features/bids/components/TopBar.tsx
+import { Loader2, RotateCcw, Save } from 'lucide-react'
+import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { bulkTagLost, fetchBids } from '../store'
+import exportCsv from '../exportCsv'
 
-import {
-  bulkTagLost,
-  fetchBids,
-  useAppDispatch,
-  useAppSelector,
-} from '../store'
-import { exportCsv } from '../exportCsv'
-
-import type { JSX } from 'react'
 import { Button } from '@/components/ui/button'
 
-export default function TopBar(props: {
-  selectedIds: Array<string>
-}): JSX.Element {
-  const { selectedIds } = props
+import type { JSX } from 'react'
+
+type Props = {
+  isLoading: boolean
+  onReload: () => void
+}
+
+export default function TopBar({ isLoading, onReload }: Props): JSX.Element {
   const dispatch = useAppDispatch()
-  const { rows } = useAppSelector((s) => s.bids)
-  const load = useAppSelector((s) => s.bids.loadState)
-  const save = useAppSelector((s) => s.bids.saveState)
+  const selectedRows = useAppSelector((s) => {
+    const set = new Set(s.bids.selection)
+    return s.bids.rows.filter((r) => set.has(r.id))
+  })
+  const selectedIds = selectedRows.map((r) => r.id)
+  const isSaving = useAppSelector((s) => s.bids.saveState === 'saving')
 
   return (
-    <div className="rounded-2xl border bg-white p-4 flex items-center gap-2">
-      <Button
-        variant="outline"
-        onClick={() => dispatch(fetchBids())}
-        disabled={load === 'loading'}
-      >
-        {load === 'loading' ? 'Loading…' : 'Reload'}
-      </Button>
+    <header className="mb-6 flex items-center justify-between">
+      <div>
+        <h1 className="text-xl font-semibold">Bids Manager</h1>
+        <p className="text-sm text-zinc-600">
+          {isLoading ? 'Loading…' : `${selectedRows.length} selected`}
+        </p>
+      </div>
 
-      <div className="ml-auto flex gap-2">
+      <div className="flex items-center gap-2">
         <Button
-          onClick={() =>
-            dispatch(bulkTagLost({ ids: selectedIds })).then(() =>
-              dispatch(fetchBids()),
-            )
-          }
-          disabled={selectedIds.length === 0 || save === 'saving'}
+          variant="ghost"
+          disabled={selectedIds.length === 0 || isSaving}
+          onClick={() => dispatch(bulkTagLost({ ids: selectedIds }) as any)}
+          title="Mark selected as Lost"
         >
-          Mark as Lost
+          Mark Lost
         </Button>
-        <Button variant="outline" onClick={() => exportCsv(rows)}>
+
+        <Button
+          variant="outline"
+          disabled={selectedIds.length === 0}
+          onClick={() => exportCsv(selectedRows)}
+          title="Export selected to CSV"
+        >
+          <Save className="mr-2 h-4 w-4" />
           Export CSV
         </Button>
+
+        <Button
+          variant="outline"
+          disabled={isLoading || isSaving}
+          onClick={() => onReload()}
+          title="Reload"
+        >
+          {isLoading ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <RotateCcw className="mr-2 h-4 w-4" />
+          )}
+          {isLoading ? 'Loading…' : 'Reload'}
+        </Button>
       </div>
-    </div>
+    </header>
   )
 }

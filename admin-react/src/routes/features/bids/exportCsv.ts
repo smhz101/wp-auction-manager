@@ -1,8 +1,6 @@
-// /features/bids/exportCsv.ts
-
 import type { Bid } from './types'
 
-export function exportCsv(rows: Array<Bid>): void {
+export default function exportCsv(rows: Array<Bid>) {
   const header = [
     'id',
     'auction',
@@ -24,7 +22,7 @@ export function exportCsv(rows: Array<Bid>): void {
       r.amount.toFixed(2),
       r.status,
       r.placedAt,
-      r.note.replace(/\n/g, ' '),
+      (r.note || '').replace(/\n/g, ' '),
     ]
       .map((v) => `"${String(v).replace(/"/g, '""')}"`)
       .join(','),

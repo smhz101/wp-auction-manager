@@ -1,111 +1,117 @@
-// /features/bids/components/BidsFilters.tsx
-
 import { zodResolver } from '@hookform/resolvers/zod'
+import { FormProvider, useForm } from 'react-hook-form'
 import { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
 
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
+import { Label } from '@/components/ui/label'
 import { FiltersSchema } from '../schema'
-import { fetchBids, setFilters, useAppDispatch, useAppSelector } from '../store'
 
 import type { JSX } from 'react'
-import type { FiltersFormValues } from '../schema'
 import type { Resolver } from 'react-hook-form'
+import type { FiltersFormValues } from '../schema'
 
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+type Props = {
+  initialValues: FiltersFormValues
+  onChange: (partial: Partial<FiltersFormValues>) => void
+  onSearch: () => void
+}
 
-export default function BidsFilters(): JSX.Element {
-  const dispatch = useAppDispatch()
-  const filters = useAppSelector((s) => s.bids.filters)
-
+export default function BidsFilters({
+  initialValues,
+  onChange,
+  onSearch,
+}: Props): JSX.Element {
   const form = useForm<FiltersFormValues>({
-    defaultValues: filters,
+    defaultValues: initialValues,
     resolver: zodResolver(
       FiltersSchema,
     ) as unknown as Resolver<FiltersFormValues>,
     mode: 'onChange',
   })
 
+  // keep in sync when store updates
   useEffect(() => {
-    form.reset(filters)
-  }, [filters])
+    form.reset(initialValues)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    initialValues.q,
+    initialValues.status,
+    initialValues.min,
+    initialValues.max,
+    initialValues.from,
+    initialValues.to,
+  ])
 
+  // push partials up on any change
   useEffect(() => {
-    const sub = form.watch((v) => {
-      dispatch(setFilters(v as FiltersFormValues))
-      dispatch(fetchBids())
-    })
+    const sub = form.watch((v) => onChange(v as Partial<FiltersFormValues>))
     return () => sub.unsubscribe()
-  }, [dispatch, form])
+  }, [form, onChange])
 
   return (
-    <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-6">
-      <div className="grid gap-1">
-        <Label htmlFor="q">Search</Label>
-        <Input
-          id="q"
-          placeholder="Auction, lot, bidder, email…"
-          {...form.register('q')}
-        />
-      </div>
+    <FormProvider {...form}>
+      <form
+        className="grid grid-cols-1 gap-3 md:grid-cols-6"
+        onSubmit={(e) => {
+          e.preventDefault()
+          onSearch()
+        }}
+      >
+        <div className="col-span-2">
+          <Label className="mb-1 block text-xs text-zinc-600">Search</Label>
+          <Input
+            placeholder="Auction, lot, bidder, email…"
+            {...form.register('q')}
+          />
+        </div>
 
-      <div className="grid gap-1">
-        <Label>Status</Label>
-        <Select
-          value={form.getValues('status')}
-          onValueChange={(v) =>
-            form.setValue('status', v as any, { shouldValidate: true })
-          }
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            <SelectItem value="leading">Leading</SelectItem>
-            <SelectItem value="outbid">Outbid</SelectItem>
-            <SelectItem value="won">Won</SelectItem>
-            <SelectItem value="lost">Lost</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+        <div>
+          <Label className="mb-1 block text-xs text-zinc-600">Status</Label>
+          <Select {...form.register('status')}>
+            <option value="all">All</option>
+            <option value="leading">Leading</option>
+            <option value="outbid">Outbid</option>
+            <option value="won">Won</option>
+            <option value="lost">Lost</option>
+          </Select>
+        </div>
 
-      <div className="grid gap-1">
-        <Label htmlFor="min">Min</Label>
-        <Input
-          id="min"
-          type="number"
-          placeholder="Min $"
-          {...form.register('min')}
-        />
-      </div>
+        <div>
+          <Label className="mb-1 block text-xs text-zinc-600">Min</Label>
+          <Input type="number" placeholder="£" {...form.register('min')} />
+        </div>
 
-      <div className="grid gap-1">
-        <Label htmlFor="max">Max</Label>
-        <Input
-          id="max"
-          type="number"
-          placeholder="Max $"
-          {...form.register('max')}
-        />
-      </div>
+        <div>
+          <Label className="mb-1 block text-xs text-zinc-600">Max</Label>
+          <Input type="number" placeholder="£" {...form.register('max')} />
+        </div>
 
-      <div className="grid gap-1">
-        <Label htmlFor="from">From</Label>
-        <Input id="from" type="date" {...form.register('from')} />
-      </div>
+        <div>
+          <Label className="mb-1 block text-xs text-zinc-600">From</Label>
+          <Input type="date" {...form.register('from')} />
+        </div>
 
-      <div className="grid gap-1">
-        <Label htmlFor="to">To</Label>
-        <Input id="to" type="date" {...form.register('to')} />
-      </div>
-    </div>
+        <div>
+          <Label className="mb-1 block text-xs text-zinc-600">To</Label>
+          <Input type="date" {...form.register('to')} />
+        </div>
+
+        <div className="col-span-full flex gap-2">
+          <Button type="submit">Apply</Button>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => {
+              form.reset(FiltersSchema.parse({}))
+              onSearch()
+            }}
+          >
+            Reset
+          </Button>
+        </div>
+      </form>
+    </FormProvider>
   )
 }

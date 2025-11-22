@@ -1,6 +1,6 @@
 // /features/customer-roles/components/UsersTab.tsx
 import React from 'react'
-import { useCR } from '../store'
+import { useCR } from '../storeAdapter'
 import BulkRoleActions from './BulkRoleActions'
 import UserTable from './UserTable'
 import { CreateEditUserDialog, DeleteUsersAlert } from './UserDialogs'

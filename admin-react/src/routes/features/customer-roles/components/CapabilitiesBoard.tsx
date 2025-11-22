@@ -1,7 +1,7 @@
 import React from 'react'
 
 import { GROUPS } from '../seed'
-import { useCR } from '../store'
+import { useCR } from '../storeAdapter'
 import type { Role } from '../types'
 
 import type { JSX } from 'react'

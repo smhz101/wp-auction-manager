@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace WPAM\Includes\Domain;
+namespace WPAM\Includes\Services;
 
 use WP_User;
 
