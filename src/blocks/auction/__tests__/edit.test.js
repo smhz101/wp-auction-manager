@@ -26,7 +26,7 @@ describe('Edit', () => {
         // We can't easily render without a React environment setup (enzyme/RTL), 
         // and wp-scripts might not have it fully configured for us without more setup.
         // But we can verify it's a valid component function.
-        const attributes = {
+    const attributes = {
 			showCountdown: true,
 			showBidForm: true,
 			showStatus: true,
